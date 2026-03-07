@@ -1,7 +1,7 @@
 // IPC Channel Definitions
 // This file centralizes all IPC channel names to prevent typos and ensure consistency
 
-export default {
+module.exports = {
   // Domain-specific channels
   SETTINGS_GET_ALL: 'settings:getAll',
   SETTINGS_SAVE_ONE: 'settings:saveOne',

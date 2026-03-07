@@ -5,7 +5,7 @@
  * Supports page numbers, headers/footers — no external dependencies needed
  */
 
-import { BrowserWindow } from 'electron';
+const { BrowserWindow } = require('electron');
 
 /**
  * Render HTML content to a PDF buffer
@@ -83,7 +83,7 @@ async function close() {
   // Nothing to clean up — each render creates/destroys its own BrowserWindow
 }
 
-export default {
+module.exports = {
   renderReport,
   close,
 };
