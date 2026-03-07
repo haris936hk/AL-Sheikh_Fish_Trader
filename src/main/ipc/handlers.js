@@ -1,14 +1,13 @@
-import electron from 'electron';
-const { ipcMain, app } = electron;
-import channels from './channels.js';
-import db from '../database/index.js';
-import queries from '../database/queries.js';
-import printService from '../services/printService.js';
+const { ipcMain, app, BrowserWindow } = require('electron');
+const channels = require('./channels.js');
+const db = require('../database/index.js');
+const queries = require('../database/queries.js');
+const printService = require('../services/printService.js');
 
 /**
  * Register all IPC handlers
  */
-export function registerHandlers() {
+function registerHandlers() {
   // Database handlers
   // Settings handlers
   ipcMain.handle(channels.SETTINGS_GET_ALL, async () => {
@@ -760,7 +759,7 @@ export function registerHandlers() {
   // Print/Export handlers
   ipcMain.handle(channels.PRINT_REPORT, async (event, { htmlContent, options }) => {
     try {
-      const mainWindow = electron.BrowserWindow.getFocusedWindow();
+      const mainWindow = BrowserWindow.getFocusedWindow();
       await printService.printReport(mainWindow, htmlContent, options);
       return { success: true };
     } catch (error) {
@@ -771,7 +770,7 @@ export function registerHandlers() {
 
   ipcMain.handle(channels.PRINT_PREVIEW, async (event, { htmlContent, options }) => {
     try {
-      const mainWindow = electron.BrowserWindow.getFocusedWindow();
+      const mainWindow = BrowserWindow.getFocusedWindow();
       await printService.printPreview(mainWindow, htmlContent, options);
       return { success: true };
     } catch (error) {
@@ -782,7 +781,7 @@ export function registerHandlers() {
 
   ipcMain.handle(channels.EXPORT_PDF, async (event, { htmlContent, options }) => {
     try {
-      const mainWindow = electron.BrowserWindow.getFocusedWindow();
+      const mainWindow = BrowserWindow.getFocusedWindow();
       const filePath = await printService.exportToPDF(mainWindow, htmlContent, options);
       if (!filePath) {
         return { success: false, error: 'Export cancelled' };
@@ -796,7 +795,7 @@ export function registerHandlers() {
 
   ipcMain.handle(channels.EXPORT_EXCEL, async (event, { data, options }) => {
     try {
-      const mainWindow = electron.BrowserWindow.getFocusedWindow();
+      const mainWindow = BrowserWindow.getFocusedWindow();
       const filePath = await printService.exportToExcel(mainWindow, data, options);
       if (!filePath) {
         return { success: false, error: 'Export cancelled' };
@@ -810,7 +809,7 @@ export function registerHandlers() {
 
   ipcMain.handle(channels.EXPORT_CSV, async (event, { data, options }) => {
     try {
-      const mainWindow = electron.BrowserWindow.getFocusedWindow();
+      const mainWindow = BrowserWindow.getFocusedWindow();
       const filePath = await printService.exportToExcel(mainWindow, data, {
         ...options,
         filename: options?.filename || 'export.csv',
@@ -887,3 +886,5 @@ export function registerHandlers() {
     }
   });
 }
+
+module.exports = { registerHandlers };

@@ -1,0 +1,14 @@
+appId: com.fishplus.distributor
+productName: FISHPLUS Distributor
+directories:
+  output: dist-electron
+files:
+  - src/main/**/*
+  - src/renderer/dist/**/*
+  - package.json
+  - node_modules/**/*
+win:
+  target: nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true

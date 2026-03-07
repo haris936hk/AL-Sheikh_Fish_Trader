@@ -1,4 +1,4 @@
-import db from './index.js';
+const db = require('./index.js');
 
 /**
  * Common database queries with prepared statements
@@ -2742,7 +2742,7 @@ const yearEnd = {
   },
 };
 
-export default {
+module.exports = {
   settings,
   dashboard,
   suppliers,

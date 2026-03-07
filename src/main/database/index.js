@@ -1,11 +1,7 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
-import { app } from 'electron';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const Database = require('better-sqlite3');
+const path = require('path');
+const fs = require('fs');
+const { app } = require('electron');
 
 let db = null;
 
@@ -13,7 +9,7 @@ let db = null;
  * Initialize the database
  * Database is stored in the user's app data directory
  */
-export function initialize(customPath = null) {
+function initialize(customPath = null) {
   if (db) {
     return db;
   }
@@ -43,9 +39,7 @@ export function initialize(customPath = null) {
     // Try multiple paths for schema.sql (handles both dev and production)
     const possiblePaths = [
       path.join(__dirname, 'schema.sql'),
-      path.join(__dirname, '..', 'src', 'database', 'schema.sql'),
-      path.join(app.getAppPath(), 'src', 'database', 'schema.sql'),
-      path.join(app.getAppPath(), '.webpack', 'main', 'schema.sql'),
+      path.join(app.getAppPath(), 'src', 'main', 'database', 'schema.sql'),
     ];
 
     let schemaLoaded = false;
@@ -206,7 +200,7 @@ function createEssentialTables() {
  * @param {Array} params - Query parameters
  * @returns {Array} Query results
  */
-export function query(sql, params = []) {
+function query(sql, params = []) {
   if (!db) initialize();
   const stmt = db.prepare(sql);
   return stmt.all(...params);
@@ -218,7 +212,7 @@ export function query(sql, params = []) {
  * @param {Array} params - Query parameters
  * @returns {Object} Result with changes and lastInsertRowid
  */
-export function execute(sql, params = []) {
+function execute(sql, params = []) {
   if (!db) initialize();
   const stmt = db.prepare(sql);
   return stmt.run(...params);
@@ -229,7 +223,7 @@ export function execute(sql, params = []) {
  * @param {Array} operations - Array of {sql, params} objects
  * @returns {Array} Results of all operations
  */
-export function transaction(operations) {
+function transaction(operations) {
   if (!db) initialize();
 
   const txn = db.transaction(() => {
@@ -247,14 +241,14 @@ export function transaction(operations) {
 /**
  * Close the database connection
  */
-export function close() {
+function close() {
   if (db) {
     db.close();
     db = null;
   }
 }
 
-export default {
+module.exports = {
   initialize,
   query,
   execute,

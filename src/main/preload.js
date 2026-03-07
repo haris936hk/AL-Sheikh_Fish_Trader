@@ -1,8 +1,8 @@
 // Preload script - secure bridge between main and renderer
 // See: https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
-import { contextBridge, ipcRenderer } from 'electron';
-import channels from './ipc/channels.js';
+const { contextBridge, ipcRenderer } = require('electron');
+const channels = require('./ipc/channels.js');
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
@@ -53,7 +53,11 @@ contextBridge.exposeInMainWorld('api', {
     update: (id, data) => ipcRenderer.invoke(channels.SUPPLIER_BILL_UPDATE, { id, data }),
     delete: (id) => ipcRenderer.invoke(channels.SUPPLIER_BILL_DELETE, id),
     generatePreview: (supplierId, dateFrom, dateTo) =>
-      ipcRenderer.invoke(channels.SUPPLIER_BILL_GENERATE_PREVIEW, { supplierId, dateFrom, dateTo }),
+      ipcRenderer.invoke(channels.SUPPLIER_BILL_GENERATE_PREVIEW, {
+        supplierId,
+        dateFrom,
+        dateTo,
+      }),
     getNextNumber: () => ipcRenderer.invoke(channels.SUPPLIER_BILL_GET_NEXT_NUMBER),
   },
 
@@ -113,11 +117,13 @@ contextBridge.exposeInMainWorld('api', {
     getLedger: (params) => ipcRenderer.invoke(channels.REPORT_LEDGER, params),
     getItemPurchases: (params) => ipcRenderer.invoke(channels.REPORT_ITEM_PURCHASES, params),
     getStock: (params) => ipcRenderer.invoke(channels.REPORT_STOCK, params),
-    getCustomerRegister: (params) => ipcRenderer.invoke(channels.REPORT_CUSTOMER_REGISTER, params),
+    getCustomerRegister: (params) =>
+      ipcRenderer.invoke(channels.REPORT_CUSTOMER_REGISTER, params),
     getConcession: (params) => ipcRenderer.invoke(channels.REPORT_CONCESSION, params),
     getDailyDetails: (params) => ipcRenderer.invoke(channels.REPORT_DAILY_DETAILS, params),
     getVendorSales: (params) => ipcRenderer.invoke(channels.REPORT_VENDOR_SALES, params),
-    getVendorStockBill: (params) => ipcRenderer.invoke(channels.REPORT_VENDOR_STOCK_BILL, params),
+    getVendorStockBill: (params) =>
+      ipcRenderer.invoke(channels.REPORT_VENDOR_STOCK_BILL, params),
     getDailyNetSummary: (params) => ipcRenderer.invoke(channels.REPORT_NET_SUMMARY, params),
   },
 

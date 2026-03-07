@@ -1,7 +1,6 @@
 const js = require('@eslint/js');
 const reactPlugin = require('eslint-plugin-react');
 const reactHooksPlugin = require('eslint-plugin-react-hooks');
-const mochaPlugin = require('eslint-plugin-mocha');
 
 module.exports = [
   // Global ignores
@@ -31,9 +30,7 @@ module.exports = [
         __filename: 'readonly',
         module: 'readonly',
         require: 'readonly',
-        // Electron globals
-        MAIN_WINDOW_WEBPACK_ENTRY: 'readonly',
-        MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: 'readonly',
+        // Electron globals (none needed after Vite migration)
       },
     },
     plugins: {
@@ -52,25 +49,6 @@ module.exports = [
     settings: {
       react: {
         version: 'detect',
-      },
-    },
-  },
-
-  // Test-specific config
-  {
-    files: ['test/**/*.js'],
-    plugins: {
-      mocha: mochaPlugin,
-    },
-    languageOptions: {
-      globals: {
-        global: 'writable',
-        describe: 'readonly',
-        it: 'readonly',
-        before: 'readonly',
-        after: 'readonly',
-        beforeEach: 'readonly',
-        afterEach: 'readonly',
       },
     },
   },

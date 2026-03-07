@@ -5,12 +5,11 @@
  * Implements FR-PRINT-001 through FR-PRINT-012
  */
 
-import electron from 'electron';
-const { BrowserWindow, dialog, app } = electron;
-import path from 'path';
-import fs from 'fs';
-import ExcelJS from 'exceljs';
-import jsreportService from './jsreportService.js';
+const { BrowserWindow, dialog, app } = require('electron');
+const path = require('path');
+const fs = require('fs');
+const ExcelJS = require('exceljs');
+const jsreportService = require('./jsreportService.js');
 
 /**
  * Print HTML content using a hidden browser window
@@ -430,7 +429,7 @@ async function printPreview(mainWindow, htmlContent, options = {}) {
   }
 }
 
-export default {
+module.exports = {
   printReport,
   printPreview,
   exportToPDF,
