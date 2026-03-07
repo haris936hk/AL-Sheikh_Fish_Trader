@@ -286,7 +286,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         if (editSale?.items) {
           for (const existingItem of editSale.items) {
             const key = String(existingItem.item_id);
-            if (stockMap[key]) {
+            if (existingItem.is_stock && stockMap[key]) {
               stockMap[key].stock += existingItem.weight || 0;
             }
           }
@@ -294,7 +294,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
 
         const stockInfo = stockMap[String(selectedItem)];
         const numWeight = Number(weight) || 0;
-        if (stockInfo && numWeight > stockInfo.stock) {
+        if (isStock && stockInfo && numWeight > stockInfo.stock) {
           notifications.show({
             title: t.insufficientStockTitle,
             message: t.insufficientStockMsg(

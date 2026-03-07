@@ -1153,13 +1153,15 @@ const sales = {
       );
 
       // Update item stock (reduce by weight)
-      db.execute(
-        `UPDATE items SET 
-          current_stock = current_stock - ?,
-          updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [lineWeight, item.item_id]
-      );
+      if (item.is_stock) {
+        db.execute(
+          `UPDATE items SET 
+            current_stock = current_stock - ?,
+            updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+          [lineWeight, item.item_id]
+        );
+      }
 
       // Track balance per customer
       if (item.customer_id) {
@@ -1203,10 +1205,12 @@ const sales = {
 
     // Restore previous stock levels
     for (const item of existingSale.items) {
-      db.execute(
-        'UPDATE items SET current_stock = current_stock + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [item.weight || 0, item.item_id]
-      );
+      if (item.is_stock) {
+        db.execute(
+          'UPDATE items SET current_stock = current_stock + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [item.weight || 0, item.item_id]
+        );
+      }
     }
 
     // Restore per-line-item customer balances
@@ -1318,10 +1322,12 @@ const sales = {
       );
 
       // Update item stock
-      db.execute(
-        'UPDATE items SET current_stock = current_stock - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [lineWeight, item.item_id]
-      );
+      if (item.is_stock) {
+        db.execute(
+          'UPDATE items SET current_stock = current_stock - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [lineWeight, item.item_id]
+        );
+      }
 
       // Track balance per customer
       if (item.customer_id) {
@@ -1352,10 +1358,12 @@ const sales = {
 
     // Restore stock levels
     for (const item of sale.items) {
-      db.execute(
-        'UPDATE items SET current_stock = current_stock + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [item.weight || 0, item.item_id]
-      );
+      if (item.is_stock) {
+        db.execute(
+          'UPDATE items SET current_stock = current_stock + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [item.weight || 0, item.item_id]
+        );
+      }
     }
 
     // Restore per-line-item customer balances

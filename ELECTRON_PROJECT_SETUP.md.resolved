@@ -1,0 +1,143 @@
+# SA Fish Plus: Project Development & Electron Setup Guide
+
+This document provides a comprehensive analysis of the architecture, configuration, and development workflow used in the **SA Fish Plus** project. This setup is designed for high-performance, secure, and professional-grade Electron applications using local SQLite storage and a modern React frontend.
+
+---
+
+## 🏗️ Architecture Overview
+
+The project follows a strict **IPC (Inter-Process Communication)** architecture to ensure security and performance.
+
+1.  **Main Process (`src/main/`)**:
+    *   Runs in a Node.js environment.
+    *   Handles system-level tasks: Window lifecycle, Database (SQLite), File System access, Printing, and OS integrations.
+    *   Uses **CommonJS** (`require`).
+2.  **Renderer Process (`src/renderer/`)**:
+    *   Runs in a "browser-like" environment.
+    *   Handles the UI: React components, styling, and user interaction.
+    *   Uses **ESM** (`import/export`).
+    *   **Security**: No direct Node.js or Database access. It interacts with the Main process via a secure bridge.
+3.  **Preload Script (`src/main/preload.js`)**:
+    *   The "bridge" between Main and Renderer.
+    *   Exposes a controlled API to the Renderer using `contextBridge`.
+
+---
+
+## 🛠️ Main Process Configuration
+
+### Entry Point: `src/main/index.js`
+*   **Window Management**: Creates the `BrowserWindow` with native-look settings.
+*   **Performance**: Disables the default menu before the app is ready and uses GPU acceleration flags.
+*   **Deferred Loading**: To speed up startup, heavy modules like `database` and `logger` are only required after `app.whenReady()`.
+
+### Database: `src/main/database.js`
+*   **Library**: `better-sqlite3` (synchronous performance optimized for Electron).
+*   **Performance Mode**: Enables **WAL (Write-Ahead Logging)** mode for significantly faster writes and multi-process safety.
+*   **Optimizations**: Uses SQL PRAGMAs:
+    *   `journal_mode = WAL`
+    *   `cache_size = -8000` (8MB cache)
+    *   `temp_store = MEMORY`
+    *   `synchronous = NORMAL`
+*   **Schema Management**: Tables are created if they don't exist. Small migrations are handled via `PRAGMA table_info` checks and `ALTER TABLE` commands.
+
+### IPC Handlers: `src/main/ipc-handlers.js`
+*   Registers all listeners for `ipcMain.handle`.
+*   Acts as the API backend for the renderer.
+*   Handles complex operations like Excel exports, PDF generation, and thermal printing.
+
+---
+
+## 🌉 Preload & Security
+
+The preload script is critical for security.
+
+```javascript
+// src/main/preload.js
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('electron', {
+  getAllFish: (page, pageSize) => ipcRenderer.invoke('get-all-fish', page, pageSize),
+  addFish: (data) => ipcRenderer.invoke('add-fish', data),
+  // ... other methods
+});
+```
+*   **Context Isolation**: `contextIsolation: true` in `webPreferences` ensures the renderer cannot access the `ipcRenderer` directly.
+*   **Sandboxing**: `sandbox: false` is used here because certain native modules need access, but standard security best practices are followed by limiting the exposed API.
+
+---
+
+## ⚛️ Renderer Setup (React + Vite)
+
+### Technology Stack
+*   **Frontend**: React 19 (Functional components + Hooks).
+*   **Build Tool**: Vite 7 (Configured for Electron).
+*   **UI Framework**: Mantine UI 8 (Robust component library).
+*   **Styling**: Tailwind CSS v4 (Modern utility-first styling).
+*   **i18n**: `i18next` for bilingual support (English/Urdu) with RTL/LTR direction handling.
+
+### Vite Configuration (`src/renderer/vite.config.js`)
+*   **Base Path**: `base: './'` is required so that Electron can resolve relative paths in the packaged build.
+*   **Port**: Fixed to `5173` for predictable dev-mode linking.
+
+---
+
+## 🚀 Development Workflow
+
+The project uses `concurrently` and `wait-on` to orchestrate the development environment.
+
+### Scripts in `package.json`
+*   `npm run dev`:
+    1.  Starts the Vite dev server (`npm run dev:renderer`).
+    2.  Waits for the server to be ready (`wait-on http://localhost:5173`).
+    3.  Launches Electron (`npm run dev:electron`).
+*   `npm run build`:
+    1.  Builds the React app into `src/renderer/dist`.
+    2.  Runs `electron-builder` to package the app.
+
+---
+
+## 📦 Packaging & Distribution
+
+### Electron Builder (`electron-builder.yml`)
+*   **Output**: Packages are stored in `dist-electron/`.
+*   **Files**: Includes only necessary files: `src/main`, `src/renderer/dist`, `package.json`, and `node_modules`.
+*   **Windows (NSIS)**:
+    *   Configured for a professional installer experience.
+    *   `oneClick: false` allows users to choose the install directory.
+    *   Includes desktop shortcut creation.
+*   **Resources**: Assets like the app icon (`icon.png`) are stored in a dedicated `resources/` folder.
+
+---
+
+## 💎 Performance Best Practices Used
+
+1.  **V8 Code Cache**: `v8CacheOptions: 'code'` in `webPreferences` to speed up script execution.
+2.  **Ready-to-Show**: The window is hidden initially and shown only when `ready-to-show` fires to prevent white-flash.
+3.  **Pure SQLite**: Using `better-sqlite3` avoids the overhead of asynchronous database drivers since the main process is dedicated and handles long-running tasks via IPC.
+4.  **Hardware Acceleration**: Manually appending GPU flags for smoother rendering of complex charts (Recharts).
+5.  **Native Rebuilds**: Uses `electron-rebuild` (orchestrated by `electron-builder`) to ensure `better-sqlite3` is compiled correctly for the Electron Node.js version.
+
+---
+
+## 📂 Summary Project Structure
+
+```text
+├── .agents/          # Developer knowledge and rules
+├── database/         # Local DB storage (dev)
+├── resources/        # Icons and packaging assets
+├── src/
+│   ├── main/         # Main Process (Node.js)
+│   │   ├── database.js     # SQLite connection & Schema
+│   │   ├── index.js        # Entry point & Window configuration
+│   │   ├── ipc-handlers.js # Logic for UI requests
+│   │   └── preload.js      # Secure bridge
+│   └── renderer/     # Renderer Process (React)
+│       ├── src/            # UI Source Code
+│       │   ├── components/
+│       │   ├── hooks/
+│       │   ├── locales/    # i18n translations
+│       │   └── main.jsx    # React entry point
+│       └── vite.config.js  # Vite build config
+├── package.json      # Dependencies and scripts pipeline
+└── electron-builder.yml # Packaging configuration
+```

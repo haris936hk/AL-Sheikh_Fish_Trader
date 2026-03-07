@@ -8,8 +8,18 @@ export default {
   rebuildConfig: {},
   makers: [
     {
-      name: '@electron-forge/maker-squirrel',
-      config: {},
+      name: '@felixrieseberg/electron-forge-maker-nsis',
+      config: {
+        getAdditionalConfig: () => {
+          return {
+            oneClick: false,
+            allowToChangeInstallationDirectory: true,
+            installerIcon: undefined,
+            uninstallerIcon: undefined,
+            artifactName: '${productName}-Setup-${version}.${ext}',
+          };
+        },
+      },
     },
     {
       name: '@electron-forge/maker-zip',
