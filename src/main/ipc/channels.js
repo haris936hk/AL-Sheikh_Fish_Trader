@@ -88,6 +88,7 @@ module.exports = {
   REPORT_VENDOR_SALES: 'report:vendorSales',
   REPORT_VENDOR_STOCK_BILL: 'report:vendorStockBill',
   REPORT_NET_SUMMARY: 'report:netSummary',
+  REPORT_STOCK_SALE_HISTORY: 'report:stockSaleHistory',
 
   // Print/Export channels (FR-PRINT-001 through FR-PRINT-012)
   PRINT_REPORT: 'print:report',

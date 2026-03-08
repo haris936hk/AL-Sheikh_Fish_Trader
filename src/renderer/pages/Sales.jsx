@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
 import { Box, Container, Group, Title, Button, Tabs } from '@mantine/core';
 import PropTypes from 'prop-types';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { SaleForm, SaleSearch } from '../components';
 
 /**

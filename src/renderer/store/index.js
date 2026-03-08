@@ -29,6 +29,8 @@ const useStore = create(
       // Load settings from database
       loadSettings: async () => {
         try {
+          if (!window.api)
+            throw new Error('Electron API not available. Please run the app via Electron.');
           set({ loading: true });
           const result = await window.api.settings.getAll();
 
@@ -52,6 +54,7 @@ const useStore = create(
       // Save settings to database
       saveSetting: async (key, value) => {
         try {
+          if (!window.api) throw new Error('Electron API not available.');
           const result = await window.api.settings.save(key, value);
 
           if (!result.success) {
@@ -65,6 +68,8 @@ const useStore = create(
       // Dashboard actions
       loadDashboardData: async () => {
         try {
+          if (!window.api)
+            throw new Error('Electron API not available. Please run the app via Electron.');
           set({ dashboardLoading: true });
 
           // Fetch all dashboard data in parallel
@@ -86,11 +91,25 @@ const useStore = create(
             error: error.message,
             dashboardLoading: false,
           });
+          // Show error notification
+          import('@mantine/notifications')
+            .then(({ notifications }) => {
+              notifications.show({
+                title: 'Dashboard Error',
+                message: `Failed to load dashboard data: ${error.message}`,
+                color: 'red',
+              });
+              return null;
+            })
+            .catch((err) => {
+              console.error('Failed to load notifications module:', err);
+            });
         }
       },
 
       refreshSupplierAdvances: async () => {
         try {
+          if (!window.api) return;
           const result = await window.api.dashboard.getSupplierAdvances();
           if (result.success) {
             set({ supplierAdvances: result.data });
@@ -102,6 +121,7 @@ const useStore = create(
 
       refreshItemsStock: async () => {
         try {
+          if (!window.api) return;
           const result = await window.api.dashboard.getItemsStock();
           if (result.success) {
             set({ itemsStock: result.data });

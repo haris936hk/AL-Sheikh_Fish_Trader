@@ -572,6 +572,7 @@ const supplierBills = {
          AND DATE(s.sale_date) <= DATE(?)
          AND s.status = 'posted'
          AND si.supplier_bill_id IS NULL
+         AND si.is_stock = 0
        ORDER BY s.sale_date ASC, si.line_number ASC`,
       [supplierId, dateFrom, dateTo]
     );
@@ -702,6 +703,7 @@ const supplierBills = {
     db.execute(
       `UPDATE sale_items SET supplier_bill_id = ?
        WHERE supplier_bill_id IS NULL
+         AND is_stock = 0
          AND sale_id IN (
            SELECT id FROM sales
            WHERE supplier_id = ?
@@ -2114,6 +2116,7 @@ const reports = {
           FROM sale_items si
           JOIN sales s ON si.sale_id = s.id
           WHERE si.item_id = i.id 
+            AND si.is_stock = 1
             AND s.status != 'deleted'
             AND DATE(s.sale_date) < DATE(?)
         ), 0) as sales_before,
@@ -2130,6 +2133,7 @@ const reports = {
           FROM sale_items si
           JOIN sales s ON si.sale_id = s.id
           WHERE si.item_id = i.id 
+            AND si.is_stock = 1
             AND s.status != 'deleted'
             AND DATE(s.sale_date) = DATE(?)
         ), 0) as today_sales
@@ -2448,6 +2452,47 @@ const reports = {
     const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0);
 
     return { items, totalWeight, totalAmount };
+  },
+
+  /**
+   * Stock Sale History Report
+   * Get all stock-sourced sales within a date range
+   * @param {string} dateFrom - Start date (YYYY-MM-DD)
+   * @param {string} dateTo - End date (YYYY-MM-DD)
+   * @returns {Object} Report data with transactions and totals
+   */
+  getStockSaleHistory: (dateFrom, dateTo) => {
+    const transactions = db.query(
+      `SELECT 
+        si.id,
+        s.sale_number,
+        s.sale_date,
+        c.name as customer_name,
+        c.name_english as customer_name_english,
+        i.name as item_name,
+        i.name_english as item_name_english,
+        sup.name as supplier_name,
+        sup.name_english as supplier_name_english,
+        si.rate,
+        si.weight,
+        si.amount
+      FROM sale_items si
+      JOIN sales s ON si.sale_id = s.id
+      JOIN customers c ON s.customer_id = c.id
+      JOIN items i ON si.item_id = i.id
+      LEFT JOIN suppliers sup ON s.supplier_id = sup.id
+      WHERE si.is_stock = 1
+        AND s.status != 'deleted'
+        AND DATE(s.sale_date) >= DATE(?)
+        AND DATE(s.sale_date) <= DATE(?)
+      ORDER BY s.sale_date DESC, s.sale_number, si.line_number`,
+      [dateFrom, dateTo]
+    );
+
+    const totalWeight = transactions.reduce((sum, item) => sum + (item.weight || 0), 0);
+    const totalAmount = transactions.reduce((sum, item) => sum + (item.amount || 0), 0);
+
+    return { transactions, totalWeight, totalAmount };
   },
 
   /**

@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Stack,
   Grid,
@@ -13,8 +12,10 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
-import { ReportViewer } from '../ReportViewer';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import useStore from '../../store';
+import { ReportViewer } from '../ReportViewer';
 
 /**
  * Vendor Sales Report (8.10) - بیوپاری بکری
@@ -437,7 +438,7 @@ export function VendorSalesReport() {
                       {t.totalVehicles}: {grandTotalVehicles}
                     </strong>
                   </Table.Td>
-                  <Table.Td></Table.Td>
+                  <Table.Td />
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                     <strong>{formatWeight(grandTotalWeight)}</strong>
                   </Table.Td>

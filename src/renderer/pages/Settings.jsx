@@ -1,6 +1,3 @@
-import { useState, useEffect } from 'react';
-import useStore from '../store';
-import { useTranslation } from 'react-i18next';
 import {
   Container,
   Title,
@@ -21,6 +18,7 @@ import {
   Alert,
   LoadingOverlay,
 } from '@mantine/core';
+import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import {
   IconSettings,
@@ -34,7 +32,10 @@ import {
   IconCheck,
   IconCalendarTime,
 } from '@tabler/icons-react';
-import { DatePickerInput } from '@mantine/dates';
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import useStore from '../store';
 
 function Settings() {
   const { t } = useTranslation();
@@ -206,7 +207,7 @@ function Settings() {
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
   };
 
   return (

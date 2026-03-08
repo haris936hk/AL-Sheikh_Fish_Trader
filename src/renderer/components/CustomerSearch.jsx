@@ -1,4 +1,3 @@
-import { useState, useCallback, useEffect } from 'react';
 import {
   Card,
   TextInput,
@@ -18,6 +17,8 @@ import {
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
+import { useState, useCallback, useEffect } from 'react';
+
 import { useResizableColumns } from '../hooks/useResizableColumns';
 
 /**

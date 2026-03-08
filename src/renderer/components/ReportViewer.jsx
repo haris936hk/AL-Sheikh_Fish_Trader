@@ -1,13 +1,14 @@
-import { useRef } from 'react';
 import { Paper, Stack, Group, Title, Text, Button, Divider, Menu } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   IconPrinter,
   IconFileTypePdf,
   IconFileSpreadsheet,
   IconChevronDown,
 } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
+import { useRef } from 'react';
+
 import useStore from '../store';
 
 /**

@@ -1,5 +1,3 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { MantineProvider, Group, Button, Text, Tooltip } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
@@ -15,9 +13,12 @@ import {
   IconWorld,
   IconFish,
 } from '@tabler/icons-react';
+import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
-import useStore from './store';
+import { ErrorBoundary } from './components';
 import i18n from './i18n/index.js';
 import {
   Dashboard,
@@ -29,7 +30,7 @@ import {
   Purchases,
   Reports,
 } from './pages';
-import { ErrorBoundary } from './components';
+import useStore from './store';
 
 /**
  * Root App Component
@@ -74,14 +75,14 @@ function App() {
   // Dynamic window title
   useEffect(() => {
     const pageTitles = {
-      dashboard: 'FISHPLUS - ' + t('nav.dashboard'),
-      suppliers: 'FISHPLUS - ' + t('nav.suppliers'),
-      customers: 'FISHPLUS - ' + t('nav.customers'),
-      'supplier-bills': 'FISHPLUS - ' + t('nav.bills'),
-      item: 'FISHPLUS - ' + t('nav.items'),
-      sales: 'FISHPLUS - ' + t('nav.sales'),
-      purchases: 'FISHPLUS - ' + t('nav.purchases'),
-      reports: 'FISHPLUS - ' + t('nav.reports'),
+      dashboard: `FISHPLUS - ${  t('nav.dashboard')}`,
+      suppliers: `FISHPLUS - ${  t('nav.suppliers')}`,
+      customers: `FISHPLUS - ${  t('nav.customers')}`,
+      'supplier-bills': `FISHPLUS - ${  t('nav.bills')}`,
+      item: `FISHPLUS - ${  t('nav.items')}`,
+      sales: `FISHPLUS - ${  t('nav.sales')}`,
+      purchases: `FISHPLUS - ${  t('nav.purchases')}`,
+      reports: `FISHPLUS - ${  t('nav.reports')}`,
     };
     document.title = pageTitles[currentPage] || 'FISHPLUS Distributor';
   }, [currentPage, t]);

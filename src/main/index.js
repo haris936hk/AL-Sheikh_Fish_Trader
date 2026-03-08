@@ -1,5 +1,6 @@
-const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
+
+const { app, BrowserWindow, Menu } = require('electron');
 
 // Detect if running in development mode
 const isDev = !app.isPackaged;
@@ -9,14 +10,14 @@ Menu.setApplicationMenu(null);
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    show: false, // Prevent white flash — show on 'ready-to-show'
+    width: 1280,
+    height: 800,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      v8CacheOptions: 'code', // Faster script execution via V8 code caching
+      contextIsolation: true, // Keeps Node.js isolated from renderer JS
+      nodeIntegration: false, // Renderer cannot access Node.js directly
+      sandbox: false, // Required: preload uses require() for channels.js
+      v8CacheOptions: 'code',
     },
   });
 
@@ -26,9 +27,9 @@ const createWindow = () => {
     mainWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'));
   }
 
-  // Show window only when fully rendered (prevents white flash)
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
+  // Log any page load failures to the console for debugging
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Window failed to load:', errorCode, errorDescription);
   });
 
   // Open DevTools only in development mode
@@ -37,31 +38,38 @@ const createWindow = () => {
   }
 };
 
-app.whenReady().then(() => {
-  // Deferred loading: only require heavy modules after app is ready
-  const db = require('./database/index.js');
-  const { registerHandlers } = require('./ipc/handlers.js');
+app
+  .whenReady()
+  .then(() => {
+    // Deferred loading: only require heavy modules after app is ready
+    const db = require('./database/index.js');
+    const { registerHandlers } = require('./ipc/handlers.js');
 
-  // Initialize database
-  try {
-    db.initialize();
-    console.log('Database initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize database:', error);
-  }
-
-  // Register IPC handlers
-  registerHandlers();
-  console.log('IPC handlers registered');
-
-  createWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+    // Initialize database
+    try {
+      db.initialize();
+      console.log('Database initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize database:', error);
     }
+
+    // Register IPC handlers
+    registerHandlers();
+    console.log('IPC handlers registered');
+
+    createWindow();
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
+
+    return null;
+  })
+  .catch((err) => {
+    console.error('App failed to start:', err);
   });
-});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

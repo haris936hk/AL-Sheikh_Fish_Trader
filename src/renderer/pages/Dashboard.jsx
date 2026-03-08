@@ -1,6 +1,3 @@
-import { useEffect, useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
-import { useTranslation } from 'react-i18next';
 import {
   Title,
   Text,
@@ -19,6 +16,7 @@ import {
   Divider,
   ThemeIcon,
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   IconWorld,
   IconRefresh,
@@ -42,14 +40,15 @@ import {
   IconArrowsExchange,
   IconAddressBook,
   IconReportAnalytics,
-  IconBuildingStore,
   IconCoins,
   IconCurrencyDollar,
-  IconChevronRight,
 } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
-import useStore from '../store';
+import PropTypes from 'prop-types';
+import { useEffect, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { DashboardButton, SupplierAdvancesList, ItemStockDisplay } from '../components';
+import useStore from '../store';
 
 // Stats card component
 const StatCard = ({ value, label, icon: Icon, color }) => (
@@ -83,6 +82,24 @@ StatCard.propTypes = {
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   label: PropTypes.string.isRequired,
   icon: PropTypes.elementType.isRequired,
+  color: PropTypes.string.isRequired,
+};
+
+// Section header component
+const SectionHeader = ({ icon: Icon, label, color }) => (
+  <Group gap="sm" mb="sm">
+    <ThemeIcon variant="light" color={color} size="md" radius="md">
+      <Icon size={16} />
+    </ThemeIcon>
+    <Title order={5} c="dark" fw={600}>
+      {label}
+    </Title>
+  </Group>
+);
+
+SectionHeader.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string.isRequired,
   color: PropTypes.string.isRequired,
 };
 
@@ -243,18 +260,6 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
       tab: 'net-summary',
     },
   ];
-
-  // Section header component
-  const SectionHeader = ({ icon: Icon, label, color }) => (
-    <Group gap="sm" mb="sm">
-      <ThemeIcon variant="light" color={color} size="md" radius="md">
-        <Icon size={16} />
-      </ThemeIcon>
-      <Title order={5} c="dark" fw={600}>
-        {label}
-      </Title>
-    </Group>
-  );
 
   return (
     <Box style={{ minHeight: '100vh', background: '#0f172a' }}>

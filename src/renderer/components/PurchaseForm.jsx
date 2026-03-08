@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Paper,
   Stack,
@@ -18,9 +17,11 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import '@mantine/dates/styles.css';
-import { validateRequired } from '../utils/validators';
 import useStore from '../store';
+import { validateRequired } from '../utils/validators';
 
 /**
  * PurchaseForm Component
@@ -110,6 +111,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
   useEffect(() => {
     const loadData = async () => {
       try {
+        if (!window.api)
+          throw new Error('Electron API not available. Please run the app via Electron.');
         const [suppliersRes, itemsRes, nextNumRes] = await Promise.all([
           window.api.suppliers.getAll(),
           window.api.items.getAll(),
@@ -136,8 +139,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       } catch (error) {
         console.error('Failed to load data:', error);
         notifications.show({
-          title: t.saveErrorTitle, // Using error title
-          message: t.loadErrorMsg,
+          title: t.saveErrorTitle,
+          message: `${t.loadErrorMsg}: ${error.message || 'Unknown error'}`,
           color: 'red',
         });
       }

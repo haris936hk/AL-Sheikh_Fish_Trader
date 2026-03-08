@@ -1,6 +1,6 @@
-import { useRef } from 'react';
 import { Paper, Stack, Group, Text, Title, Table, Divider, Button, Center } from '@mantine/core';
 import PropTypes from 'prop-types';
+import { useRef } from 'react';
 
 /**
  * SupplierBillPreview Component
@@ -190,7 +190,7 @@ function SupplierBillPreview({ previewData }) {
                     Total:
                   </Table.Td>
                   <Table.Td style={{ textAlign: 'right' }}>{totalWeight.toFixed(2)} kg</Table.Td>
-                  <Table.Td></Table.Td>
+                  <Table.Td />
                   <Table.Td style={{ textAlign: 'right' }}>Rs. {grossAmount.toFixed(2)}</Table.Td>
                 </Table.Tr>
               </Table.Tfoot>

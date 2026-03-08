@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Modal,
   TextInput,
@@ -14,6 +13,8 @@ import {
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
 import { validateRequired, validateNIC, validateEmail, validatePhone } from '../utils/validators';
 
 /**
@@ -134,10 +135,10 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
         formatted = digits.slice(0, 5);
       }
       if (digits.length > 5) {
-        formatted += '-' + digits.slice(5, 12);
+        formatted += `-${  digits.slice(5, 12)}`;
       }
       if (digits.length > 12) {
-        formatted += '-' + digits.slice(12, 13);
+        formatted += `-${  digits.slice(12, 13)}`;
       }
 
       handleChange('nic', formatted);
@@ -152,11 +153,11 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
       let formatted = digits;
       // Mobile format: 03XX-XXXXXXX
       if (digits.length >= 4 && digits.startsWith('03')) {
-        formatted = digits.slice(0, 4) + (digits.length > 4 ? '-' + digits.slice(4, 11) : '');
+        formatted = digits.slice(0, 4) + (digits.length > 4 ? `-${  digits.slice(4, 11)}` : '');
       }
       // Landline format: 0XX-XXXXXXX
       else if (digits.length >= 3 && digits.startsWith('0')) {
-        formatted = digits.slice(0, 3) + (digits.length > 3 ? '-' + digits.slice(3, 10) : '');
+        formatted = digits.slice(0, 3) + (digits.length > 3 ? `-${  digits.slice(3, 10)}` : '');
       }
       handleChange(field, formatted);
     },

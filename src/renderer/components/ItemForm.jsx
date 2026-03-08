@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Modal,
   TextInput,
@@ -15,6 +14,8 @@ import {
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
 import { validateRequired, validatePositiveNumber } from '../utils/validators';
 
 /**

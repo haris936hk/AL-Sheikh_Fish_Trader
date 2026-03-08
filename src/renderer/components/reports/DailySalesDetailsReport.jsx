@@ -1,10 +1,11 @@
-import { useState, useCallback, useMemo } from 'react';
 import { Stack, Grid, Button, Table, LoadingOverlay, Text, ScrollArea } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
-import { ReportViewer } from '../ReportViewer';
+import { useState, useCallback, useMemo } from 'react';
+
 import useStore from '../../store';
+import { ReportViewer } from '../ReportViewer';
 
 /**
  * Daily Sales Details Report (امروزہ بکری تفصیلات)
@@ -230,7 +231,7 @@ export function DailySalesDetailsReport() {
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                     <strong>{formatNumber(reportData.totals.total_weight)}</strong>
                   </Table.Td>
-                  <Table.Td></Table.Td>
+                  <Table.Td />
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                     <strong>{formatNumber(reportData.totals.total_amount)}</strong>
                   </Table.Td>

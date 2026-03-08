@@ -1,8 +1,10 @@
 const { ipcMain, app, BrowserWindow } = require('electron');
-const channels = require('./channels.js');
+
 const db = require('../database/index.js');
 const queries = require('../database/queries.js');
 const printService = require('../services/printService.js');
+
+const channels = require('./channels.js');
 
 /**
  * Register all IPC handlers
@@ -739,6 +741,17 @@ function registerHandlers() {
       return { success: true, data: result };
     } catch (error) {
       console.error('Report netSummary error:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(channels.REPORT_STOCK_SALE_HISTORY, async (event, params) => {
+    try {
+      const { dateFrom, dateTo } = params;
+      const result = queries.reports.getStockSaleHistory(dateFrom, dateTo);
+      return { success: true, data: result };
+    } catch (error) {
+      console.error('Report stockSaleHistory error:', error);
       return { success: false, error: error.message };
     }
   });

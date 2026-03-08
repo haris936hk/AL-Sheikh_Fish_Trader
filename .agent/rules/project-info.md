@@ -1,83 +1,32 @@
 
-> Persistent project memory for AI assistants working on FISHPLUS-Distributor.
+> Memory for FISHPLUS-Distributor assistants.
 
-## Project Overview
-
-**FISHPLUS-Distributor** is a desktop-optimized (mouse-focused) Electron app for fish trading/distribution. Handles vendors, customers, items, sales, purchases, supplier billing, reports, and PDF/Excel/CSV exports.
-
-**Stack:** Electron 40 · Vite 7 · React 19 · Zustand · Mantine 8 · Tailwind CSS 4 · better-sqlite3 · electron-builder · i18next · ExcelJS · jsPDF
-
----
+## Overview
+**FISHPLUS-Distributor:** Electron app for fish distribution (Vendor/Customer/Item management, Sales, Billing, PDF/Excel reports).
+**Stack:** Electron 40, Vite 7, React 19, Mantine 8, Tailwind 4, SQLite, i18next, ExcelJS, jsPDF.
 
 ## Architecture
-
-Strict **IPC separation** between two processes:
-
-- **Main** (`src/main/`) — Node.js **CommonJS** (`require`/`module.exports`). Handles window lifecycle, SQLite, file system, printing. Heavy modules deferred inside `app.whenReady()`.
-- **Renderer** (`src/renderer/`) — **ESM** (`import`/`export`), bundled by Vite. React UI with Mantine + Tailwind. No direct Node.js access.
-- **Preload** (`src/main/preload.js`) — Bridge via `contextBridge`, exposes `window.api.*`.
-
----
+**IPC Separation:**
+- **Main** (`src/main/`): CJS. Window lifecycle, SQLite, FS. Heavy modules deferred `app.whenReady()`.
+- **Renderer** (`src/renderer/`): ESM (Vite). React UI. No Node.js access.
+- **Preload** (`src/main/preload.js`): `contextBridge` exposing `window.api`.
 
 ## Commands
-
-| Task | Command |
-|---|---|
-| Dev server | `npm start` |
-| Build renderer | `npm run build:renderer` |
-| Build installer | `npm run build:electron` |
-| Full build | `npm run build` |
-| Lint / fix | `npm run lint` / `npm run lint:fix` |
-| Format / check | `npm run format` / `npm run format:check` |
-| Rebuild natives | `npm run rebuild` |
-
-`npm start` runs Vite on port 5173, waits for it, then launches Electron in dev mode.
-
----
+`npm start` (Dev) · `npm run build` (Full) · `npm run build:electron` (Installer) · `npm run lint` / `format` · `npm run rebuild` (SQLite).
 
 ## Code Style
+- **Prettier:** ES5 commas, single quotes, 2-space tabs, 100 width.
+- **Conventions:** PascalCase Components, `use` Hooks, SCREAMING_SNAKE Constants, Colon:Separated:IPC.
+- **Processes:** Main=CJS (`require`), Renderer=ESM (`import`).
 
-**Prettier:** semicolons, single quotes, 2-space tabs, ES5 trailing commas, 100 char width.
-
-| Type | Convention | Example |
-|---|---|---|
-| Components | PascalCase | `SaleForm.jsx` |
-| Hooks | `use` prefix | `useResizableColumns.js` |
-| Constants | SCREAMING_SNAKE | `SETTINGS_GET_ALL` |
-| IPC Channels | colon-separated | `'sale:create'` |
-| Main files | CommonJS | `require()` / `module.exports` |
-| Renderer files | ESM | `import` / `export` |
-
----
-
-## IPC API (`window.api.*`)
-
-| Namespace | Key Methods |
-|---|---|
-| `settings` | `getAll()`, `save(key, value)` |
-| `dashboard` | `getSupplierAdvances()`, `getItemsStock()`, `getSummary()` |
-| `suppliers` | `getAll()`, `getById()`, `create()`, `update()`, `delete()`, `search()`, `checkNic()` |
-| `customers` | Same as suppliers |
-| `supplierBills` | `getAll()`, `getById()`, `create()`, `update()`, `delete()`, `generatePreview()`, `getNextNumber()` |
-| `items` | `getAll()`, `getById()`, `create()`, `update()`, `delete()`, `search()`, `checkName()` |
-| `sales` | `getAll()`, `getById()`, `create()`, `update()`, `delete()`, `search()`, `getNextNumber()` |
-| `purchases` | Same as sales |
-| `reference` | `getCities()`, `getCountries()`, `getCategories()` |
-| `app` | `getVersion()`, `getPlatform()`, `getPath(name)` |
-| `reports` | `getClientRecovery()`, `getItemSales()`, `getDailySales()`, `getLedger()`, `getItemPurchases()`, `getStock()`, `getCustomerRegister()`, `getConcession()`, `getDailyDetails()`, `getVendorSales()`, `getVendorStockBill()`, `getDailyNetSummary()` |
-| `print` | `report()`, `preview()`, `exportPDF()`, `exportExcel()`, `exportCSV()` |
-| `backup` | `create()`, `restore()`, `list()` |
-| `yearEnd` | `getPreview()`, `process()`, `getHistory()` |
-| `on/off` | Event listeners (whitelisted: `db:updated`) |
-
----
+## IPC API (`window.api`)
+- **Common:** `settings`, `dashboard`, `reference`, `app`, `print`, `backup`, `yearEnd`.
+- **CRUD:** `suppliers`, `customers`, `supplierBills`, `items`, `sales`, `purchases`.
+- **Key Methods:** Search, get(All/Id/NextNum), save/create/update/delete, generatePreview, report, exportPDF/Excel.
 
 ## Terminology
+UI "Vendor" = code `supplier`. UI/Code "Customer" (never "Client").
 
-- **Customer** in UI → `customer` in code (never "Client")
-- **Vendor** in UI → `supplier` in code/DB
-
----
 
 ## Project Structure
 
@@ -178,38 +127,12 @@ FISHPLUS-Distributor/
 ---
 
 ## Do's & Don'ts
-
-**Do:**
-- Use `window.api.*` for all IPC communication
-- Use Mantine components + Tailwind for styling
-- Use `PropTypes` for props validation
-- Use `t()` (i18next) for all UI text — English and Urdu
-- Use `require()`/`module.exports` in main process
-- Use `import`/`export` in renderer
-- Use barrel exports (`index.js`) in directories
-- Keep heavy `require()` calls inside `app.whenReady()`
-
-**Don't:**
-- Use raw SQL in renderer — use `window.api.*`
-- Disable `contextIsolation` or enable `nodeIntegration`
-- Import Electron in renderer
-- Use ESM in main process files
-- Use the deprecated `useDatabase` hook
-- Use inline styles — prefer Tailwind or Mantine props
-- Call `ipcRenderer` directly — go through `window.api`
-- Hardcode strings — use translation keys
-
----
+- **Do:** Use `window.api` for IPC · use Mantine + Tailwind · use `t()` for all UI text · use `PropTypes` · use CJS in Main, ESM in Renderer · use barrel exports · defer heavy `require`.
+- **Don't:** Use raw SQL in renderer · disable `contextIsolation` · import Electron in renderer · use deprecated `useDatabase` · use inline styles · hardcode strings.
 
 ## Key Gotchas
-
-1. **Main = CJS, Renderer = ESM.** Main process runs as raw Node.js (not bundled). Renderer is bundled by Vite.
-2. **`useDatabase` is deprecated.** Always use `window.api.*`.
-3. **DevTools** auto-open only when `!app.isPackaged`.
-4. **DB lifecycle:** Initialized inside `app.whenReady()`, closed on `before-quit`.
-5. **Schema ordering:** Tables in `schema.sql` must be ordered by dependency (referenced tables first).
-6. **PDF margins** must be in **inches** when using `printToPDF` with custom margins.
-7. **Vite `base: './'`** is critical — Electron needs relative paths.
-8. **After installing deps**, run `npm run rebuild` for `better-sqlite3`.
-9. **Window uses** `show: false` + `ready-to-show` pattern + `v8CacheOptions: 'code'`.
-10. **Vendor vs Supplier:** UI says "Vendor", code/DB says `supplier`.
+- **Processes:** Main (CJS/Raw Node) vs Renderer (ESM/Vite).
+- **Database:** Initialized in `app.whenReady`. `useDatabase` is deprecated. Tables in `schema.sql` by dependency order.
+- **Environment:** `base: './'` in Vite is required. `npm run rebuild` for `better-sqlite3`.
+- **Printing:** PDF margins in inches for `printToPDF`.
+- **UI/DB:** UI "Vendor" = code `supplier`.
