@@ -264,6 +264,21 @@ function SaleForm({ editSale, onSaved, onCancel }) {
     });
   }, []);
 
+  // Auto-add line when the last row is filled
+  useEffect(() => {
+    if (lineItems.length === 0) return;
+    const lastRow = lineItems[lineItems.length - 1];
+
+    // A row is considered "filled" if it has an item, a rate, and a weight
+    if (
+      lastRow.item_id &&
+      lastRow.rate_kg !== '' && Number(lastRow.rate_kg) > 0 &&
+      lastRow.weight !== '' && Number(lastRow.weight) > 0
+    ) {
+      handleAddLine();
+    }
+  }, [lineItems, handleAddLine]);
+
   // Calculated totals across all line items
   const totals = useMemo(() => {
     return lineItems.reduce(
@@ -452,14 +467,14 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       const numRateKg = Number(row.rate_kg) || 0;
       const numFare = Number(row.fare_charges) || 0;
       const numIce = Number(row.ice_charges) || 0;
-      const totalAmount = (numWeight * numRateKg) + numFare + numIce;
+      const totalAmount = Math.round((numWeight * numRateKg) + numFare + numIce);
 
       return `<tr>
         <td style="text-align:${isUr ? 'right' : 'left'}">${itemInfo?.name || ''}</td>
         <td style="text-align:${isUr ? 'right' : 'left'}">${custInfo?.label || ''}</td>
         <td style="text-align:${isUr ? 'right' : 'left'}">${numWeight.toFixed(2)}</td>
         <td style="text-align:${isUr ? 'right' : 'left'}">${numRateKg.toFixed(2)}</td>
-        <td style="text-align:${isUr ? 'right' : 'left'}">${totalAmount.toFixed(2)}</td>
+        <td style="text-align:${isUr ? 'right' : 'left'}">${totalAmount.toLocaleString('en-US')}</td>
       </tr>`;
     }).join('');
 
@@ -497,12 +512,12 @@ function SaleForm({ editSale, onSaved, onCancel }) {
             </tbody>
         </table>
         <table class="totals">
-            <tr><td>${t.grossAmount}:</td><td>Rs. ${totals.grossAmount.toFixed(2)}</td></tr>
-            <tr><td>${t.fareCharges}:</td><td>Rs. ${totals.fareCharges.toFixed(2)}</td></tr>
-            <tr><td>${t.iceCharges}:</td><td>Rs. ${totals.iceCharges.toFixed(2)}</td></tr>
-            <tr><td>${t.netAmount}:</td><td><strong>Rs. ${totals.netAmount.toFixed(2)}</strong></td></tr>
-            <tr><td>${t.cash}:</td><td>Rs. ${totals.cashReceived.toFixed(2)}</td></tr>
-            <tr class="grand-total"><td>${t.balance}:</td><td>Rs. ${balanceAmount.toFixed(2)}</td></tr>
+            <tr><td>${t.grossAmount}:</td><td>Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t.fareCharges}:</td><td>Rs. ${Math.round(totals.fareCharges).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t.iceCharges}:</td><td>Rs. ${Math.round(totals.iceCharges).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t.netAmount}:</td><td><strong>Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}</strong></td></tr>
+            <tr><td>${t.cash}:</td><td>Rs. ${Math.round(totals.cashReceived).toLocaleString('en-US')}</td></tr>
+            <tr class="grand-total"><td>${t.balance}:</td><td>Rs. ${Math.round(balanceAmount).toLocaleString('en-US')}</td></tr>
         </table>
         </body></html>`;
 
@@ -709,7 +724,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                         value={row.ice_charges}
                         onChange={(val) => handleLineChange(index, 'ice_charges', val === '' ? '' : val)}
                         min={0}
-                        decimalScale={2}
+                        decimalScale={0}
                         hideControls
                         size="xs"
                         variant="unstyled"
@@ -722,7 +737,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                         value={row.fare_charges}
                         onChange={(val) => handleLineChange(index, 'fare_charges', val === '' ? '' : val)}
                         min={0}
-                        decimalScale={2}
+                        decimalScale={0}
                         hideControls
                         size="xs"
                         variant="unstyled"
@@ -732,7 +747,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                     {/* Total Amount */}
                     <Table.Td style={{ padding: '4px' }}>
                       <Text fw={700} size="sm" c="blue" dir="ltr" ta={isUr ? 'right' : 'left'}>
-                        {rowNetAmount.toFixed(2)}
+                        {Math.round(rowNetAmount).toLocaleString('en-US')}
                       </Text>
                     </Table.Td>
 
@@ -742,7 +757,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                         value={row.cash_amount}
                         onChange={(val) => handleLineChange(index, 'cash_amount', val === '' ? '' : val)}
                         min={0}
-                        decimalScale={2}
+                        decimalScale={0}
                         hideControls
                         size="xs"
                         variant="unstyled"
@@ -755,7 +770,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                         value={row.receipt_amount}
                         onChange={(val) => handleLineChange(index, 'receipt_amount', val === '' ? '' : val)}
                         min={0}
-                        decimalScale={2}
+                        decimalScale={0}
                         hideControls
                         size="xs"
                         variant="unstyled"
@@ -781,11 +796,6 @@ function SaleForm({ editSale, onSaved, onCancel }) {
               })}
             </Table.Tbody>
           </Table>
-          <Group p="xs" style={{ borderTop: '1px solid #dee2e6' }}>
-            <Button variant="light" color="blue" onClick={handleAddLine} size="xs">
-              ➕ {t.addLine}
-            </Button>
-          </Group>
         </Paper>
 
         <Divider label={t.summary} labelPosition="center" />
@@ -805,17 +815,17 @@ function SaleForm({ editSale, onSaved, onCancel }) {
             {[
               {
                 label: t.grossAmount,
-                val: `Rs. ${totals.grossAmount.toFixed(2)}`,
+                val: `Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}`,
                 color: 'dark',
               },
               {
                 label: t.charges,
-                val: `Rs. ${(totals.fareCharges + totals.iceCharges).toFixed(2)}`,
+                val: `Rs. ${Math.round(totals.fareCharges + totals.iceCharges).toLocaleString('en-US')}`,
                 color: 'dark',
               },
               {
                 label: t.netAmount,
-                val: `Rs. ${totals.netAmount.toFixed(2)}`,
+                val: `Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}`,
                 color: 'blue',
               },
             ].map(({ label, val, color }, idx) => (
@@ -840,7 +850,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                   {t.cashReceipt}
                 </Text>
                 <Text fw={600} size="sm" dir="ltr" ta={isUr ? 'right' : 'left'}>
-                  Rs. {(totals.cashReceived + totals.receiptAmount).toFixed(2)}
+                  Rs. {Math.round(totals.cashReceived + totals.receiptAmount).toLocaleString('en-US')}
                 </Text>
               </Paper>
             </Grid.Col>
@@ -864,7 +874,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                   dir="ltr"
                   ta={isUr ? 'right' : 'left'}
                 >
-                  Rs. {balanceAmount.toFixed(2)}
+                  Rs. {Math.round(balanceAmount).toLocaleString('en-US')}
                 </Text>
               </Paper>
             </Grid.Col>

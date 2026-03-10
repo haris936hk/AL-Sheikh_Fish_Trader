@@ -89,11 +89,8 @@ export function LedgerReport() {
     return date.toISOString().split('T')[0];
   };
 
-  const formatNumber = (num) => {
-    return (num || 0).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const formatAmount = (num) => {
+    return Math.round(num || 0).toLocaleString('en-US');
   };
 
   const handleGenerate = useCallback(async () => {
@@ -150,11 +147,7 @@ export function LedgerReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData) return null;
 
-    const fmt = (num) =>
-      (num || 0).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+    const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
 
     const txnsWithBalance = getTransactionsWithBalance();
 
@@ -166,9 +159,9 @@ export function LedgerReport() {
         <td class="amount-cell" style="text-align: left;">${new Date(txn.date).toLocaleDateString()}</td>
         <td class="amount-cell" style="text-align: left;">${txn.reference || '-'}</td>
         <td style="text-align: ${isUr ? 'right' : 'left'};">${txn.description || '-'}</td>
-        <td class="amount-cell">${txn.debit > 0 ? fmt(txn.debit) : '-'}</td>
-        <td class="amount-cell">${txn.credit > 0 ? fmt(txn.credit) : '-'}</td>
-        <td class="amount-cell">Rs. ${fmt(txn.balance)}</td>
+        <td class="amount-cell">${txn.debit > 0 ? fmtAmount(txn.debit) : '-'}</td>
+        <td class="amount-cell">${txn.credit > 0 ? fmtAmount(txn.credit) : '-'}</td>
+        <td class="amount-cell">Rs. ${fmtAmount(txn.balance)}</td>
       </tr>
     `
       )
@@ -193,7 +186,7 @@ export function LedgerReport() {
       </style>
 
       <div class="balance-info">
-        ${t.openingBalance}: <span class="amount-cell" style="display:inline-block; margin-${isUr ? 'right' : 'left'}: 10px;">Rs. ${fmt(reportData.openingBalance)}</span>
+        ${t.openingBalance}: <span class="amount-cell" style="display:inline-block; margin-${isUr ? 'right' : 'left'}: 10px;">Rs. ${fmtAmount(reportData.openingBalance)}</span>
       </div>
 
       <table class="print-table">
@@ -215,9 +208,9 @@ export function LedgerReport() {
           ${rows}
           <tr class="total-row">
             <td colspan="4" style="text-align: ${isUr ? 'right' : 'left'};">${t.totals}</td>
-            <td class="amount-cell">${fmt(totalDebit)}</td>
-            <td class="amount-cell">${fmt(totalCredit)}</td>
-            <td class="amount-cell">Rs. ${fmt(finalBalance)}</td>
+            <td class="amount-cell">${fmtAmount(totalDebit)}</td>
+            <td class="amount-cell">${fmtAmount(totalCredit)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(finalBalance)}</td>
           </tr>
         </tbody>
       </table>
@@ -302,7 +295,7 @@ export function LedgerReport() {
               <Text style={{ textAlign: isUr ? 'right' : 'left' }}>
                 <strong>{t.openingBalance}:</strong>{' '}
                 <span style={{ direction: 'ltr', display: 'inline-block' }}>
-                  {formatNumber(reportData.openingBalance)}
+                  {formatAmount(reportData.openingBalance)}
                 </span>
               </Text>
             </Paper>
@@ -335,13 +328,13 @@ export function LedgerReport() {
                       {txn.description}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {txn.debit > 0 ? formatNumber(txn.debit) : '-'}
+                      {txn.debit > 0 ? formatAmount(txn.debit) : '-'}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {txn.credit > 0 ? formatNumber(txn.credit) : '-'}
+                      {txn.credit > 0 ? formatAmount(txn.credit) : '-'}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(txn.balance)}
+                      {formatAmount(txn.balance)}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -353,21 +346,21 @@ export function LedgerReport() {
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                     <strong>
-                      {formatNumber(
+                      {formatAmount(
                         reportData.transactions.reduce((sum, txn) => sum + (txn.debit || 0), 0)
                       )}
                     </strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                     <strong>
-                      {formatNumber(
+                      {formatAmount(
                         reportData.transactions.reduce((sum, txn) => sum + (txn.credit || 0), 0)
                       )}
                     </strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                     <strong>
-                      {formatNumber(
+                      {formatAmount(
                         getTransactionsWithBalance().slice(-1)[0]?.balance ??
                         reportData.openingBalance
                       )}

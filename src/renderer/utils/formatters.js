@@ -9,21 +9,21 @@
  * @param {number|string} amount - Amount to format
  * @param {Object} options - Formatting options
  * @param {string} options.symbol - Currency symbol (default: 'Rs.')
- * @param {number} options.decimals - Decimal places (default: 2)
+ * @param {number} options.decimals - Decimal places (default: 0)
  * @param {boolean} options.showSymbol - Show currency symbol (default: true)
- * @returns {string} Formatted currency string (e.g., "Rs. 1,234.56")
+ * @returns {string} Formatted currency string (e.g., "Rs. 1,234")
  */
 export function formatCurrency(amount, options = {}) {
-  const { symbol = 'Rs.', decimals = 2, showSymbol = true } = options;
+  const { symbol = 'Rs.', decimals = 0, showSymbol = true } = options;
 
   if (amount === null || amount === undefined || amount === '') {
-    return showSymbol ? `${symbol} 0.00` : '0.00';
+    return showSymbol ? `${symbol} 0` : '0';
   }
 
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
 
   if (isNaN(num)) {
-    return showSymbol ? `${symbol} 0.00` : '0.00';
+    return showSymbol ? `${symbol} 0` : '0';
   }
 
   // Format with thousand separators and decimal places
@@ -209,7 +209,7 @@ export function parseCurrency(currencyString) {
 
   // Remove currency symbol and thousand separators
   const cleaned = currencyString.replace(/[Rs.\s,]/g, '');
-  const value = parseFloat(cleaned);
+  const value = parseInt(cleaned, 10);
 
   return isNaN(value) ? 0 : value;
 }

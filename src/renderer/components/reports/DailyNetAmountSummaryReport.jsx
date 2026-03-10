@@ -62,11 +62,8 @@ export function DailyNetAmountSummaryReport() {
     return date.toISOString().split('T')[0];
   };
 
-  const formatNumber = (num) => {
-    return (num || 0).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const formatAmount = (num) => {
+    return Math.round(num || 0).toLocaleString('en-US');
   };
 
   const handleGenerate = useCallback(async () => {
@@ -128,7 +125,7 @@ export function DailyNetAmountSummaryReport() {
           c={color}
           style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}
         >
-          Rs. {formatNumber(value)}
+          Rs. {formatAmount(value)}
         </Text>
       </Stack>
     </Paper>
@@ -145,11 +142,7 @@ export function DailyNetAmountSummaryReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData) return null;
 
-    const fmt = (num) =>
-      (num || 0).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+    const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
 
     return `
       <style>
@@ -218,27 +211,27 @@ export function DailyNetAmountSummaryReport() {
           <tr>
             <td class="operator"></td>
             <td>${t.previousBalance}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.previousBalance)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.previousBalance)}</td>
           </tr>
           <tr>
             <td class="operator">+</td>
             <td>${t.todaySales}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.todaySales)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.todaySales)}</td>
           </tr>
           <tr>
             <td class="operator">+</td>
             <td>${t.todayCharges}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.todayCharges)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.todayCharges)}</td>
           </tr>
           <tr>
             <td class="operator">−</td>
             <td>${t.todayDiscount}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.todayDiscount)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.todayDiscount)}</td>
           </tr>
           <tr class="total-row">
             <td class="operator">=</td>
             <td>${t.totalAmount}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.totalAmount)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.totalAmount)}</td>
           </tr>
         </tbody>
       </table>
@@ -259,17 +252,17 @@ export function DailyNetAmountSummaryReport() {
           <tr>
             <td class="operator"></td>
             <td>${t.cashReceived}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.todayCollection)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.todayCollection)}</td>
           </tr>
           <tr>
             <td class="operator">+</td>
             <td>${t.paymentsReceived}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.todayPayments)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.todayPayments)}</td>
           </tr>
           <tr class="total-row">
             <td class="operator">=</td>
             <td>${t.totalCollection}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.totalCollection)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.totalCollection)}</td>
           </tr>
         </tbody>
       </table>
@@ -285,17 +278,17 @@ export function DailyNetAmountSummaryReport() {
           <tr>
             <td class="operator"></td>
             <td>${t.totalAmount}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.totalAmount)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.totalAmount)}</td>
           </tr>
           <tr>
             <td class="operator">−</td>
             <td>${t.totalCollection}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.totalCollection)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.totalCollection)}</td>
           </tr>
           <tr class="grand-total-row">
             <td class="operator">=</td>
             <td>${t.closingBalance}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.closingBalance)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.closingBalance)}</td>
           </tr>
         </tbody>
       </table>
@@ -432,7 +425,7 @@ export function DailyNetAmountSummaryReport() {
                       {t.todaySales}:
                     </Text>
                     <Text size="sm" style={{ direction: 'ltr' }}>
-                      Rs. {formatNumber(reportData.todaySales)}
+                      Rs. {formatAmount(reportData.todaySales)}
                     </Text>
                   </div>
                   <div className="flex justify-between">
@@ -440,7 +433,7 @@ export function DailyNetAmountSummaryReport() {
                       {t.todayCharges}:
                     </Text>
                     <Text size="sm" style={{ direction: 'ltr' }}>
-                      Rs. {formatNumber(reportData.todayCharges)}
+                      Rs. {formatAmount(reportData.todayCharges)}
                     </Text>
                   </div>
                   <div className="flex justify-between">
@@ -448,7 +441,7 @@ export function DailyNetAmountSummaryReport() {
                       {t.todayDiscount}:
                     </Text>
                     <Text size="sm" style={{ direction: 'ltr' }}>
-                      Rs. {formatNumber(reportData.todayDiscount)}
+                      Rs. {formatAmount(reportData.todayDiscount)}
                     </Text>
                   </div>
                 </Stack>
@@ -458,7 +451,7 @@ export function DailyNetAmountSummaryReport() {
                       {t.cashReceived}:
                     </Text>
                     <Text size="sm" style={{ direction: 'ltr' }}>
-                      Rs. {formatNumber(reportData.todayCollection)}
+                      Rs. {formatAmount(reportData.todayCollection)}
                     </Text>
                   </div>
                   <div className="flex justify-between">
@@ -466,7 +459,7 @@ export function DailyNetAmountSummaryReport() {
                       {t.paymentsReceived}:
                     </Text>
                     <Text size="sm" style={{ direction: 'ltr' }}>
-                      Rs. {formatNumber(reportData.todayPayments)}
+                      Rs. {formatAmount(reportData.todayPayments)}
                     </Text>
                   </div>
                   <div className="flex justify-between border-t pt-2 mt-2">
@@ -474,7 +467,7 @@ export function DailyNetAmountSummaryReport() {
                       {t.totalCollection}:
                     </Text>
                     <Text size="sm" fw={500} style={{ direction: 'ltr' }}>
-                      Rs. {formatNumber(reportData.totalCollection)}
+                      Rs. {formatAmount(reportData.totalCollection)}
                     </Text>
                   </div>
                 </Stack>
@@ -490,7 +483,7 @@ export function DailyNetAmountSummaryReport() {
                 <div className="flex justify-between">
                   <Text>{t.previousBalance}:</Text>
                   <Text fw={500} style={{ direction: 'ltr' }}>
-                    Rs. {formatNumber(reportData.previousBalance)}
+                    Rs. {formatAmount(reportData.previousBalance)}
                   </Text>
                 </div>
                 <div className="flex justify-between">
@@ -498,7 +491,7 @@ export function DailyNetAmountSummaryReport() {
                     {isUr ? '+' : '+'} {t.todaySales}:
                   </Text>
                   <Text fw={500} style={{ direction: 'ltr' }}>
-                    Rs. {formatNumber(reportData.todaySales)}
+                    Rs. {formatAmount(reportData.todaySales)}
                   </Text>
                 </div>
                 <div className="flex justify-between border-t pt-2">
@@ -506,7 +499,7 @@ export function DailyNetAmountSummaryReport() {
                     {isUr ? '=' : '='} {t.totalAmount}:
                   </Text>
                   <Text fw={600} style={{ direction: 'ltr' }}>
-                    Rs. {formatNumber(reportData.totalAmount)}
+                    Rs. {formatAmount(reportData.totalAmount)}
                   </Text>
                 </div>
                 <div className="flex justify-between">
@@ -514,7 +507,7 @@ export function DailyNetAmountSummaryReport() {
                     {isUr ? '−' : '-'} {t.totalCollection}:
                   </Text>
                   <Text fw={500} style={{ direction: 'ltr' }}>
-                    Rs. {formatNumber(reportData.totalCollection)}
+                    Rs. {formatAmount(reportData.totalCollection)}
                   </Text>
                 </div>
                 <div
@@ -525,7 +518,7 @@ export function DailyNetAmountSummaryReport() {
                     {t.closingBalance}:
                   </Text>
                   <Text size="lg" fw={700} c="red" style={{ direction: 'ltr' }}>
-                    Rs. {formatNumber(reportData.closingBalance)}
+                    Rs. {formatAmount(reportData.closingBalance)}
                   </Text>
                 </div>
               </Stack>
@@ -568,14 +561,14 @@ export function DailyNetAmountSummaryReport() {
                             {metric.label}
                           </Table.Td>
                           <Table.Td style={{ textAlign: 'center', direction: 'ltr' }}>
-                            Rs. {formatNumber(val1)}
+                            Rs. {formatAmount(val1)}
                           </Table.Td>
                           <Table.Td style={{ textAlign: 'center', direction: 'ltr' }}>
-                            Rs. {formatNumber(val2)}
+                            Rs. {formatAmount(val2)}
                           </Table.Td>
                           <Table.Td style={{ textAlign: 'center', direction: 'ltr' }}>
                             <Text c={diff > 0 ? 'red' : diff < 0 ? 'green' : 'dimmed'} size="sm">
-                              Rs. {formatNumber(Math.abs(diff))}
+                              Rs. {formatAmount(Math.abs(diff))}
                             </Text>
                           </Table.Td>
                           <Table.Td style={{ textAlign: 'center' }}>

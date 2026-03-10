@@ -78,12 +78,19 @@ export function ItemSaleReport() {
     return date.toISOString().split('T')[0];
   };
 
-  const formatNumber = (num) => {
-    return (num || 0).toLocaleString('en-US', {
+  const formatAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
+
+  const formatWeight = (num) =>
+    (num || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    });
+
+  const formatRate = (num) =>
+    (num || 0).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-  };
 
   const handleGenerate = useCallback(async () => {
     if (!selectedItem) {
@@ -128,7 +135,15 @@ export function ItemSaleReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData || reportData.transactions.length === 0) return null;
 
-    const fmt = (num) =>
+    const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
+
+    const fmtWeight = (num) =>
+      (num || 0).toLocaleString('en-US', {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+      });
+
+    const fmtRate = (num) =>
       (num || 0).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -143,9 +158,9 @@ export function ItemSaleReport() {
         <td style="text-align: ${isUr ? 'right' : 'left'};">${row.item_name}</td>
         <td class="amount-cell" style="text-align: left;">${row.sale_number}</td>
         <td class="amount-cell" style="text-align: left;">${new Date(row.sale_date).toLocaleDateString()}</td>
-        <td class="amount-cell">${fmt(row.weight)}</td>
-        <td class="amount-cell">Rs. ${fmt(row.rate)}</td>
-        <td class="amount-cell">Rs. ${fmt(row.amount)}</td>
+        <td class="amount-cell">${fmtWeight(row.weight)}</td>
+        <td class="amount-cell">Rs. ${fmtRate(row.rate)}</td>
+        <td class="amount-cell">Rs. ${fmtAmount(row.amount)}</td>
       </tr>
     `
       )
@@ -181,9 +196,9 @@ export function ItemSaleReport() {
           ${rows}
           <tr class="total-row">
             <td colspan="5" style="text-align: ${isUr ? 'right' : 'left'};">${t.total}</td>
-            <td class="amount-cell">${fmt(reportData.summary.total_weight)}</td>
-            <td class="amount-cell" style="font-size: 12px;">${t.avg} Rs. ${fmt(reportData.summary.avg_rate)}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.summary.total_amount)}</td>
+            <td class="amount-cell">${fmtWeight(reportData.summary.total_weight)}</td>
+            <td class="amount-cell" style="font-size: 12px;">${t.avg} Rs. ${fmtRate(reportData.summary.avg_rate)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.summary.total_amount)}</td>
           </tr>
         </tbody>
       </table>
@@ -283,13 +298,13 @@ export function ItemSaleReport() {
                       {row.item_name}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.weight)}
+                      {formatWeight(row.weight)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.rate)}
+                      {formatRate(row.rate)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.amount)}
+                      {formatAmount(row.amount)}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -300,15 +315,15 @@ export function ItemSaleReport() {
                     <strong>{t.total}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.summary.total_weight)}</strong>
+                    <strong>{formatWeight(reportData.summary.total_weight)}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                     <strong>
-                      {t.avg}: {formatNumber(reportData.summary.avg_rate)}
+                      {t.avg}: {formatRate(reportData.summary.avg_rate)}
                     </strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.summary.total_amount)}</strong>
+                    <strong>{formatAmount(reportData.summary.total_amount)}</strong>
                   </Table.Td>
                 </Table.Tr>
               </Table.Tfoot>

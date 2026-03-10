@@ -76,11 +76,8 @@ export function ConcessionReport() {
     return date.toISOString().split('T')[0];
   };
 
-  const formatNumber = (num) => {
-    return (num || 0).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const formatAmount = (num) => {
+    return Math.round(num || 0).toLocaleString('en-US');
   };
 
   const handleGenerate = useCallback(async () => {
@@ -127,11 +124,7 @@ export function ConcessionReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData || reportData.transactions.length === 0) return null;
 
-    const fmt = (num) =>
-      (num || 0).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+    const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
 
     const rows = reportData.transactions
       .map(
@@ -141,7 +134,7 @@ export function ConcessionReport() {
         <td style="text-align: ${isUr ? 'right' : 'left'};">${row.customer_name}</td>
         <td class="amount-cell" style="text-align: left;">${row.sale_number}</td>
         <td class="amount-cell" style="text-align: left;">${new Date(row.sale_date).toLocaleDateString()}</td>
-        <td class="amount-cell">Rs. ${fmt(row.concession)}</td>
+        <td class="amount-cell">Rs. ${fmtAmount(row.concession)}</td>
       </tr>
     `
       )
@@ -174,7 +167,7 @@ export function ConcessionReport() {
           ${rows}
           <tr class="total-row">
             <td colspan="4" style="text-align: left;">${t.totalConcession}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.totalConcession)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.totalConcession)}</td>
           </tr>
         </tbody>
       </table>
@@ -278,7 +271,7 @@ export function ConcessionReport() {
                       {row.customer_name}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.concession)}
+                      {formatAmount(row.concession)}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -289,7 +282,7 @@ export function ConcessionReport() {
                     <strong>{t.totalConcession}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.totalConcession)}</strong>
+                    <strong>{formatAmount(reportData.totalConcession)}</strong>
                   </Table.Td>
                 </Table.Tr>
               </Table.Tfoot>

@@ -85,7 +85,11 @@ export function VendorSalesReport() {
     return date.toISOString().split('T')[0];
   };
 
-  const formatNumber = (num) => {
+  const formatAmount = (num) => {
+    return Math.round(num || 0).toLocaleString('en-US');
+  };
+
+  const formatRate = (num) => {
     return (num || 0).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -178,7 +182,9 @@ export function VendorSalesReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData || reportData.transactions.length === 0) return null;
 
-    const fmt = (num) =>
+    const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
+
+    const fmtRate = (num) =>
       (num || 0).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -209,9 +215,9 @@ export function VendorSalesReport() {
             <td style="text-align: ${isUr ? 'right' : 'left'};">${row.customer_name}</td>
             <td style="text-align: ${isUr ? 'right' : 'left'};">${row.item_name}</td>
             <td style="text-align: ${isUr ? 'right' : 'left'}; direction: ltr;">${row.vehicle_number || '-'}</td>
-            <td class="amount-cell">Rs. ${fmt(row.rate)}</td>
+            <td class="amount-cell">Rs. ${fmtRate(row.rate)}</td>
             <td class="amount-cell">${fmtWeight(row.weight)}</td>
-            <td class="amount-cell">Rs. ${fmt(row.amount)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(row.amount)}</td>
           </tr>
         `;
       });
@@ -220,7 +226,7 @@ export function VendorSalesReport() {
         <tr style="background-color: #e8e8e8; font-weight: bold; border-bottom: 2px solid #000;">
           <td colspan="5" style="text-align: ${isUr ? 'right' : 'left'};">${t.vendorTotal}:</td>
           <td class="amount-cell">${fmtWeight(group.totalWeight)}</td>
-          <td class="amount-cell">Rs. ${fmt(group.totalAmount)}</td>
+          <td class="amount-cell">Rs. ${fmtAmount(group.totalAmount)}</td>
         </tr>
       `;
     });
@@ -257,7 +263,7 @@ export function VendorSalesReport() {
             <td style="text-align: left; direction: ltr;">${t.totalVehicles}: ${grandTotalVehicles}</td>
             <td></td>
             <td class="amount-cell">${fmtWeight(grandTotalWeight)}</td>
-            <td class="amount-cell">Rs. ${fmt(grandTotalAmount)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(grandTotalAmount)}</td>
           </tr>
         </tbody>
       </table>
@@ -395,7 +401,7 @@ export function VendorSalesReport() {
                           <Table.Td
                             style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}
                           >
-                            {formatNumber(row.rate)}
+                            {formatRate(row.rate)}
                           </Table.Td>
                           <Table.Td
                             style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}
@@ -405,7 +411,7 @@ export function VendorSalesReport() {
                           <Table.Td
                             style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}
                           >
-                            {formatNumber(row.amount)}
+                            {formatAmount(row.amount)}
                           </Table.Td>
                         </Table.Tr>
                       );
@@ -422,7 +428,7 @@ export function VendorSalesReport() {
                         <strong>{formatWeight(group.totalWeight)}</strong>
                       </Table.Td>
                       <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                        <strong>{formatNumber(group.totalAmount)}</strong>
+                        <strong>{formatAmount(group.totalAmount)}</strong>
                       </Table.Td>
                     </Table.Tr>,
                   ];
@@ -444,7 +450,7 @@ export function VendorSalesReport() {
                     <strong>{formatWeight(grandTotalWeight)}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(grandTotalAmount)}</strong>
+                    <strong>{formatAmount(grandTotalAmount)}</strong>
                   </Table.Td>
                 </Table.Tr>
               </Table.Tfoot>

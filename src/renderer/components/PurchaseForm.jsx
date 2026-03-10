@@ -231,6 +231,21 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     [handleLineChange]
   );
 
+  // Auto-add line when the last row is filled
+  useEffect(() => {
+    if (lineItems.length === 0) return;
+    const lastRow = lineItems[lineItems.length - 1];
+
+    // A row is considered "filled" if it has an item, a rate, and a weight
+    if (
+      lastRow.item_id &&
+      lastRow.rate_kg !== '' && Number(lastRow.rate_kg) > 0 &&
+      lastRow.weight !== '' && Number(lastRow.weight) > 0
+    ) {
+      handleAddLine();
+    }
+  }, [lineItems, handleAddLine]);
+
   // Update previous balance when supplier changes (new purchase only)
   useEffect(() => {
     if (selectedSupplier && !editPurchase) {
@@ -388,7 +403,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           <td>${itemInfo?.name || ''}</td>
           <td style="text-align:${isUr ? 'right' : 'left'}">${w.toFixed(2)}</td>
           <td style="text-align:${isUr ? 'right' : 'left'}">${r.toFixed(2)}</td>
-          <td style="text-align:${isUr ? 'right' : 'left'}">${amt.toFixed(2)}</td>
+          <td style="text-align:${isUr ? 'right' : 'left'}">${Math.round(amt).toLocaleString('en-US')}</td>
         </tr>
       `;
     }).join('');
@@ -428,11 +443,11 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
             </tbody>
         </table>
         <table class="totals">
-            <tr><td>${t.grossAmount}:</td><td>Rs. ${totals.grossAmount.toFixed(2)}</td></tr>
-            <tr><td>${t.concession}:</td><td>Rs. ${(concessionAmount || 0).toFixed(2)}</td></tr>
-            <tr><td>${t.netAmount}:</td><td><strong>Rs. ${totals.netAmount.toFixed(2)}</strong></td></tr>
-            <tr><td>${t.cashPaid}:</td><td>Rs. ${(cashPaid || 0).toFixed(2)}</td></tr>
-            <tr class="grand-total"><td>${t.balanceDue}:</td><td>Rs. ${totals.balanceAmount.toFixed(2)}</td></tr>
+            <tr><td>${t.grossAmount}:</td><td>Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t.concession}:</td><td>Rs. ${Math.round(concessionAmount || 0).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t.netAmount}:</td><td><strong>Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}</strong></td></tr>
+            <tr><td>${t.cashPaid}:</td><td>Rs. ${Math.round(cashPaid || 0).toLocaleString('en-US')}</td></tr>
+            <tr class="grand-total"><td>${t.balanceDue}:</td><td>Rs. ${Math.round(totals.balanceAmount).toLocaleString('en-US')}</td></tr>
         </table>
         </body></html>`;
 
@@ -615,7 +630,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
                     {/* Amount */}
                     <Table.Td style={{ padding: '4px' }}>
                       <Text fw={700} size="sm" c="blue" dir="ltr" ta={isUr ? 'right' : 'left'}>
-                        {rowLineAmount.toFixed(2)}
+                        {Math.round(rowLineAmount).toLocaleString('en-US')}
                       </Text>
                     </Table.Td>
 
@@ -638,11 +653,6 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
               })}
             </Table.Tbody>
           </Table>
-          <Group p="xs" style={{ borderTop: '1px solid #dee2e6' }}>
-            <Button variant="light" color="blue" onClick={handleAddLine} size="xs">
-              ➕ Add Line
-            </Button>
-          </Group>
         </Paper>
 
         <Grid gutter="md">
@@ -653,7 +663,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
               value={concessionAmount}
               onChange={(val) => setConcessionAmount(val === '' ? '' : val)}
               min={0}
-              decimalScale={2}
+              decimalScale={0}
               hideControls
             />
           </Grid.Col>
@@ -663,7 +673,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
               value={cashPaid}
               onChange={(val) => setCashPaid(val === '' ? '' : val)}
               min={0}
-              decimalScale={2}
+              decimalScale={0}
               hideControls
             />
           </Grid.Col>
@@ -676,7 +686,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
                 fw={600}
                 size="sm"
               >
-                Rs. {previousBalance.toFixed(2)}
+                Rs. {Math.round(previousBalance).toLocaleString('en-US')}
               </Text>
             </Paper>
           </Grid.Col>
@@ -703,7 +713,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
                   fw={600}
                   size="sm"
                 >
-                  Rs. {totals.grossAmount.toFixed(2)}
+                  Rs. {Math.round(totals.grossAmount).toLocaleString('en-US')}
                 </Text>
               </Paper>
             </Grid.Col>
@@ -717,7 +727,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
                   size="md"
                   c="green"
                 >
-                  Rs. {totals.netAmount.toFixed(2)}
+                  Rs. {Math.round(totals.netAmount).toLocaleString('en-US')}
                 </Text>
               </Paper>
             </Grid.Col>
@@ -739,7 +749,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
                   size="md"
                   c={totals.balanceAmount > 0 ? 'red' : 'green'}
                 >
-                  Rs. {totals.balanceAmount.toFixed(2)}
+                  Rs. {Math.round(totals.balanceAmount).toLocaleString('en-US')}
                 </Text>
               </Paper>
             </Grid.Col>

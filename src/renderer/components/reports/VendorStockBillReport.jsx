@@ -74,7 +74,9 @@ export function VendorStockBillReport() {
 
   const formatDate = (d) => d.toISOString().split('T')[0];
 
-  const formatNumber = (num) =>
+  const formatAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
+
+  const formatRate = (num) =>
     (num || 0).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -128,7 +130,9 @@ export function VendorStockBillReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData || reportData.items.length === 0) return null;
 
-    const fmt = (num) =>
+    const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
+
+    const fmtRate = (num) =>
       (num || 0).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -147,9 +151,9 @@ export function VendorStockBillReport() {
                 <td style="text-align: center;">${index + 1}</td>
                 <td style="text-align: ${isUr ? 'right' : 'left'};">${item.customer_name}</td>
                 <td style="text-align: ${isUr ? 'right' : 'left'};">${item.item_name}</td>
-                <td class="amount-cell">Rs. ${fmt(item.rate)}</td>
+                <td class="amount-cell">Rs. ${fmtRate(item.rate)}</td>
                 <td class="amount-cell">${fmtWeight(item.weight)}</td>
-                <td class="amount-cell">Rs. ${fmt(item.amount)}</td>
+                <td class="amount-cell">Rs. ${fmtAmount(item.amount)}</td>
             </tr>
         `
       )
@@ -185,7 +189,7 @@ export function VendorStockBillReport() {
                         <td colspan="3" style="text-align: ${isUr ? 'right' : 'left'};">${t.total}</td>
                         <td></td>
                         <td class="amount-cell">${fmtWeight(reportData.totalWeight)}</td>
-                        <td class="amount-cell">Rs. ${fmt(reportData.totalAmount)}</td>
+                        <td class="amount-cell">Rs. ${fmtAmount(reportData.totalAmount)}</td>
                     </tr>
                 </tbody>
             </table>
@@ -263,13 +267,13 @@ export function VendorStockBillReport() {
                       {item.item_name}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(item.rate)}
+                      {formatRate(item.rate)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                       {formatWeight(item.weight)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(item.amount)}
+                      {formatAmount(item.amount)}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -284,7 +288,7 @@ export function VendorStockBillReport() {
                     <strong>{formatWeight(reportData.totalWeight)}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.totalAmount)}</strong>
+                    <strong>{formatAmount(reportData.totalAmount)}</strong>
                   </Table.Td>
                 </Table.Tr>
               </Table.Tfoot>

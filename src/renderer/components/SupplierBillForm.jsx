@@ -416,7 +416,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               value={drugsCharges}
               onChange={(val) => setDrugsCharges(val === '' ? '' : val)}
               min={0}
-              decimalScale={2}
+              decimalScale={0}
               prefix="Rs. "
             />
           </Grid.Col>
@@ -426,7 +426,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               value={fareCharges}
               onChange={(val) => setFareCharges(val === '' ? '' : val)}
               min={0}
-              decimalScale={2}
+              decimalScale={0}
               prefix="Rs. "
             />
           </Grid.Col>
@@ -439,7 +439,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               value={laborCharges}
               onChange={(val) => setLaborCharges(val === '' ? '' : val)}
               min={0}
-              decimalScale={2}
+              decimalScale={0}
               prefix="Rs. "
             />
           </Grid.Col>
@@ -449,7 +449,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               value={iceCharges}
               onChange={(val) => setIceCharges(val === '' ? '' : val)}
               min={0}
-              decimalScale={2}
+              decimalScale={0}
               prefix="Rs. "
             />
           </Grid.Col>
@@ -470,9 +470,9 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           <Grid.Col span={4}>
             <NumberInput
               label={t.commissionAmount}
-              value={commissionAmount}
+              value={Math.round(commissionAmount)}
               readOnly
-              decimalScale={2}
+              decimalScale={0}
               prefix="Rs. "
               styles={{ input: { backgroundColor: '#f8f9fa' } }}
             />
@@ -483,7 +483,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               value={concessionAmount}
               onChange={(val) => setConcessionAmount(val === '' ? '' : val)}
               min={0}
-              decimalScale={2}
+              decimalScale={0}
               prefix="Rs. "
             />
           </Grid.Col>
@@ -493,7 +493,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               value={cashPaid}
               onChange={(val) => setCashPaid(val === '' ? '' : val)}
               min={0}
-              decimalScale={2}
+              decimalScale={0}
               prefix="Rs. "
             />
           </Grid.Col>
@@ -517,7 +517,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
                 <Text size="sm" c="dimmed">
                   {t.grossAmount}:
                 </Text>
-                <Text fw={500} dir="ltr">Rs. {grossAmount.toFixed(2)}</Text>
+                <Text fw={500} dir="ltr">Rs. {Math.round(grossAmount).toLocaleString('en-US')}</Text>
               </Group>
             </Grid.Col>
             <Grid.Col span={6}>
@@ -526,7 +526,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
                   {t.totalCharges}:
                 </Text>
                 <Text fw={500} c="red" dir="ltr">
-                  - Rs. {(commissionAmount + totalCharges).toFixed(2)}
+                  - Rs. {Math.round(commissionAmount + totalCharges).toLocaleString('en-US')}
                 </Text>
               </Group>
             </Grid.Col>
@@ -536,7 +536,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
                   {t.netPayable}:
                 </Text>
                 <Text fw={600} c="blue" dir="ltr">
-                  Rs. {totalPayable.toFixed(2)}
+                  Rs. {Math.round(totalPayable).toLocaleString('en-US')}
                 </Text>
               </Group>
             </Grid.Col>
@@ -547,7 +547,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
                   {t.balanceAmount}:
                 </Text>
                 <Text size="xl" fw={700} c={balanceAmount >= 0 ? 'green' : 'red'} dir="ltr">
-                  Rs. {balanceAmount.toFixed(2)}
+                  Rs. {Math.round(balanceAmount).toLocaleString('en-US')}
                 </Text>
               </Group>
             </Grid.Col>
