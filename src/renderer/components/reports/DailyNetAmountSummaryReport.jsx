@@ -23,7 +23,7 @@ import { ReportViewer } from '../ReportViewer';
  * Shows day-end reconciliation summary with previous balance, sales, collections, and closing balance
  */
 export function DailyNetAmountSummaryReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [asOfDate, setAsOfDate] = useState(new Date());
   const [compareDate, setCompareDate] = useState(null);

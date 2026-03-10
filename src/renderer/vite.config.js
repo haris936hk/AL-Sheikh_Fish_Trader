@@ -13,6 +13,22 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-mantine': [
+            '@mantine/core',
+            '@mantine/hooks',
+            '@mantine/notifications',
+            '@mantine/modals',
+            '@mantine/dates',
+          ],
+          'vendor-icons': ['@tabler/icons-react'],
+          'vendor-i18n': ['i18next', 'react-i18next'],
+        },
+      },
+    },
   },
   server: {
     port: 5173,

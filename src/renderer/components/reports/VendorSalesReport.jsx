@@ -15,6 +15,7 @@ import { IconSearch } from '@tabler/icons-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import useStore from '../../store';
+import { formatDisplayName } from '../../utils/formatters';
 import { ReportViewer } from '../ReportViewer';
 
 /**
@@ -23,7 +24,7 @@ import { ReportViewer } from '../ReportViewer';
  * Matches the original system layout: transactions grouped by vendor with subtotals.
  */
 export function VendorSalesReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -69,7 +70,7 @@ export function VendorSalesReport() {
           setSuppliers(
             response.data.map((s) => ({
               value: String(s.id),
-              label: s.name + (s.name_english ? ` (${s.name_english})` : ''),
+              label: formatDisplayName(s.name, s.name_english, isUr),
             }))
           );
         }
@@ -78,7 +79,7 @@ export function VendorSalesReport() {
       }
     };
     fetchSuppliers();
-  }, []);
+  }, [isUr]);
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];
@@ -142,22 +143,22 @@ export function VendorSalesReport() {
   const groupedByVendor = useMemo(() => {
     return reportData
       ? reportData.transactions.reduce((groups, txn) => {
-          const key = txn.supplier_id || 0;
-          if (!groups[key]) {
-            groups[key] = {
-              supplierName: txn.supplier_name || 'Unknown',
-              transactions: [],
-              totalWeight: 0,
-              totalAmount: 0,
-              vehicleNumbers: new Set(),
-            };
-          }
-          groups[key].transactions.push(txn);
-          groups[key].totalWeight += txn.weight || 0;
-          groups[key].totalAmount += txn.amount || 0;
-          if (txn.vehicle_number) groups[key].vehicleNumbers.add(txn.vehicle_number);
-          return groups;
-        }, {})
+        const key = txn.supplier_id || 0;
+        if (!groups[key]) {
+          groups[key] = {
+            supplierName: txn.supplier_name || 'Unknown',
+            transactions: [],
+            totalWeight: 0,
+            totalAmount: 0,
+            vehicleNumbers: new Set(),
+          };
+        }
+        groups[key].transactions.push(txn);
+        groups[key].totalWeight += txn.weight || 0;
+        groups[key].totalAmount += txn.amount || 0;
+        if (txn.vehicle_number) groups[key].vehicleNumbers.add(txn.vehicle_number);
+        return groups;
+      }, {})
       : {};
   }, [reportData]);
 

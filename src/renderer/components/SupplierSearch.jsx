@@ -18,9 +18,11 @@ import {
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 
 import { useResizableColumns } from '../hooks/useResizableColumns';
+import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
 
 /**
  * SupplierSearch Component
@@ -31,12 +33,54 @@ import { useResizableColumns } from '../hooks/useResizableColumns';
  * @param {function} onRefresh - Callback to refresh after delete
  */
 function SupplierSearch({ onEdit, onRefresh }) {
+  const isUr = useStore((s) => s.language === 'ur');
   const [searchTerm, setSearchTerm] = useState('');
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 25;
+
+  const t = useMemo(
+    () => ({
+      error: isUr ? 'خرابی' : 'Error',
+      failedLoadData: isUr ? 'بیوپاری لوڈ کرنے میں ناکام' : 'Failed to load vendors',
+      noResultsTitle: isUr ? 'کوئی نتیجہ نہیں' : 'No Results',
+      noResultsMsg: isUr ? 'آپ کی تلاش کے مطابق کوئی بیوپاری نہیں ملا' : 'No vendors found matching your search',
+      searchFailed: isUr ? 'تلاش ناکام ہو گئی' : 'Search failed',
+      deleteTitle: isUr ? 'بیوپاری حذف کریں' : 'Delete Vendor',
+      deleteBtn: isUr ? 'حذف کریں' : 'Delete',
+      cancelBtn: isUr ? 'منسوخ' : 'Cancel',
+      deletedTitle: isUr ? 'حذف ہو گیا' : 'Deleted',
+      cannotDelete: isUr ? 'حذف نہیں کر سکتے' : 'Cannot Delete',
+      failedDelete: isUr ? 'بیوپاری حذف کرنے میں ناکام' : 'Failed to delete vendor',
+      searchPlaceholder: isUr ? 'نام سے تلاش کریں...' : 'Search by name...',
+      searchBtn: isUr ? 'تلاش کریں' : '🔍 Search',
+      clearBtn: isUr ? 'صاف کریں' : 'Clear',
+      itemsFound: isUr ? 'بیوپاری ملے' : 'vendors found',
+      itemFound: isUr ? 'بیوپاری ملا' : 'vendor found',
+      noItemsText: isUr ? 'کوئی بیوپاری نہیں ملا' : 'No vendors found',
+      colName: isUr ? 'نام' : 'Name',
+      colCity: isUr ? 'شہر' : 'City',
+      colCountry: isUr ? 'ملک' : 'Country',
+      colContact: isUr ? 'رابطہ' : 'Contact',
+      colAdvance: isUr ? 'پیشگی' : 'Advance',
+      colActions: isUr ? 'عمل' : 'Actions',
+      deleteConfirm1: isUr ? 'کیا آپ واقعی بیوپاری ' : 'Are you sure you want to delete vendor ',
+      deleteConfirm2: isUr ? ' کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں کیا جا سکتا۔' : '? This action cannot be undone.',
+      deletedMsg1: isUr ? 'بیوپاری "' : 'Vendor "',
+      deletedMsg2: isUr ? '" حذف ہو گیا ہے' : '" has been deleted',
+      bulkDeleteTitle: isUr ? 'منتخب بیوپاری حذف کریں' : 'Delete Selected Vendors',
+      bulkDeleteConfirm1: isUr ? 'کیا آپ واقعی ' : 'Are you sure you want to delete ',
+      bulkDeleteConfirm2: isUr ? ' منتخب بیوپاری حذف کرنا چاہتے ہیں؟' : ' selected vendor(s)?',
+      bulkDeleteBtn: isUr ? 'سب کو حذف کریں' : 'Delete All',
+      bulkDeletedMsg: isUr ? ' بیوپاری حذف ہو گئے' : ' vendor(s) deleted',
+      selectedText: isUr ? 'منتخب' : 'selected',
+      deleteSelected: isUr ? 'منتخب حذف کریں' : '🗑️ Delete Selected',
+      clearSelection: isUr ? 'چناؤ ختم کریں' : 'Clear Selection',
+    }),
+    [isUr]
+  );
 
   // Bulk selection (FR-GRID-006)
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -60,23 +104,23 @@ function SupplierSearch({ onEdit, onRefresh }) {
         setSuppliers(result.data);
       } else {
         notifications.show({
-          title: 'Error',
-          message: result.error || 'Failed to load vendors',
+          title: t.error,
+          message: result.error || t.failedLoadData,
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Load suppliers error:', error);
       notifications.show({
-        title: 'Error',
-        message: 'Failed to load vendors',
+        title: t.error,
+        message: t.failedLoadData,
         color: 'red',
       });
     } finally {
       setLoading(false);
       setInitialLoad(false);
     }
-  }, []);
+  }, [t]);
 
   // Load on mount
   useEffect(() => {
@@ -96,8 +140,8 @@ function SupplierSearch({ onEdit, onRefresh }) {
         setPage(1);
         if (result.data.length === 0) {
           notifications.show({
-            title: 'No Results',
-            message: 'No vendors found matching your search',
+            title: t.noResultsTitle,
+            message: t.noResultsMsg,
             color: 'blue',
           });
         }
@@ -105,58 +149,57 @@ function SupplierSearch({ onEdit, onRefresh }) {
     } catch (error) {
       console.error('Search error:', error);
       notifications.show({
-        title: 'Error',
-        message: 'Search failed',
+        title: t.error,
+        message: t.searchFailed,
         color: 'red',
       });
     } finally {
       setLoading(false);
     }
-  }, [searchTerm]);
+  }, [searchTerm, t]);
 
   // Handle delete with confirmation
   const handleDelete = useCallback(
     (supplier) => {
       modals.openConfirmModal({
-        title: 'Delete Vendor',
+        title: t.deleteTitle,
         centered: true,
         children: (
           <Text size="sm">
-            Are you sure you want to delete vendor <strong>{supplier.name}</strong>? This action
-            cannot be undone.
+            {t.deleteConfirm1}<strong>{formatDisplayName(supplier.name, supplier.name_english, isUr)}</strong>{t.deleteConfirm2}
           </Text>
         ),
-        labels: { confirm: 'Delete', cancel: 'Cancel' },
+        labels: { confirm: t.deleteBtn, cancel: t.cancelBtn },
         confirmProps: { color: 'red' },
         onConfirm: async () => {
           try {
             const result = await window.api.suppliers.delete(supplier.id);
             if (result.success) {
               notifications.show({
-                title: 'Deleted',
-                message: `Vendor "${supplier.name}" has been deleted`,
+                title: t.deletedTitle,
+                message: `${t.deletedMsg1}${formatDisplayName(supplier.name, supplier.name_english, isUr)}${t.deletedMsg2}`,
                 color: 'green',
               });
               loadSuppliers();
               onRefresh?.();
             } else {
               notifications.show({
-                title: 'Cannot Delete',
+                title: t.cannotDelete,
                 message: result.error,
                 color: 'red',
               });
             }
           } catch {
             notifications.show({
-              title: 'Error',
-              message: 'Failed to delete vendor',
+              title: t.error,
+              message: t.failedDelete,
               color: 'red',
             });
           }
         },
       });
     },
-    [loadSuppliers, onRefresh]
+    [loadSuppliers, onRefresh, isUr, t]
   );
 
   // Handle key press in search input
@@ -197,14 +240,9 @@ function SupplierSearch({ onEdit, onRefresh }) {
         />
       </Table.Td>
       <Table.Td>
-        <Text fw={500} dir="rtl">
-          {supplier.name}
+        <Text fw={500} dir={isUr ? 'rtl' : 'ltr'}>
+          {formatDisplayName(supplier.name, supplier.name_english, isUr)}
         </Text>
-        {supplier.name_english && (
-          <Text size="xs" c="dimmed">
-            {supplier.name_english}
-          </Text>
-        )}
       </Table.Td>
       <Table.Td>{supplier.city_name || '-'}</Table.Td>
       <Table.Td>{supplier.country_name || '-'}</Table.Td>
@@ -238,14 +276,14 @@ function SupplierSearch({ onEdit, onRefresh }) {
         <Group justify="space-between">
           <Group>
             <TextInput
-              placeholder="Search by name..."
+              placeholder={t.searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={handleKeyPress}
-              style={{ width: 300 }}
+              style={{ width: 300, direction: isUr ? 'rtl' : 'ltr' }}
             />
             <Button onClick={handleSearch} loading={loading}>
-              🔍 Search
+              {t.searchBtn}
             </Button>
             <Button
               variant="light"
@@ -254,11 +292,11 @@ function SupplierSearch({ onEdit, onRefresh }) {
                 loadSuppliers();
               }}
             >
-              Clear
+              {t.clearBtn}
             </Button>
           </Group>
           <Text size="sm" c="dimmed">
-            {suppliers.length} vendor{suppliers.length !== 1 ? 's' : ''} found
+            {suppliers.length} {suppliers.length !== 1 ? t.itemsFound : t.itemFound}
           </Text>
         </Group>
 
@@ -270,7 +308,7 @@ function SupplierSearch({ onEdit, onRefresh }) {
             style={{ background: 'var(--mantine-color-blue-0)', borderRadius: 8 }}
           >
             <Text size="sm" fw={500}>
-              {selectedIds.size} selected
+              {selectedIds.size} {t.selectedText}
             </Text>
             <Button
               size="xs"
@@ -278,13 +316,13 @@ function SupplierSearch({ onEdit, onRefresh }) {
               color="red"
               onClick={() => {
                 modals.openConfirmModal({
-                  title: 'Delete Selected Vendors',
+                  title: t.bulkDeleteTitle,
                   children: (
                     <Text size="sm">
-                      Are you sure you want to delete {selectedIds.size} selected vendor(s)?
+                      {t.bulkDeleteConfirm1}{selectedIds.size}{t.bulkDeleteConfirm2}
                     </Text>
                   ),
-                  labels: { confirm: 'Delete All', cancel: 'Cancel' },
+                  labels: { confirm: t.bulkDeleteBtn, cancel: t.cancelBtn },
                   confirmProps: { color: 'red' },
                   onConfirm: async () => {
                     for (const id of selectedIds) {
@@ -293,18 +331,18 @@ function SupplierSearch({ onEdit, onRefresh }) {
                     setSelectedIds(new Set());
                     loadSuppliers();
                     notifications.show({
-                      title: 'Deleted',
-                      message: `${selectedIds.size} vendor(s) deleted`,
+                      title: t.deletedTitle,
+                      message: `${selectedIds.size}${t.bulkDeletedMsg}`,
                       color: 'green',
                     });
                   },
                 });
               }}
             >
-              🗑️ Delete Selected
+              {t.deleteSelected}
             </Button>
             <Button size="xs" variant="subtle" onClick={() => setSelectedIds(new Set())}>
-              Clear Selection
+              {t.clearSelection}
             </Button>
           </Group>
         )}
@@ -319,7 +357,7 @@ function SupplierSearch({ onEdit, onRefresh }) {
             <Center h={200}>
               <Stack align="center" gap="sm">
                 <Text size="xl">📭</Text>
-                <Text c="dimmed">No suppliers found</Text>
+                <Text c="dimmed">{t.noItemsText}</Text>
               </Stack>
             </Center>
           ) : (
@@ -348,12 +386,12 @@ function SupplierSearch({ onEdit, onRefresh }) {
                     />
                   </Table.Th>
                   {[
-                    ['name', 'Name'],
-                    ['city', 'City'],
-                    ['country', 'Country'],
-                    ['contact', 'Contact'],
-                    ['advance', 'Advance'],
-                    ['actions', 'Actions'],
+                    ['name', t.colName],
+                    ['city', t.colCity],
+                    ['country', t.colCountry],
+                    ['contact', t.colContact],
+                    ['advance', t.colAdvance],
+                    ['actions', t.colActions],
                   ].map(([key, label]) => {
                     const rp = getResizeProps(key);
                     return (

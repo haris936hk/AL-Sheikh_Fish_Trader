@@ -1,17 +1,24 @@
 @import 'tailwindcss';
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Noto Sans Arabic';
   margin: 0;
   padding: 0;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-/* Ensure Mantine number inputs stay LTR */
-[data-type='number'] input {
-  direction: ltr;
-  text-align: left;
+/* Ensure Mantine number inputs and specific LTR fields stay LTR */
+[data-type='number'] input,
+.ltr-field,
+.ltr-field input {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+/* RTL-specific tweaks */
+[dir='rtl'] body {
+  font-weight: 500; /* Noto Sans Arabic often needs a slight weight bump for readability */
 }
 
 /* Thin scrollbar */

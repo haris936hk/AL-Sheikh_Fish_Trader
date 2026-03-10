@@ -260,10 +260,8 @@ export function getTodayForAPI() {
  * @param {string} englishName - Optional English name/code
  * @returns {string} Combined display name
  */
-export function formatDisplayName(urduName, englishName) {
+export function formatDisplayName(urduName, englishName, isUr = true) {
   if (!urduName && !englishName) return '';
-  if (!englishName) return urduName;
-  if (!urduName) return englishName;
-
-  return `${urduName} (${englishName})`;
+  if (isUr) return urduName || englishName;
+  return englishName || urduName;
 }

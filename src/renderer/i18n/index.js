@@ -16,4 +16,10 @@ i18n.use(initReactI18next).init({
   },
 });
 
+// Update document direction and lang attribute whenever language changes
+i18n.on('languageChanged', (lng) => {
+  document.documentElement.lang = lng;
+  document.documentElement.dir = lng === 'ur' ? 'rtl' : 'ltr';
+});
+
 export default i18n;

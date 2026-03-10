@@ -26,6 +26,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import '@mantine/dates/styles.css';
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
 
 /**
  * SaleSearch Component
@@ -35,7 +36,7 @@ import useStore from '../store';
  * @param {function} onEdit - Callback to edit a sale
  */
 function SaleSearch({ onEdit }) {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [sales, setSales] = useState([]);
@@ -145,7 +146,7 @@ function SaleSearch({ onEdit }) {
           setCustomers(
             response.data.map((c) => ({
               value: String(c.id),
-              label: c.name + (c.name_english ? ` (${c.name_english})` : ''),
+              label: formatDisplayName(c.name, c.name_english, isUr),
             }))
           );
         }
@@ -154,7 +155,7 @@ function SaleSearch({ onEdit }) {
       }
     };
     loadCustomers();
-  }, []);
+  }, [isUr]);
 
   // Format date for API
   const formatDate = (date) => {

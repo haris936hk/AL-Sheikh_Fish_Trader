@@ -83,7 +83,7 @@ const REPORT_TABS = [
  */
 export function Reports({ onBack, initialTab = null }) {
   const { t } = useTranslation();
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const isUrdu = language === 'ur';
   // Use state with initialTab on first render only
   const [activeTab, setActiveTab] = useState(() => {

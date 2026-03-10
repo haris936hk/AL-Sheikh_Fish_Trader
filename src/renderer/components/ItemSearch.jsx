@@ -16,7 +16,10 @@ import {
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+
+import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
 
 /**
  * ItemSearch Component
@@ -27,10 +30,43 @@ import { useState, useCallback, useEffect } from 'react';
  * @param {function} onRefresh - Callback to refresh after delete
  */
 function ItemSearch({ onEdit, onRefresh }) {
+  const isUr = useStore((s) => s.language === 'ur');
   const [searchTerm, setSearchTerm] = useState('');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+
+  const t = useMemo(
+    () => ({
+      error: isUr ? 'خرابی' : 'Error',
+      failedLoadData: isUr ? 'آئٹمز لوڈ کرنے میں ناکام' : 'Failed to load items',
+      noResultsTitle: isUr ? 'کوئی نتیجہ نہیں' : 'No Results',
+      noResultsMsg: isUr ? 'آپ کی تلاش کے مطابق کوئی آئٹم نہیں ملا' : 'No items found matching your search',
+      searchFailed: isUr ? 'تلاش ناکام ہو گئی' : 'Search failed',
+      deleteTitle: isUr ? 'آئٹم حذف کریں' : 'Delete Item',
+      deleteBtn: isUr ? 'حذف کریں' : 'Delete',
+      cancelBtn: isUr ? 'منسوخ' : 'Cancel',
+      deletedTitle: isUr ? 'حذف ہو گیا' : 'Deleted',
+      cannotDelete: isUr ? 'حذف نہیں کر سکتے' : 'Cannot Delete',
+      failedDelete: isUr ? 'آئٹم حذف کرنے میں ناکام' : 'Failed to delete item',
+      searchPlaceholder: isUr ? 'نام سے تلاش کریں...' : 'Search by item name...',
+      searchBtn: isUr ? 'تلاش کریں' : '🔍 Search',
+      clearBtn: isUr ? 'صاف کریں' : 'Clear',
+      itemsFound: isUr ? 'آئٹمز ملے' : 'items found',
+      itemFound: isUr ? 'آئٹم ملا' : 'item found',
+      noItemsText: isUr ? 'کوئی آئٹم نہیں ملا' : 'No items found',
+      colName: isUr ? 'نام' : 'Name',
+      colCategory: isUr ? 'قسم' : 'Category',
+      colUnitPrice: isUr ? 'قیمت' : 'Unit Price',
+      colStock: isUr ? 'اسٹاک' : 'Stock',
+      colActions: isUr ? 'عمل' : 'Actions',
+      deleteConfirm1: isUr ? 'کیا آپ واقعی آئٹم ' : 'Are you sure you want to delete item ',
+      deleteConfirm2: isUr ? ' کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں کیا جا سکتا۔' : '? This action cannot be undone.',
+      deletedMsg1: isUr ? 'آئٹم "' : 'Item "',
+      deletedMsg2: isUr ? '" حذف ہو گیا ہے' : '" has been deleted',
+    }),
+    [isUr]
+  );
 
   // Load all items initially
   const loadItems = useCallback(async () => {
@@ -41,23 +77,23 @@ function ItemSearch({ onEdit, onRefresh }) {
         setItems(result.data);
       } else {
         notifications.show({
-          title: 'Error',
-          message: result.error || 'Failed to load items',
+          title: t.error,
+          message: result.error || t.failedLoadData,
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Load items error:', error);
       notifications.show({
-        title: 'Error',
-        message: 'Failed to load items',
+        title: t.error,
+        message: t.failedLoadData,
         color: 'red',
       });
     } finally {
       setLoading(false);
       setInitialLoad(false);
     }
-  }, []);
+  }, [t]);
 
   // Load on mount
   useEffect(() => {
@@ -76,8 +112,8 @@ function ItemSearch({ onEdit, onRefresh }) {
         setItems(result.data);
         if (result.data.length === 0) {
           notifications.show({
-            title: 'No Results',
-            message: 'No items found matching your search',
+            title: t.noResultsTitle,
+            message: t.noResultsMsg,
             color: 'blue',
           });
         }
@@ -85,43 +121,42 @@ function ItemSearch({ onEdit, onRefresh }) {
     } catch (error) {
       console.error('Search error:', error);
       notifications.show({
-        title: 'Error',
-        message: 'Search failed',
+        title: t.error,
+        message: t.searchFailed,
         color: 'red',
       });
     } finally {
       setLoading(false);
     }
-  }, [searchTerm]);
+  }, [searchTerm, t]);
 
   // Handle delete with confirmation
   const handleDelete = useCallback(
     (item) => {
       modals.openConfirmModal({
-        title: 'Delete Item',
+        title: t.deleteTitle,
         centered: true,
         children: (
           <Text size="sm">
-            Are you sure you want to delete item <strong>{item.name}</strong>? This action cannot be
-            undone.
+            {t.deleteConfirm1}<strong>{formatDisplayName(item.name, item.name_english, isUr)}</strong>{t.deleteConfirm2}
           </Text>
         ),
-        labels: { confirm: 'Delete', cancel: 'Cancel' },
+        labels: { confirm: t.deleteBtn, cancel: t.cancelBtn },
         confirmProps: { color: 'red' },
         onConfirm: async () => {
           try {
             const result = await window.api.items.delete(item.id);
             if (result.success) {
               notifications.show({
-                title: 'Deleted',
-                message: `Item "${item.name}" has been deleted`,
+                title: t.deletedTitle,
+                message: `${t.deletedMsg1}${formatDisplayName(item.name, item.name_english, isUr)}${t.deletedMsg2}`,
                 color: 'green',
               });
               loadItems();
               onRefresh?.();
             } else {
               notifications.show({
-                title: 'Cannot Delete',
+                title: t.cannotDelete,
                 message: result.error,
                 color: 'red',
               });
@@ -129,15 +164,15 @@ function ItemSearch({ onEdit, onRefresh }) {
           } catch (error) {
             console.error('Delete item error:', error);
             notifications.show({
-              title: 'Error',
-              message: 'Failed to delete item',
+              title: t.error,
+              message: t.failedDelete,
               color: 'red',
             });
           }
         },
       });
     },
-    [loadItems, onRefresh]
+    [loadItems, onRefresh, isUr, t]
   );
 
   // Handle key press in search input
@@ -162,14 +197,9 @@ function ItemSearch({ onEdit, onRefresh }) {
   const rows = items.map((item) => (
     <Table.Tr key={item.id}>
       <Table.Td>
-        <Text fw={500} dir="rtl">
-          {item.name}
+        <Text fw={500} dir={isUr ? 'rtl' : 'ltr'}>
+          {formatDisplayName(item.name, item.name_english, isUr)}
         </Text>
-        {item.name_english && (
-          <Text size="xs" c="dimmed">
-            {item.name_english}
-          </Text>
-        )}
       </Table.Td>
       <Table.Td>{item.category_name || item.category_name_urdu || 'None'}</Table.Td>
       <Table.Td>
@@ -206,14 +236,14 @@ function ItemSearch({ onEdit, onRefresh }) {
         <Group justify="space-between">
           <Group>
             <TextInput
-              placeholder="Search by item name..."
+              placeholder={t.searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={handleKeyPress}
-              style={{ width: 300 }}
+              style={{ width: 300, direction: isUr ? 'rtl' : 'ltr' }}
             />
             <Button onClick={handleSearch} loading={loading}>
-              🔍 Search
+              {t.searchBtn}
             </Button>
             <Button
               variant="light"
@@ -222,11 +252,11 @@ function ItemSearch({ onEdit, onRefresh }) {
                 loadItems();
               }}
             >
-              Clear
+              {t.clearBtn}
             </Button>
           </Group>
           <Text size="sm" c="dimmed">
-            {items.length} item{items.length !== 1 ? 's' : ''} found
+            {items.length} {items.length !== 1 ? t.itemsFound : t.itemFound}
           </Text>
         </Group>
 
@@ -240,18 +270,18 @@ function ItemSearch({ onEdit, onRefresh }) {
             <Center h={200}>
               <Stack align="center" gap="sm">
                 <Text size="xl">📭</Text>
-                <Text c="dimmed">No items found</Text>
+                <Text c="dimmed">{t.noItemsText}</Text>
               </Stack>
             </Center>
           ) : (
-            <Table striped highlightOnHover>
+            <Table striped highlightOnHover style={{ direction: isUr ? 'rtl' : 'ltr' }}>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Category</Table.Th>
-                  <Table.Th>Unit Price</Table.Th>
-                  <Table.Th>Stock</Table.Th>
-                  <Table.Th>Actions</Table.Th>
+                  <Table.Th style={{ textAlign: isUr ? 'right' : 'left' }}>{t.colName}</Table.Th>
+                  <Table.Th style={{ textAlign: isUr ? 'right' : 'left' }}>{t.colCategory}</Table.Th>
+                  <Table.Th style={{ textAlign: isUr ? 'left' : 'right' }}>{t.colUnitPrice}</Table.Th>
+                  <Table.Th style={{ textAlign: isUr ? 'left' : 'right' }}>{t.colStock}</Table.Th>
+                  <Table.Th style={{ textAlign: isUr ? 'right' : 'left' }}>{t.colActions}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>{rows}</Table.Tbody>

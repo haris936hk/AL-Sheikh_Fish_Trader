@@ -39,7 +39,7 @@ import useStore from '../store';
 
 function Settings() {
   const { t } = useTranslation();
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const isUrdu = language === 'ur';
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -207,7 +207,7 @@ function Settings() {
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   };
 
   return (
@@ -282,8 +282,6 @@ function Settings() {
                     onChange={(e) => handleChange('company_phone', e.target.value)}
                     placeholder="051-1234567"
                     className="ltr-field"
-                    dir="ltr"
-                    styles={{ input: { textAlign: 'left' } }}
                   />
                 </Grid.Col>
                 <Grid.Col span={4}>
@@ -293,8 +291,6 @@ function Settings() {
                     onChange={(e) => handleChange('company_mobile', e.target.value)}
                     placeholder="03001234567"
                     className="ltr-field"
-                    dir="ltr"
-                    styles={{ input: { textAlign: 'left' } }}
                   />
                 </Grid.Col>
                 <Grid.Col span={4}>
@@ -304,8 +300,6 @@ function Settings() {
                     onChange={(e) => handleChange('company_email', e.target.value)}
                     placeholder="info@company.com"
                     className="ltr-field"
-                    dir="ltr"
-                    styles={{ input: { textAlign: 'left' } }}
                   />
                 </Grid.Col>
               </Grid>
@@ -581,8 +575,8 @@ function Settings() {
                       if (
                         !window.confirm(
                           'Are you sure you want to process year-end closing? ' +
-                            'This will update opening balances for all customers and vendors. ' +
-                            'This action cannot be undone easily.'
+                          'This will update opening balances for all customers and vendors. ' +
+                          'This action cannot be undone easily.'
                         )
                       ) {
                         return;

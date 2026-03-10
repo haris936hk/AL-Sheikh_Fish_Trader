@@ -1,3 +1,4 @@
+import { notifications } from '@mantine/notifications';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
@@ -92,18 +93,11 @@ const useStore = create(
             dashboardLoading: false,
           });
           // Show error notification
-          import('@mantine/notifications')
-            .then(({ notifications }) => {
-              notifications.show({
-                title: 'Dashboard Error',
-                message: `Failed to load dashboard data: ${error.message}`,
-                color: 'red',
-              });
-              return null;
-            })
-            .catch((err) => {
-              console.error('Failed to load notifications module:', err);
-            });
+          notifications.show({
+            title: 'Dashboard Error',
+            message: `Failed to load dashboard data: ${error.message}`,
+            color: 'red',
+          });
         }
       },
 

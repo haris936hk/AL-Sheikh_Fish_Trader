@@ -1,5 +1,6 @@
 import { UnstyledButton, Text, Box } from '@mantine/core';
 import PropTypes from 'prop-types';
+import { memo } from 'react';
 
 /**
  * DashboardButton Component
@@ -109,4 +110,4 @@ DashboardButton.propTypes = {
   variant: PropTypes.oneOf(['administration', 'transaction', 'user', 'report', 'default']),
 };
 
-export default DashboardButton;
+export default memo(DashboardButton);

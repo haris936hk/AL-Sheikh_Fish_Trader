@@ -5,6 +5,7 @@ const Database = require('better-sqlite3');
 const { app } = require('electron');
 
 let db = null;
+const stmtCache = new Map();
 
 /**
  * Initialize the database
@@ -31,14 +32,20 @@ function initialize(customPath = null) {
 
     console.log('Initializing database at:', dbPath);
 
-    // Create database connection
-    db = new Database(dbPath);
+    // Create database connection with 10s timeout to prevent locking errors
+    db = new Database(dbPath, { timeout: 10000 });
 
     // Enable WAL mode for better concurrency
     db.pragma('journal_mode = WAL');
 
     // Enable foreign keys
     db.pragma('foreign_keys = ON');
+
+    // Performance PRAGMAs
+    db.pragma('synchronous = NORMAL');   // Safe with WAL; fewer fsync calls
+    db.pragma('cache_size = -32000');    // 32 MB page cache (default ~2 MB)
+    db.pragma('temp_store = MEMORY');    // Temporary tables/indexes in RAM
+    db.pragma('mmap_size = 268435456'); // 256 MB memory-mapped I/O
 
     // Try multiple paths for schema.sql (handles both dev and production)
     const appPath = app.getAppPath();
@@ -66,8 +73,7 @@ function initialize(customPath = null) {
     }
 
     if (!schemaLoaded) {
-      console.warn('Schema file not found or failed to load, trying expanded inline fallback...');
-      createFullFallbackSchema();
+      throw new Error('CRITICAL: Database schema file (schema.sql) not found or failed to load.');
     }
 
     return db;
@@ -78,213 +84,40 @@ function initialize(customPath = null) {
   }
 }
 
+
 /**
- * Full fallback schema in case schema.sql is missing.
- * This ensures the app is never in a completely broken state.
+ * Get or create a cached prepared statement
+ * @param {string} sql - SQL query
+ * @returns {Statement} Prepared statement
  */
-function createFullFallbackSchema() {
-  db.exec(`
-    -- Reference Tables
-    CREATE TABLE IF NOT EXISTS countries (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      name_urdu TEXT,
-      code TEXT,
-      is_active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS cities (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      name_urdu TEXT,
-      country_id INTEGER NOT NULL,
-      is_active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      name_urdu TEXT,
-      is_active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Master Tables
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      full_name TEXT NOT NULL,
-      is_active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS suppliers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      code TEXT,
-      name TEXT NOT NULL,
-      name_english TEXT,
-      city_id INTEGER,
-      country_id INTEGER,
-      opening_balance REAL DEFAULT 0,
-      current_balance REAL DEFAULT 0,
-      advance_amount REAL DEFAULT 0,
-      is_active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS customers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      code TEXT,
-      name TEXT NOT NULL,
-      name_english TEXT,
-      city_id INTEGER,
-      country_id INTEGER,
-      opening_balance REAL DEFAULT 0,
-      current_balance REAL DEFAULT 0,
-      is_active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      code TEXT,
-      name TEXT NOT NULL,
-      name_english TEXT,
-      category_id INTEGER,
-      current_stock REAL DEFAULT 0,
-      is_active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Transaction Tables
-    CREATE TABLE IF NOT EXISTS sales (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sale_number TEXT NOT NULL UNIQUE,
-      sale_date DATE NOT NULL,
-      customer_id INTEGER NOT NULL,
-      supplier_id INTEGER,
-      net_amount REAL DEFAULT 0,
-      cash_received REAL DEFAULT 0,
-      status TEXT DEFAULT 'posted',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS sale_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sale_id INTEGER NOT NULL,
-      item_id INTEGER NOT NULL,
-      customer_id INTEGER,
-      weight REAL NOT NULL,
-      rate REAL NOT NULL,
-      amount REAL NOT NULL,
-      FOREIGN KEY (sale_id) REFERENCES sales(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS purchases (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      purchase_number TEXT NOT NULL UNIQUE,
-      purchase_date DATE NOT NULL,
-      supplier_id INTEGER NOT NULL,
-      net_amount REAL DEFAULT 0,
-      status TEXT DEFAULT 'posted',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS purchase_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      purchase_id INTEGER NOT NULL,
-      item_id INTEGER NOT NULL,
-      weight REAL NOT NULL,
-      rate REAL NOT NULL,
-      amount REAL NOT NULL,
-      FOREIGN KEY (purchase_id) REFERENCES purchases(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS supplier_bills (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      bill_number TEXT NOT NULL UNIQUE,
-      supplier_id INTEGER NOT NULL,
-      date_from DATE NOT NULL,
-      date_to DATE NOT NULL,
-      status TEXT DEFAULT 'draft',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS payments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      payment_number TEXT NOT NULL UNIQUE,
-      payment_date DATE NOT NULL,
-      payment_type TEXT NOT NULL,
-      amount REAL NOT NULL,
-      status TEXT DEFAULT 'posted'
-    );
-
-    -- System Tables
-    CREATE TABLE IF NOT EXISTS settings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      key TEXT NOT NULL UNIQUE,
-      value TEXT NOT NULL,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS number_sequences (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL UNIQUE,
-      prefix TEXT NOT NULL,
-      current_number INTEGER DEFAULT 0,
-      number_length INTEGER DEFAULT 6,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Default Data
-    INSERT OR IGNORE INTO countries (id, name, name_urdu) VALUES (1, 'Pakistan', 'پاکستان');
-    INSERT OR IGNORE INTO cities (id, name, name_urdu, country_id) VALUES (1, 'Rawalpindi', 'راولپنڈی', 1);
-    
-    INSERT OR IGNORE INTO settings (key, value) VALUES 
-      ('app_theme', 'light'),
-      ('app_language', 'ur'),
-      ('company_name', 'FISHPLUS Distributor');
-
-    INSERT OR IGNORE INTO number_sequences (name, prefix) VALUES 
-      ('sale', 'SL-'),
-      ('purchase', 'PO-'),
-      ('payment', 'PAY-'),
-      ('supplier_bill', 'BILL-');
-
-    INSERT OR IGNORE INTO users (id, username, password_hash, full_name) 
-    VALUES (1, 'admin', 'admin', 'Administrator');
-  `);
-  console.log('Full fallback schema created inline');
+function getStmt(sql) {
+  if (!db) initialize();
+  let stmt = stmtCache.get(sql);
+  if (!stmt) {
+    stmt = db.prepare(sql);
+    stmtCache.set(sql, stmt);
+  }
+  return stmt;
 }
 
 /**
- * Execute a SELECT query
+ * Execute a SELECT query (with cached prepared statement)
  * @param {string} sql - SQL query
  * @param {Array} params - Query parameters
  * @returns {Array} Query results
  */
 function query(sql, params = []) {
-  if (!db) initialize();
-  const stmt = db.prepare(sql);
-  return stmt.all(...params);
+  return getStmt(sql).all(...params);
 }
 
 /**
- * Execute an INSERT, UPDATE, or DELETE query
+ * Execute an INSERT, UPDATE, or DELETE query (with cached prepared statement)
  * @param {string} sql - SQL query
  * @param {Array} params - Query parameters
  * @returns {Object} Result with changes and lastInsertRowid
  */
 function execute(sql, params = []) {
-  if (!db) initialize();
-  const stmt = db.prepare(sql);
-  return stmt.run(...params);
+  return getStmt(sql).run(...params);
 }
 
 /**
@@ -298,8 +131,7 @@ function transaction(operations) {
   const txn = db.transaction(() => {
     const results = [];
     for (const op of operations) {
-      const stmt = db.prepare(op.sql);
-      results.push(stmt.run(...(op.params || [])));
+      results.push(getStmt(op.sql).run(...(op.params || [])));
     }
     return results;
   });
@@ -308,10 +140,21 @@ function transaction(operations) {
 }
 
 /**
+ * Get the raw database instance for advanced operations (e.g. custom transactions)
+ * @returns {Database} The better-sqlite3 database instance
+ */
+function getDb() {
+  if (!db) initialize();
+  return db;
+}
+
+/**
  * Close the database connection
  */
 function close() {
   if (db) {
+    db.pragma('optimize');  // Gather statistics for query planner before closing
+    stmtCache.clear();
     db.close();
     db = null;
   }
@@ -322,5 +165,6 @@ module.exports = {
   query,
   execute,
   transaction,
+  getDb,
   close,
 };

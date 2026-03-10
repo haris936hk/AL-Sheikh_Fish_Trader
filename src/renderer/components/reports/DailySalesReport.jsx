@@ -22,7 +22,7 @@ import { ReportViewer } from '../ReportViewer';
  * Shows aggregated daily sales summary by item type
  */
 export function DailySalesReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [dateFrom, setDateFrom] = useState(new Date());
   const [dateTo, setDateTo] = useState(new Date());

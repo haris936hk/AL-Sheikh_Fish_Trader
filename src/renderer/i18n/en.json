@@ -61,7 +61,13 @@
     "manageCustomers": "Manage Customers",
     "manageItems": "Manage Items",
     "viewReports": "View Reports",
-    "openSettings": "Open Settings"
+    "openSettings": "Open Settings",
+    "administration": "Administration",
+    "transactions": "Transactions",
+    "contacts": "Contacts & Inventory",
+    "todaysSales": "Today's Sales",
+    "autoRefreshOn": "Auto Refresh: ON",
+    "autoRefreshOff": "Auto Refresh: OFF"
   },
   "supplier": {
     "title": "Vendors",

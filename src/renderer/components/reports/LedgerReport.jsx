@@ -15,6 +15,7 @@ import { IconSearch } from '@tabler/icons-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import useStore from '../../store';
+import { formatDisplayName } from '../../utils/formatters';
 import { ReportViewer } from '../ReportViewer';
 
 /**
@@ -22,7 +23,7 @@ import { ReportViewer } from '../ReportViewer';
  * Shows account ledger for customer or supplier
  */
 export function LedgerReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
@@ -72,7 +73,7 @@ export function LedgerReport() {
           setAccounts(
             response.data.map((a) => ({
               value: String(a.id),
-              label: a.name + (a.name_english ? ` (${a.name_english})` : ''),
+              label: formatDisplayName(a.name, a.name_english, isUr),
             }))
           );
         }
@@ -82,7 +83,7 @@ export function LedgerReport() {
     };
     fetchAccounts();
     setSelectedAccount(null);
-  }, [accountType]);
+  }, [accountType, isUr]);
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];
@@ -368,7 +369,7 @@ export function LedgerReport() {
                     <strong>
                       {formatNumber(
                         getTransactionsWithBalance().slice(-1)[0]?.balance ??
-                          reportData.openingBalance
+                        reportData.openingBalance
                       )}
                     </strong>
                   </Table.Td>

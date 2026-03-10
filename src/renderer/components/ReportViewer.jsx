@@ -27,7 +27,7 @@ export function ReportViewer({
   printContentHTML = null, // Optional: Custom print body HTML (overrides DOM capture)
 }) {
   const printRef = useRef();
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
 
   // Determine the display title based on the active language
   const displayTitle = language === 'ur' && titleUrdu ? titleUrdu : title;

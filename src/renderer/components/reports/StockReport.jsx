@@ -12,7 +12,7 @@ import { ReportViewer } from '../ReportViewer';
  * Shows stock levels for all items as of a specific date
  */
 export function StockReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [asOfDate, setAsOfDate] = useState(new Date());
   const [reportData, setReportData] = useState(null);

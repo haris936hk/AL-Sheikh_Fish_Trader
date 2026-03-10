@@ -158,15 +158,19 @@ contextBridge.exposeInMainWorld('api', {
     // Whitelist channels to prevent security issues
     const validChannels = [channels.DB_UPDATED];
     if (validChannels.includes(channel)) {
-      ipcRenderer.on(channel, (event, ...args) => callback(...args));
+      const wrappedCallback = (event, ...args) => callback(...args);
+      // Attach wrapped callback to original callback for removal later
+      callback._wrappedCallback = wrappedCallback;
+      ipcRenderer.on(channel, wrappedCallback);
     }
   },
 
   // Remove event listeners
   off: (channel, callback) => {
     const validChannels = [channels.DB_UPDATED];
-    if (validChannels.includes(channel)) {
-      ipcRenderer.removeListener(channel, callback);
+    if (validChannels.includes(channel) && callback._wrappedCallback) {
+      ipcRenderer.removeListener(channel, callback._wrappedCallback);
+      delete callback._wrappedCallback;
     }
   },
 });

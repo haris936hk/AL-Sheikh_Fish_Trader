@@ -13,7 +13,7 @@ import { ReportViewer } from '../ReportViewer';
  * Columns: #, Date, Sale #, Customer, Item, Rate, Weight, Amount
  */
 export function StockSaleHistoryReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [dateFrom, setDateFrom] = useState(new Date());
   const [dateTo, setDateTo] = useState(new Date());

@@ -61,7 +61,13 @@
     "manageCustomers": "گاہک مینیج",
     "manageItems": "اشیاء مینیج",
     "viewReports": "رپورٹ دیکھیں",
-    "openSettings": "ترتیبات"
+    "openSettings": "ترتیبات",
+    "administration": "انتظامیہ",
+    "transactions": "لین دین",
+    "contacts": "رابطے اور مال",
+    "todaysSales": "آج کی فروخت",
+    "autoRefreshOn": "خودکار تازہ: آن",
+    "autoRefreshOff": "خودکار تازہ: آف"
   },
   "supplier": {
     "title": "بیوپاری",

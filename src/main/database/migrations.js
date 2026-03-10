@@ -34,6 +34,32 @@ const migrations = [
       // Would need to recreate table
     },
   },
+  // Migration 3 -> 4: Placeholder for any local changes before we added checks
+  {
+    version: 4,
+    up: (_database) => {
+      // No schema changes, just version bump
+    },
+    down: (_database) => { },
+  },
+  // Migration 4 -> 5: Add CHECK constraints to DB schema for data integrity
+  {
+    version: 5,
+    up: (_database) => {
+      const fs = require('fs');
+      const path = require('path');
+      const migrationPath = path.join(__dirname, 'migration_v5.sql');
+      if (fs.existsSync(migrationPath)) {
+        const sql = fs.readFileSync(migrationPath, 'utf8');
+        _database.exec(sql);
+      } else {
+        console.warn('migration_v5.sql not found, skipping CHECK constraints migration');
+      }
+    },
+    down: (_database) => {
+      // Down migration would drop CHECK constraints
+    },
+  },
   // Add more migrations here as needed
 ];
 
@@ -65,7 +91,7 @@ function migrate() {
     console.log(`Applying migration ${migration.version}...`);
 
     try {
-      migration.up(db);
+      migration.up(db.getDb());
       db.execute('INSERT INTO schema_versions (version) VALUES (?)', [migration.version]);
       console.log(`Migration ${migration.version} completed`);
     } catch (error) {

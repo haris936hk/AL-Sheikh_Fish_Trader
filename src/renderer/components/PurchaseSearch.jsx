@@ -26,6 +26,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import '@mantine/dates/styles.css';
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
 
 /**
  * PurchaseSearch Component
@@ -35,7 +36,7 @@ import useStore from '../store';
  * @param {function} onEdit - Callback to edit a purchase
  */
 function PurchaseSearch({ onEdit }) {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -133,7 +134,7 @@ function PurchaseSearch({ onEdit }) {
           setSuppliers(
             response.data.map((s) => ({
               value: String(s.id),
-              label: s.name + (s.name_english ? ` (${s.name_english})` : ''),
+              label: formatDisplayName(s.name, s.name_english, isUr),
             }))
           );
         }
@@ -142,7 +143,7 @@ function PurchaseSearch({ onEdit }) {
       }
     };
     loadSuppliers();
-  }, []);
+  }, [isUr]);
 
   // Format date for API
   const formatDate = (date) => {

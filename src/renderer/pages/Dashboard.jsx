@@ -44,14 +44,14 @@ import {
   IconCurrencyDollar,
 } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DashboardButton, SupplierAdvancesList, ItemStockDisplay } from '../components';
 import useStore from '../store';
 
 // Stats card component
-const StatCard = ({ value, label, icon: Icon, color }) => (
+const StatCard = memo(({ value, label, icon: Icon, color }) => (
   <Paper
     p="md"
     radius="md"
@@ -76,7 +76,8 @@ const StatCard = ({ value, label, icon: Icon, color }) => (
       </Stack>
     </Group>
   </Paper>
-);
+));
+StatCard.displayName = 'StatCard';
 
 StatCard.propTypes = {
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
@@ -86,7 +87,7 @@ StatCard.propTypes = {
 };
 
 // Section header component
-const SectionHeader = ({ icon: Icon, label, color }) => (
+const SectionHeader = memo(({ icon: Icon, label, color }) => (
   <Group gap="sm" mb="sm">
     <ThemeIcon variant="light" color={color} size="md" radius="md">
       <Icon size={16} />
@@ -95,7 +96,8 @@ const SectionHeader = ({ icon: Icon, label, color }) => (
       {label}
     </Title>
   </Group>
-);
+));
+SectionHeader.displayName = 'SectionHeader';
 
 SectionHeader.propTypes = {
   icon: PropTypes.elementType.isRequired,
@@ -108,14 +110,12 @@ SectionHeader.propTypes = {
  * Central navigation hub. Implements FR-DASH-001 through FR-DASH-027.
  */
 function Dashboard({ onNavigate, onToggleLanguage }) {
-  const {
-    supplierAdvances,
-    itemsStock,
-    dashboardSummary,
-    dashboardLoading,
-    loadDashboardData,
-    language,
-  } = useStore();
+  const supplierAdvances = useStore((s) => s.supplierAdvances);
+  const itemsStock = useStore((s) => s.itemsStock);
+  const dashboardSummary = useStore((s) => s.dashboardSummary);
+  const dashboardLoading = useStore((s) => s.dashboardLoading);
+  const loadDashboardData = useStore((s) => s.loadDashboardData);
+  const language = useStore((s) => s.language);
   const { t } = useTranslation();
   const [autoRefresh, setAutoRefresh] = useState(true);
   const isUrdu = language === 'ur';
@@ -283,7 +283,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
                   AL-SHEIKH FISH TRADER
                 </Title>
               </Group>
-              <Text c="dimmed" size="xs" ml={42}>
+              <Text c="dimmed" size="xs" ms={42}>
                 Shop No. W-644 Gunj Mandi Rawalpindi | +92-3008501724
               </Text>
             </Stack>
@@ -330,15 +330,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
                 </ActionIcon>
               </Tooltip>
               <Tooltip
-                label={
-                  autoRefresh
-                    ? isUrdu
-                      ? 'خود کار تازہ چالو (60 سیکنڈ)'
-                      : 'Auto-refresh ON (60s)'
-                    : isUrdu
-                      ? 'خود کار تازہ بند'
-                      : 'Auto-refresh OFF'
-                }
+                label={autoRefresh ? t('dashboard.autoRefreshOn') : t('dashboard.autoRefreshOff')}
               >
                 <ActionIcon
                   variant={autoRefresh ? 'filled' : 'subtle'}
@@ -378,7 +370,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
                 <Card shadow="xs" padding="md" radius="md" style={{ background: '#ffffff' }}>
                   <SectionHeader
                     icon={IconFolder}
-                    label={isUrdu ? 'انتظامیہ' : 'Administration'}
+                    label={t('dashboard.administration')}
                     color="blue"
                   />
                   <Stack gap="xs">
@@ -402,7 +394,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
                 <Card shadow="xs" padding="md" radius="md" style={{ background: '#ffffff' }}>
                   <SectionHeader
                     icon={IconArrowsExchange}
-                    label={isUrdu ? 'لین دین' : 'Transactions'}
+                    label={t('dashboard.transactions')}
                     color="teal"
                   />
                   <Stack gap="xs">
@@ -425,7 +417,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
               <Card shadow="xs" padding="md" radius="md" style={{ background: '#ffffff' }}>
                 <SectionHeader
                   icon={IconAddressBook}
-                  label={isUrdu ? 'رابطہ کار' : 'Contacts'}
+                  label={t('dashboard.contacts')}
                   color="violet"
                 />
                 <SimpleGrid cols={2} spacing="xs">

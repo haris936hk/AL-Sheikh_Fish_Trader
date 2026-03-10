@@ -15,9 +15,11 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import '@mantine/dates/styles.css';
+import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
 import { validateRequired } from '../utils/validators';
 
 /**
@@ -29,6 +31,51 @@ import { validateRequired } from '../utils/validators';
  * @param {function} onBillSaved - Callback after successful save
  */
 function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
+  const language = useStore((s) => s.language);
+  const isUr = language === 'ur';
+
+  const t = useMemo(() => ({
+    title: isUr ? 'بیوپاری بل' : 'Vendor Bill',
+    dateFrom: isUr ? 'تاریخ' : 'From Date',
+    dateTo: isUr ? 'سے تاریخ' : 'To Date',
+    supplier: isUr ? 'بیوپاری' : 'Supplier',
+    supplierPh: isUr ? 'بیوپاری منتخب کریں' : 'Select supplier',
+    vehicleNo: isUr ? 'گاڑی نمبر' : 'Vehicle Number',
+    chargesTitle: isUr ? 'خرچ' : 'Charges',
+    drugsCharges: isUr ? 'منشیانا' : 'Drugs/Chemicals',
+    fareCharges: isUr ? 'کرایہ' : 'Fare',
+    laborCharges: isUr ? 'مزدوری' : 'Labor',
+    iceCharges: isUr ? 'برف' : 'Ice',
+    commissionPct: isUr ? 'کمیش %' : 'Commission %',
+    commissionAmount: isUr ? 'کمیش' : 'Commission Amount',
+    concession: isUr ? 'رعایت' : 'Concession',
+    cashPaid: isUr ? 'نقل' : 'Cash Paid',
+    summaryTitle: isUr ? 'خلاصہ' : 'Summary',
+    totalWeight: isUr ? 'کل وزن' : 'Total Weight',
+    grossAmount: isUr ? 'مجموعی رقم' : 'Gross Amount',
+    totalCharges: isUr ? 'کل خرچ' : 'Total Charges',
+    netPayable: isUr ? 'قابل ادا' : 'Net Payable',
+    balanceAmount: isUr ? 'اداینگی رقم' : 'Balance',
+    clearBtn: isUr ? 'صاف کریں' : 'Clear',
+    goBtn: isUr ? 'پیش نظارہ (Go)' : 'Go (Preview)',
+    saveBtn: isUr ? 'بل محفوظ کریں' : 'Save Bill',
+    valErrorTitle: isUr ? 'توثیق کی خرابی' : 'Validation Error',
+    supplierReqMsg: isUr ? 'براہ کرم بیوپاری منتخب کریں' : 'Please select a supplier',
+    dateErrorMsg: isUr ? 'شروع کی تاریخ ختم ہونے کی تاریخ سے بعد نہیں ہو سکتی' : 'Start date cannot be after end date',
+    noDataTitle: isUr ? 'کوئی ڈیٹا نہیں' : 'No Data',
+    noDataMsg: isUr ? 'منتخب تاریخوں میں اس بیوپاری کا کوئی ڈیٹا نہیں ملا' : 'No sales found for this supplier in the selected date range',
+    errorTitle: isUr ? 'خرابی' : 'Error',
+    previewErrorMsg: isUr ? 'پیش نظارہ بنانے میں ناکامی' : 'Failed to generate preview',
+    previewReqMsg: isUr ? 'براہ کرم پہلے پیش نظارہ بنائیں' : 'Please generate a preview first',
+    noItemsMsg: isUr ? 'پیش نظارہ میں آئٹمز کے بغیر بل محفوظ نہیں کیا جا سکتا' : 'Cannot save bill without items in preview',
+    grossAmountReqMsg: isUr ? 'مجموعی رقم صفر سے زیادہ ہونی چاہیے' : 'Gross amount must be greater than zero',
+    commErrorMsg: isUr ? 'کمیشن 0 اور 100 کے درمیان ہونا چاہیے' : 'Commission must be between 0 and 100',
+    saveSuccessTitle: isUr ? 'بل محفوظ' : 'Bill Saved',
+    saveSuccessMsg: (num) => isUr ? `بل نمبر ${num} کامیابی سے محفوظ` : `Bill ${num} created successfully`,
+    saveErrorMsg: isUr ? 'بل محفوظ کرنے میں خرابی' : 'Failed to save bill',
+    errSupplier: isUr ? 'بیوپاری ضروری ہے' : 'Supplier is required',
+  }), [isUr]);
+
   // Form state
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
@@ -77,7 +124,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           setSuppliers(
             response.data.map((s) => ({
               value: String(s.id),
-              label: s.name + (s.name_english ? ` (${s.name_english})` : ''),
+              label: formatDisplayName(s.name, s.name_english, isUr),
             }))
           );
         }
@@ -86,7 +133,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
       }
     };
     loadSuppliers();
-  }, []);
+  }, [isUr]);
 
   // Format date for API
   const formatDate = (date) => {
@@ -97,11 +144,11 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
   // Generate preview (Go button)
   const handleGeneratePreview = useCallback(async () => {
-    const supplierResult = validateRequired(selectedSupplier, 'بیوپاری / Supplier');
+    const supplierResult = validateRequired(selectedSupplier, t.errSupplier);
     if (!supplierResult.isValid) {
       notifications.show({
-        title: 'توثیق کی خرابی / Validation Error',
-        message: 'براہ کرم بیوپاری منتخب کریں / Please select a supplier',
+        title: t.valErrorTitle,
+        message: t.supplierReqMsg,
         color: 'red',
       });
       return;
@@ -109,9 +156,8 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
     if (dateFrom > dateTo) {
       notifications.show({
-        title: 'توثیق کی خرابی / Validation Error',
-        message:
-          'شروع کی تاریخ ختم ہونے کی تاریخ سے بعد نہیں ہو سکتی / Start date cannot be after end date',
+        title: t.valErrorTitle,
+        message: t.dateErrorMsg,
         color: 'red',
       });
       return;
@@ -142,37 +188,63 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
         if (data.items.length === 0) {
           notifications.show({
-            title: 'کوئی ڈیٹا نہیں / No Data',
-            message:
-              'منتخب تاریخوں میں اس بیوپاری کا کوئی ڈیٹا نہیں ملا / No sales found for this supplier in the selected date range',
+            title: t.noDataTitle,
+            message: t.noDataMsg,
             color: 'yellow',
           });
         }
       } else {
         notifications.show({
-          title: 'خرابی / Error',
-          message: response.error || 'پیش نظارہ بنانے میں ناکامی / Failed to generate preview',
+          title: t.errorTitle,
+          message: response.error || t.previewErrorMsg,
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Preview generation error:', error);
       notifications.show({
-        title: 'خرابی / Error',
-        message: 'پیش نظارہ بنانے میں ناکامی / Failed to generate preview',
+        title: t.errorTitle,
+        message: t.previewErrorMsg,
         color: 'red',
       });
     } finally {
       setLoading(false);
     }
-  }, [selectedSupplier, dateFrom, dateTo, onPreviewGenerated]);
+  }, [selectedSupplier, dateFrom, dateTo, onPreviewGenerated, t]);
 
   // Save bill
   const handleSave = useCallback(async () => {
     if (!previewData || !selectedSupplier) {
       notifications.show({
-        title: 'Error',
-        message: 'Please generate a preview first',
+        title: t.errorTitle,
+        message: t.previewReqMsg,
+        color: 'red',
+      });
+      return;
+    }
+
+    if (previewData.items && previewData.items.length === 0) {
+      notifications.show({
+        title: t.errorTitle,
+        message: t.noItemsMsg,
+        color: 'red',
+      });
+      return;
+    }
+
+    if (grossAmount <= 0) {
+      notifications.show({
+        title: t.errorTitle,
+        message: t.grossAmountReqMsg,
+        color: 'red',
+      });
+      return;
+    }
+
+    if (numCommissionPct < 0 || numCommissionPct > 100) {
+      notifications.show({
+        title: t.errorTitle,
+        message: t.commErrorMsg,
         color: 'red',
       });
       return;
@@ -206,8 +278,8 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
       if (response.success) {
         notifications.show({
-          title: 'بل محفوظ / Bill Saved',
-          message: `Bill ${response.data.billNumber} created successfully / بل نمبر ${response.data.billNumber} کامیابی سے محفوظ`,
+          title: t.saveSuccessTitle,
+          message: t.saveSuccessMsg(response.data.billNumber),
           color: 'green',
         });
         onBillSaved?.(response.data);
@@ -219,16 +291,16 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
         setCashPaid('');
       } else {
         notifications.show({
-          title: 'خرابی / Error',
-          message: response.error || 'بل محفوظ کرنے میں خرابی / Failed to save bill',
+          title: t.errorTitle,
+          message: response.error || t.saveErrorMsg,
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Save bill error:', error);
       notifications.show({
-        title: 'خرابی / Error',
-        message: 'بل محفوظ کرنے میں خرابی / Failed to save bill',
+        title: t.errorTitle,
+        message: t.saveErrorMsg,
         color: 'red',
       });
     } finally {
@@ -254,6 +326,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
     numCash,
     balanceAmount,
     onBillSaved,
+    t,
   ]);
 
   // Clear form
@@ -281,17 +354,17 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
       <Stack gap="md">
         <Title order={4} className="text-blue-700">
-          📄 بیوپاری بل (Vendor Bill)
+          📄 {t.title}
         </Title>
 
         <Divider />
 
         {/* Date Range */}
-        <Grid>
+        <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Grid.Col span={6}>
             <DatePickerInput
-              label="تاریخ (From Date)"
-              placeholder="Select start date"
+              label={t.dateFrom}
+              placeholder=""
               value={dateFrom}
               onChange={setDateFrom}
               maxDate={dateTo || undefined}
@@ -300,8 +373,8 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={6}>
             <DatePickerInput
-              label="سے تاریخ (To Date)"
-              placeholder="Select end date"
+              label={t.dateTo}
+              placeholder=""
               value={dateTo}
               onChange={setDateTo}
               minDate={dateFrom || undefined}
@@ -311,31 +384,35 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
         </Grid>
 
         {/* Supplier Selection */}
-        <Select
-          label="بیوپاری (Vendor)"
-          placeholder="Select supplier"
-          data={suppliers}
-          value={selectedSupplier}
-          onChange={setSelectedSupplier}
-          searchable
-          required
-        />
+        <div style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+          <Select
+            label={t.supplier}
+            placeholder={t.supplierPh}
+            data={suppliers}
+            value={selectedSupplier}
+            onChange={setSelectedSupplier}
+            searchable
+            required
+          />
+        </div>
 
         {/* Vehicle Number */}
-        <TextInput
-          label="گاڑی نمبر (Vehicle Number)"
-          placeholder="Enter vehicle number"
-          value={vehicleNumber}
-          onChange={(e) => setVehicleNumber(e.target.value)}
-        />
+        <div style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+          <TextInput
+            label={t.vehicleNo}
+            placeholder=""
+            value={vehicleNumber}
+            onChange={(e) => setVehicleNumber(e.target.value)}
+          />
+        </div>
 
-        <Divider label="Charges / خرچ" labelPosition="center" />
+        <Divider label={t.chargesTitle} labelPosition="center" />
 
         {/* Charges Grid */}
-        <Grid>
+        <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Grid.Col span={6}>
             <NumberInput
-              label="منشیانا (Drugs/Chemicals)"
+              label={t.drugsCharges}
               value={drugsCharges}
               onChange={(val) => setDrugsCharges(val === '' ? '' : val)}
               min={0}
@@ -345,7 +422,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={6}>
             <NumberInput
-              label="کرایہ (Fare)"
+              label={t.fareCharges}
               value={fareCharges}
               onChange={(val) => setFareCharges(val === '' ? '' : val)}
               min={0}
@@ -355,10 +432,10 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
         </Grid>
 
-        <Grid>
+        <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Grid.Col span={4}>
             <NumberInput
-              label="مزدوری (Labor)"
+              label={t.laborCharges}
               value={laborCharges}
               onChange={(val) => setLaborCharges(val === '' ? '' : val)}
               min={0}
@@ -368,7 +445,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <NumberInput
-              label="برف (Ice)"
+              label={t.iceCharges}
               value={iceCharges}
               onChange={(val) => setIceCharges(val === '' ? '' : val)}
               min={0}
@@ -378,7 +455,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <NumberInput
-              label="کمیش % (Commission %)"
+              label={t.commissionPct}
               value={commissionPct}
               onChange={(val) => setCommissionPct(val === '' ? '' : val)}
               min={0}
@@ -389,10 +466,10 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
         </Grid>
 
-        <Grid>
+        <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Grid.Col span={4}>
             <NumberInput
-              label="کمیش (Commission Amount)"
+              label={t.commissionAmount}
               value={commissionAmount}
               readOnly
               decimalScale={2}
@@ -402,7 +479,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <NumberInput
-              label="رعایت (Concession)"
+              label={t.concession}
               value={concessionAmount}
               onChange={(val) => setConcessionAmount(val === '' ? '' : val)}
               min={0}
@@ -412,7 +489,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <NumberInput
-              label="نقل (Cash Paid)"
+              label={t.cashPaid}
               value={cashPaid}
               onChange={(val) => setCashPaid(val === '' ? '' : val)}
               min={0}
@@ -422,33 +499,33 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
         </Grid>
 
-        <Divider label="Summary / خلاصہ" labelPosition="center" />
+        <Divider label={t.summaryTitle} labelPosition="center" />
 
         {/* Summary Display */}
-        <Paper p="md" bg="gray.0" radius="sm">
+        <Paper p="md" bg="gray.0" radius="sm" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Grid>
             <Grid.Col span={6}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">
-                  Total Weight:
+                  {t.totalWeight}:
                 </Text>
-                <Text fw={500}>{totalWeight.toFixed(2)} kg</Text>
+                <Text fw={500} dir="ltr">{totalWeight.toFixed(2)} kg</Text>
               </Group>
             </Grid.Col>
             <Grid.Col span={6}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">
-                  Gross Amount:
+                  {t.grossAmount}:
                 </Text>
-                <Text fw={500}>Rs. {grossAmount.toFixed(2)}</Text>
+                <Text fw={500} dir="ltr">Rs. {grossAmount.toFixed(2)}</Text>
               </Group>
             </Grid.Col>
             <Grid.Col span={6}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">
-                  Total Charges:
+                  {t.totalCharges}:
                 </Text>
-                <Text fw={500} c="red">
+                <Text fw={500} c="red" dir="ltr">
                   - Rs. {(commissionAmount + totalCharges).toFixed(2)}
                 </Text>
               </Group>
@@ -456,9 +533,9 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
             <Grid.Col span={6}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">
-                  Net Payable:
+                  {t.netPayable}:
                 </Text>
-                <Text fw={600} c="blue">
+                <Text fw={600} c="blue" dir="ltr">
                   Rs. {totalPayable.toFixed(2)}
                 </Text>
               </Group>
@@ -467,9 +544,9 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               <Divider my="xs" />
               <Group justify="space-between">
                 <Text size="lg" fw={600}>
-                  اداینگی رقم (Balance):
+                  {t.balanceAmount}:
                 </Text>
-                <Text size="xl" fw={700} c={balanceAmount >= 0 ? 'green' : 'red'}>
+                <Text size="xl" fw={700} c={balanceAmount >= 0 ? 'green' : 'red'} dir="ltr">
                   Rs. {balanceAmount.toFixed(2)}
                 </Text>
               </Group>
@@ -478,15 +555,15 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
         </Paper>
 
         {/* Action Buttons */}
-        <Group justify="flex-end" mt="md">
+        <Group justify="flex-end" mt="md" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Button variant="light" color="gray" onClick={handleClear}>
-            Clear
+            {t.clearBtn}
           </Button>
           <Button variant="filled" color="teal" onClick={handleGeneratePreview}>
-            Go (Preview)
+            {t.goBtn}
           </Button>
           <Button variant="filled" color="blue" onClick={handleSave} disabled={!previewData}>
-            Save Bill
+            {t.saveBtn}
           </Button>
         </Group>
       </Stack>

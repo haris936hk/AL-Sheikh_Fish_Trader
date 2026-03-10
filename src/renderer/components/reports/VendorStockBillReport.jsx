@@ -14,6 +14,7 @@ import { IconSearch } from '@tabler/icons-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import useStore from '../../store';
+import { formatDisplayName } from '../../utils/formatters';
 import { ReportViewer } from '../ReportViewer';
 
 /**
@@ -23,7 +24,7 @@ import { ReportViewer } from '../ReportViewer';
  * columns: سیریل نمبر, گاہک, قسم, ریٹ (kg), وزن (kg), رقم
  */
 export function VendorStockBillReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -60,7 +61,7 @@ export function VendorStockBillReport() {
           setSuppliers(
             response.data.map((s) => ({
               value: String(s.id),
-              label: s.name + (s.name_english ? ` (${s.name_english})` : ''),
+              label: formatDisplayName(s.name, s.name_english, isUr),
             }))
           );
         }
@@ -69,7 +70,7 @@ export function VendorStockBillReport() {
       }
     };
     fetchSuppliers();
-  }, []);
+  }, [isUr]);
 
   const formatDate = (d) => d.toISOString().split('T')[0];
 

@@ -14,6 +14,7 @@ import { IconSearch } from '@tabler/icons-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import useStore from '../../store';
+import { formatDisplayName } from '../../utils/formatters';
 import { ReportViewer } from '../ReportViewer';
 
 /**
@@ -21,7 +22,7 @@ import { ReportViewer } from '../ReportViewer';
  * Shows sales for a specific item within date range
  */
 export function ItemSaleReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -62,7 +63,7 @@ export function ItemSaleReport() {
           setItems(
             response.data.map((i) => ({
               value: String(i.id),
-              label: i.name + (i.name_english ? ` (${i.name_english})` : ''),
+              label: formatDisplayName(i.name, i.name_english, isUr),
             }))
           );
         }
@@ -71,7 +72,7 @@ export function ItemSaleReport() {
       }
     };
     fetchItems();
-  }, []);
+  }, [isUr]);
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];

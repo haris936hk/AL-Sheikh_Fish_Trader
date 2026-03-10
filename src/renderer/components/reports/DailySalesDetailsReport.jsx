@@ -12,7 +12,7 @@ import { ReportViewer } from '../ReportViewer';
  * Shows detailed line-item sales for a specific date
  */
 export function DailySalesDetailsReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [reportData, setReportData] = useState(null);

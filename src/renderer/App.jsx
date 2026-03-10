@@ -1,4 +1,4 @@
-import { MantineProvider, Group, Button, Text, Tooltip } from '@mantine/core';
+import { MantineProvider, Group, Button, Text, Tooltip, LoadingOverlay, DirectionProvider, useDirection } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import {
@@ -13,24 +13,24 @@ import {
   IconWorld,
   IconFish,
 } from '@tabler/icons-react';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import { ErrorBoundary } from './components';
 import i18n from './i18n/index.js';
-import {
-  Dashboard,
-  Suppliers,
-  Customers,
-  SupplierBills,
-  Items,
-  Sales,
-  Purchases,
-  Reports,
-} from './pages';
+import Dashboard from './pages/Dashboard';
 import useStore from './store';
+
+// Lazy-loaded pages — only loaded when navigated to
+const Suppliers = lazy(() => import('./pages/Suppliers'));
+const Customers = lazy(() => import('./pages/Customers'));
+const SupplierBills = lazy(() => import('./pages/SupplierBills'));
+const Items = lazy(() => import('./pages/Items'));
+const Sales = lazy(() => import('./pages/Sales'));
+const Purchases = lazy(() => import('./pages/Purchases'));
+const Reports = lazy(() => import('./pages/Reports'));
 
 /**
  * Root App Component
@@ -38,7 +38,11 @@ import useStore from './store';
  * Supports Urdu (RTL) and English (LTR) languages via react-i18next.
  */
 function App() {
-  const { theme, language, setLanguage, loadSettings, saveSetting } = useStore();
+  const theme = useStore((s) => s.theme);
+  const language = useStore((s) => s.language);
+  const setLanguage = useStore((s) => s.setLanguage);
+  const loadSettings = useStore((s) => s.loadSettings);
+  const saveSetting = useStore((s) => s.saveSetting);
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [reportTab, setReportTab] = useState(null);
@@ -48,9 +52,10 @@ function App() {
     loadSettings();
   }, [loadSettings]);
 
-  // Sync language changes → i18n only (layout stays LTR always)
+  // Sync language changes → i18n and direction
   useEffect(() => {
     i18n.changeLanguage(language);
+    // document elements are updated in i18n/index.js listener, but we use useDirection here if possible
   }, [language]);
 
   // Language toggle
@@ -75,14 +80,14 @@ function App() {
   // Dynamic window title
   useEffect(() => {
     const pageTitles = {
-      dashboard: `FISHPLUS - ${  t('nav.dashboard')}`,
-      suppliers: `FISHPLUS - ${  t('nav.suppliers')}`,
-      customers: `FISHPLUS - ${  t('nav.customers')}`,
-      'supplier-bills': `FISHPLUS - ${  t('nav.bills')}`,
-      item: `FISHPLUS - ${  t('nav.items')}`,
-      sales: `FISHPLUS - ${  t('nav.sales')}`,
-      purchases: `FISHPLUS - ${  t('nav.purchases')}`,
-      reports: `FISHPLUS - ${  t('nav.reports')}`,
+      dashboard: `FISHPLUS - ${t('nav.dashboard')}`,
+      suppliers: `FISHPLUS - ${t('nav.suppliers')}`,
+      customers: `FISHPLUS - ${t('nav.customers')}`,
+      'supplier-bills': `FISHPLUS - ${t('nav.bills')}`,
+      item: `FISHPLUS - ${t('nav.items')}`,
+      sales: `FISHPLUS - ${t('nav.sales')}`,
+      purchases: `FISHPLUS - ${t('nav.purchases')}`,
+      reports: `FISHPLUS - ${t('nav.reports')}`,
     };
     document.title = pageTitles[currentPage] || 'FISHPLUS Distributor';
   }, [currentPage, t]);
@@ -154,37 +159,54 @@ function App() {
 
   // Render current page
   const renderPage = () => {
+    let pageContent = null;
     switch (currentPage) {
       case 'suppliers':
-        return <Suppliers onBack={() => navigateTo('dashboard')} />;
+        pageContent = <Suppliers onBack={() => navigateTo('dashboard')} />;
+        break;
       case 'customers':
-        return <Customers onBack={() => navigateTo('dashboard')} />;
+        pageContent = <Customers onBack={() => navigateTo('dashboard')} />;
+        break;
       case 'supplier-bills':
-        return <SupplierBills onBack={() => navigateTo('dashboard')} />;
+        pageContent = <SupplierBills onBack={() => navigateTo('dashboard')} />;
+        break;
       case 'item':
-        return <Items onBack={() => navigateTo('dashboard')} />;
+        pageContent = <Items onBack={() => navigateTo('dashboard')} />;
+        break;
       case 'sales':
-        return <Sales onBack={() => navigateTo('dashboard')} />;
+        pageContent = <Sales onBack={() => navigateTo('dashboard')} />;
+        break;
       case 'purchases':
-        return <Purchases onBack={() => navigateTo('dashboard')} />;
+        pageContent = <Purchases onBack={() => navigateTo('dashboard')} />;
+        break;
       case 'reports':
-        return <Reports onBack={() => navigateTo('dashboard')} initialTab={reportTab} />;
+        pageContent = <Reports onBack={() => navigateTo('dashboard')} initialTab={reportTab} />;
+        break;
       default:
-        return <Dashboard onNavigate={navigateTo} onToggleLanguage={toggleLanguage} />;
+        pageContent = <Dashboard onNavigate={navigateTo} onToggleLanguage={toggleLanguage} />;
+        break;
     }
+
+    // Wrap the individual page in an ErrorBoundary so a crash doesn't break navigation
+    return <ErrorBoundary key={currentPage}>{pageContent}</ErrorBoundary>;
   };
+
+  // Suspense fallback for lazy-loaded pages
+  const pageFallback = <LoadingOverlay visible loaderProps={{ type: 'dots' }} />;
 
   return (
     <MantineProvider
       theme={{
         colorScheme: theme,
         fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Noto Sans Arabic'",
         primaryColor: 'blue',
       }}
     >
+      {/* RTL-aware notification position: top-right for LTR (en), top-left for RTL (ur).
+           Mantine v8 removed top-start/top-end; use explicit left/right instead. */}
+      <Notifications position={language === 'ur' ? 'top-left' : 'top-right'} />
       <ModalsProvider>
-        <Notifications position="top-right" />
         <ErrorBoundary>
           {/* Menu Bar - visible on all non-dashboard pages (FR-MENU-001) */}
           {currentPage !== 'dashboard' && (
@@ -266,11 +288,31 @@ function App() {
               </Group>
             </div>
           )}
-          {renderPage()}
+          <Suspense fallback={pageFallback}>{renderPage()}</Suspense>
         </ErrorBoundary>
       </ModalsProvider>
     </MantineProvider>
   );
 }
 
-export default App;
+// Wrap with DirectionProvider and an inner component to access useDirection
+function AppWrapper() {
+  return (
+    <DirectionProvider detectDirection>
+      <AppInner />
+    </DirectionProvider>
+  );
+}
+
+function AppInner() {
+  const language = useStore((s) => s.language);
+  const { setDirection } = useDirection();
+
+  useEffect(() => {
+    setDirection(language === 'ur' ? 'rtl' : 'ltr');
+  }, [language, setDirection]);
+
+  return <App />;
+}
+
+export default AppWrapper;

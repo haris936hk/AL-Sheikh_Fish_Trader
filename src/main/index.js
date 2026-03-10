@@ -1,6 +1,6 @@
 const path = require('path');
 
-const { app, BrowserWindow, Menu } = require('electron');
+const { app, BrowserWindow, Menu, dialog } = require('electron');
 
 // Detect if running in development mode
 const isDev = !app.isPackaged;
@@ -8,18 +8,36 @@ const isDev = !app.isPackaged;
 // Disable default menu before app is ready
 Menu.setApplicationMenu(null);
 
+// Catch unhandled errors
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  if (app.isReady()) {
+    dialog.showErrorBox('Critical Error', `An unexpected error occurred: ${error.message}\n\nThe application will now close.`);
+  }
+  app.quit();
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
+    show: false, // Wait for 'ready-to-show' to avoid white flash
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true, // Keeps Node.js isolated from renderer JS
       nodeIntegration: false, // Renderer cannot access Node.js directly
       sandbox: false, // Required: preload uses require() for channels.js
       v8CacheOptions: 'code',
+      backgroundThrottling: false, // Prevent throttling when window loses focus
     },
   });
+
+  // Show window only after content has been painted
+  mainWindow.once('ready-to-show', () => mainWindow.show());
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
@@ -30,6 +48,25 @@ const createWindow = () => {
   // Log any page load failures to the console for debugging
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
     console.error('Window failed to load:', errorCode, errorDescription);
+  });
+
+  // Handle renderer process crashes
+  mainWindow.webContents.on('render-process-gone', (event, details) => {
+    console.error('Renderer process crashed:', details.reason);
+    const choice = dialog.showMessageBoxSync(mainWindow, {
+      type: 'error',
+      title: 'Renderer Crashed',
+      message: 'The renderer process has crashed.',
+      detail: `Reason: ${details.reason}. Would you like to reload the app?`,
+      buttons: ['Reload', 'Quit'],
+      defaultId: 0,
+      cancelId: 1
+    });
+    if (choice === 0) {
+      mainWindow.reload();
+    } else {
+      app.quit();
+    }
   });
 
   // Open DevTools only in development mode
@@ -51,6 +88,9 @@ app
       console.log('Database initialized successfully');
     } catch (error) {
       console.error('Failed to initialize database:', error);
+      dialog.showErrorBox('Database Error', `Failed to initialize database.\n\nError: ${error.message}\n\nThe application will now close.`);
+      app.quit();
+      return; // Stop further execution
     }
 
     // Register IPC handlers
@@ -77,15 +117,13 @@ app.on('window-all-closed', () => {
   }
 });
 
-// Clean up database connection and jsreport on quit
-app.on('before-quit', async () => {
+// Clean up database connection on quit
+app.on('will-quit', () => {
   try {
-    const jsreportService = require('./services/jsreportService.js');
-    await jsreportService.close();
-  } catch {
-    // jsreport may not have been initialized
+    const db = require('./database/index.js');
+    db.close();
+    console.log('Database connection closed');
+  } catch (err) {
+    console.error('Error closing database:', err);
   }
-  const db = require('./database/index.js');
-  db.close();
-  console.log('Database connection closed');
 });

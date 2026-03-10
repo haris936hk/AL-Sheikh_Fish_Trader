@@ -2,6 +2,9 @@ import { Paper, Stack, Group, Text, Title, Table, Divider, Button, Center } from
 import PropTypes from 'prop-types';
 import { useRef } from 'react';
 
+import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
+
 /**
  * SupplierBillPreview Component
  * Receipt-style preview for printing supplier bills.
@@ -11,6 +14,7 @@ import { useRef } from 'react';
  */
 function SupplierBillPreview({ previewData }) {
   const printRef = useRef();
+  const isUr = useStore((s) => s.language === 'ur');
 
   // Format date for display
   const formatDisplayDate = (dateStr) => {
@@ -161,12 +165,7 @@ function SupplierBillPreview({ previewData }) {
                   <Table.Tr key={item.id}>
                     <Table.Td style={{ textAlign: 'center' }}>{index + 1}</Table.Td>
                     <Table.Td>
-                      {item.item_name}
-                      {item.item_name_english && (
-                        <Text size="xs" c="dimmed">
-                          {item.item_name_english}
-                        </Text>
-                      )}
+                      {formatDisplayName(item.item_name, item.item_name_english, isUr)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: 'right' }}>{item.vehicle_number || '-'}</Table.Td>
                     <Table.Td style={{ textAlign: 'right' }}>
