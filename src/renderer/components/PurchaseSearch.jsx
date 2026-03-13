@@ -271,42 +271,36 @@ function PurchaseSearch({ onEdit }) {
         <Divider />
 
         {/* Filters */}
-        <Grid align="end" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
-          <Grid.Col span={2}>
+        <Grid align="flex-end" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <Group grow gap="xs" align="flex-end">
+              <DatePickerInput
+                label={t.dateFrom}
+                placeholder=""
+                value={dateFrom}
+                onChange={setDateFrom}
+                maxDate={dateTo || undefined}
+                disabled={!filterByDate}
+              />
+              <DatePickerInput
+                label={t.dateTo}
+                placeholder=""
+                value={dateTo}
+                onChange={setDateTo}
+                minDate={dateFrom || undefined}
+                disabled={!filterByDate}
+              />
+            </Group>
             <Checkbox
               label={t.filterDate}
               checked={filterByDate}
               onChange={(e) => setFilterByDate(e.target.checked)}
+              mt="xs"
+              size="xs"
             />
           </Grid.Col>
-          <Grid.Col span={2.5}>
-            <DatePickerInput
-              label={t.dateFrom}
-              placeholder=""
-              value={dateFrom}
-              onChange={setDateFrom}
-              maxDate={dateTo || undefined}
-              disabled={!filterByDate}
-            />
-          </Grid.Col>
-          <Grid.Col span={2.5}>
-            <DatePickerInput
-              label={t.dateTo}
-              placeholder=""
-              value={dateTo}
-              onChange={setDateTo}
-              minDate={dateFrom || undefined}
-              disabled={!filterByDate}
-            />
-          </Grid.Col>
-          <Grid.Col span={2}>
-            <Checkbox
-              label={t.filterSupplier}
-              checked={filterBySupplier}
-              onChange={(e) => setFilterBySupplier(e.target.checked)}
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
+
+          <Grid.Col span={{ base: 12, md: 3 }}>
             <Select
               label={t.supplier}
               placeholder=""
@@ -314,13 +308,19 @@ function PurchaseSearch({ onEdit }) {
               value={selectedSupplier}
               onChange={setSelectedSupplier}
               searchable
+              clearable
               disabled={!filterBySupplier}
             />
+            <Checkbox
+              label={t.filterSupplier}
+              checked={filterBySupplier}
+              onChange={(e) => setFilterBySupplier(e.target.checked)}
+              mt="xs"
+              size="xs"
+            />
           </Grid.Col>
-        </Grid>
 
-        <Grid align="end" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
-          <Grid.Col span={3}>
+          <Grid.Col span={{ base: 12, md: 2 }}>
             <TextInput
               label={t.purchNo}
               placeholder=""
@@ -328,7 +328,8 @@ function PurchaseSearch({ onEdit }) {
               onChange={(e) => setPurchaseNumber(e.target.value)}
             />
           </Grid.Col>
-          <Grid.Col span={9}>
+
+          <Grid.Col span={{ base: 12, md: 3 }} pb="lg">
             <Group justify="flex-end">
               <Button variant="filled" color="green" onClick={handleSearch}>
                 {t.search}
@@ -394,7 +395,7 @@ function PurchaseSearch({ onEdit }) {
         </Group>
 
         <ScrollArea h={400} style={{ direction: isUr ? 'rtl' : 'ltr' }}>
-          <Table striped withTableBorder highlightOnHover style={{ tableLayout: 'fixed' }}>
+          <Table striped withTableBorder withColumnBorders highlightOnHover style={{ tableLayout: 'fixed' }}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th style={{ width: 40 }}>

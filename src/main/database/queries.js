@@ -1208,12 +1208,79 @@ const sales = {
    * @param {Object} data - Updated sale data
    * @returns {Object} Update result
    */
+  /**
+   * Recalculate Vendor Bill totals dynamically after linked sales are edited
+   * @param {number} billId - Vendor Bill ID
+   */
+  recalculateSupplierBill: (billId) => {
+    const billResult = db.query('SELECT * FROM supplier_bills WHERE id = ?', [billId]);
+    if (!billResult[0]) return;
+    const bill = billResult[0];
+
+    // Re-aggregate all posted, non-stock items linked to this bill
+    const totalsResult = db.query(`
+      SELECT 
+        COALESCE(SUM(si.weight), 0) as total_weight, 
+        COALESCE(SUM(si.amount), 0) as gross_amount
+      FROM sale_items si
+      JOIN sales s ON si.sale_id = s.id
+      WHERE si.supplier_bill_id = ? AND s.status = 'posted' AND si.is_stock = 0
+    `, [billId]);
+    
+    const totals = totalsResult[0] || { total_weight: 0, gross_amount: 0 };
+    
+    // Recalculate charges and balance
+    const newComm = (totals.gross_amount * (bill.commission_pct || 0)) / 100;
+    const newCharges = newComm + (bill.drugs_charges || 0) + (bill.fare_charges || 0) + (bill.labor_charges || 0) + (bill.ice_charges || 0) + (bill.other_charges || 0);
+    const newPayable = totals.gross_amount - newCharges;
+    const newBalance = newPayable - (bill.concession_amount || 0) - (bill.cash_paid || 0) - (bill.collection_amount || 0);
+    const diff = newBalance - (bill.balance_amount || 0);
+
+    // Update the bill
+    db.execute(`
+      UPDATE supplier_bills SET 
+        total_weight = ?, gross_amount = ?, commission_amount = ?, 
+        total_charges = ?, total_payable = ?, balance_amount = ?, 
+        updated_at = CURRENT_TIMESTAMP 
+      WHERE id = ?`, 
+      [totals.total_weight, totals.gross_amount, newComm, newCharges, newPayable, newBalance, billId]
+    );
+
+    // Patch the supplier ledger
+    if (diff !== 0) {
+      db.execute(
+        'UPDATE suppliers SET current_balance = current_balance + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+        [diff, bill.supplier_id]
+      );
+    }
+  },
+
+  /**
+   * Update an existing sale
+   * @param {number} id - Sale ID
+   * @param {Object} data - Updated sale data
+   * @returns {Object} Update result
+   */
   update: (id, data) => {
     const { customer_id, supplier_id, vehicle_number, sale_date, details, items: saleItems } = data;
 
     // Get existing sale for balance restoration (read before transaction)
     const existingSale = sales.getById(id);
     if (!existingSale) throw new Error('Sale not found');
+
+    // Capture affected supplier_bill_ids mapped by item line or collect globally
+    const oldBilledItemsResult = db.query(
+      'SELECT DISTINCT supplier_bill_id FROM sale_items WHERE sale_id = ? AND supplier_bill_id IS NOT NULL AND is_stock = 0',
+      [id]
+    );
+    
+    const affectedBillIds = oldBilledItemsResult.map(row => row.supplier_bill_id);
+    const primaryBillId = affectedBillIds.length > 0 ? affectedBillIds[0] : null;
+
+    // If billed, do not allow changing the supplier of the sale entirely
+    if (affectedBillIds.length > 0 && supplier_id !== existingSale.supplier_id) {
+       throw new Error('Cannot change the Vendor on this sale because some items have already been processed in a Vendor Bill.');
+    }
 
     const updateTxn = db.getDb().transaction(() => {
       // Restore previous stock levels
@@ -1314,8 +1381,8 @@ const sales = {
             sale_id, line_number, item_id, customer_id, is_stock,
             rate_per_maund, rate, weight, amount,
             fare_charges, ice_charges, other_charges,
-            cash_amount, receipt_amount, notes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            cash_amount, receipt_amount, notes, supplier_bill_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             i + 1,
@@ -1332,6 +1399,7 @@ const sales = {
             item.cash_amount || 0,
             item.receipt_amount || 0,
             item.notes || null,
+            (!item.is_stock && primaryBillId) ? primaryBillId : null,
           ]
         );
 
@@ -1361,7 +1429,16 @@ const sales = {
       return { changes: 1 };
     });
 
-    return updateTxn();
+    const result = updateTxn();
+
+    // After transaction commits, dynamically update affected Vendor Bills
+    if (affectedBillIds.length > 0) {
+      for (const billId of affectedBillIds) {
+        sales.recalculateSupplierBill(billId);
+      }
+    }
+
+    return result;
   },
 
   /**
@@ -1372,6 +1449,13 @@ const sales = {
   delete: (id) => {
     const sale = sales.getById(id);
     if (!sale) throw new Error('Sale not found');
+
+    // Capture affected supplier_bill_ids
+    const oldBilledItemsResult = db.query(
+      'SELECT DISTINCT supplier_bill_id FROM sale_items WHERE sale_id = ? AND supplier_bill_id IS NOT NULL AND is_stock = 0',
+      [id]
+    );
+    const affectedBillIds = oldBilledItemsResult.map(row => row.supplier_bill_id);
 
     const deleteTxn = db.getDb().transaction(() => {
       // Restore stock levels
@@ -1409,7 +1493,16 @@ const sales = {
       );
     });
 
-    return deleteTxn();
+    const result = deleteTxn();
+
+    // After transaction commits, dynamically update affected Vendor Bills
+    if (affectedBillIds.length > 0) {
+      for (const billId of affectedBillIds) {
+        sales.recalculateSupplierBill(billId);
+      }
+    }
+
+    return result;
   },
 };
 

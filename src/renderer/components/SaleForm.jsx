@@ -321,9 +321,18 @@ function SaleForm({ editSale, onSaved, onCancel }) {
 
   // Save sale
   const handleSave = useCallback(async () => {
+    const validLineItems = lineItems.filter(
+      (row) => row.item_id || row.rate_kg || row.weight || row.customer_id
+    );
+
+    if (validLineItems.length === 0) {
+      notifications.show({ title: t.saveErrorTitle, message: t.valErrorItem, color: 'red' });
+      return;
+    }
+
     // Validate all rows
-    for (let i = 0; i < lineItems.length; i++) {
-      const row = lineItems[i];
+    for (let i = 0; i < validLineItems.length; i++) {
+      const row = validLineItems[i];
       if (!row.item_id) {
         notifications.show({ title: t.saveErrorTitle, message: t.valErrorItem, color: 'red' });
         return;
@@ -359,7 +368,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
 
         // Compute required weight from all selected line items
         const requiredWeightMap = {};
-        for (const row of lineItems) {
+        for (const row of validLineItems) {
           if (row.is_stock && row.item_id) {
             const w = Number(row.weight) || 0;
             requiredWeightMap[row.item_id] = (requiredWeightMap[row.item_id] || 0) + w;
@@ -395,7 +404,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       // Backend automatically calculates per-customer totals from items array.
       // We pass the first customer_id as the header customer_id per existing pattern
       // since the database sales table has a customer_id column.
-      const primaryCustomerId = lineItems.length > 0 ? parseInt(lineItems[0].customer_id) : null;
+      const primaryCustomerId = validLineItems.length > 0 ? parseInt(validLineItems[0].customer_id) : null;
 
       const saleData = {
         customer_id: primaryCustomerId,
@@ -403,7 +412,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         vehicle_number: vehicleNumber || null,
         sale_date: formatDate(saleDate),
         details: details || null,
-        items: lineItems.map((row) => ({
+        items: validLineItems.map((row) => ({
           item_id: parseInt(row.item_id),
           customer_id: parseInt(row.customer_id),
           is_stock: row.is_stock,
@@ -460,7 +469,8 @@ function SaleForm({ editSale, onSaved, onCancel }) {
   const handlePrint = useCallback(() => {
     const dateStr = saleDate ? new Date(saleDate).toLocaleDateString('en-PK') : '';
 
-    const rowsHtml = lineItems.map((row) => {
+    const validLines = lineItems.filter(row => row.item_id || row.rate_kg || row.weight || row.customer_id);
+    const rowsHtml = validLines.map((row) => {
       const itemInfo = itemsList.find((i) => String(i.id) === String(row.item_id));
       const custInfo = customers.find((c) => c.value === String(row.customer_id));
       const numWeight = Number(row.weight) || 0;
@@ -617,22 +627,22 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         <Divider label={t.saleDetails} labelPosition="center" />
 
         {/* Dynamic Line Items - Tabular Layout */}
-        <Paper withBorder radius="md" style={{ overflowX: 'auto' }}>
-          <Table verticalSpacing="xs" striped withTableBorder withColumnBorders style={{ minWidth: 1200 }}>
+        <Paper withBorder radius="md" style={{ overflowX: 'auto', overflowY: 'visible' }}>
+          <Table verticalSpacing="xs" striped withTableBorder withColumnBorders style={{ minWidth: 950 }}>
             <Table.Thead bg="gray.1">
               <Table.Tr>
-                <Table.Th style={{ width: 60, textAlign: 'center' }}>{t.stock}</Table.Th>
-                <Table.Th style={{ width: 220 }}>{t.item}</Table.Th>
-                <Table.Th style={{ width: 100 }}>{t.rateMaund}</Table.Th>
-                <Table.Th style={{ width: 100 }}>{t.rateKg}</Table.Th>
-                <Table.Th style={{ width: 220 }}>{t.customer}</Table.Th>
-                <Table.Th style={{ width: 90 }}>{t.weightKg}</Table.Th>
-                <Table.Th style={{ width: 80 }}>{t.iceCharges}</Table.Th>
-                <Table.Th style={{ width: 80 }}>{t.fareCharges}</Table.Th>
-                <Table.Th style={{ width: 110 }}>{t.totalAmount}</Table.Th>
-                <Table.Th style={{ width: 90 }}>{t.cash}</Table.Th>
-                <Table.Th style={{ width: 90 }}>{t.receipt}</Table.Th>
-                {lineItems.length > 1 && <Table.Th style={{ width: 50, textAlign: 'center' }}>Delete</Table.Th>}
+                <Table.Th style={{ width: 40, textAlign: 'center' }}>{t.stock}</Table.Th>
+                <Table.Th style={{ width: 170 }}>{t.item}</Table.Th>
+                <Table.Th style={{ width: 85 }}>{t.rateMaund}</Table.Th>
+                <Table.Th style={{ width: 85 }}>{t.rateKg}</Table.Th>
+                <Table.Th style={{ width: 170 }}>{t.customer}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t.weightKg}</Table.Th>
+                <Table.Th style={{ width: 70 }}>{t.iceCharges}</Table.Th>
+                <Table.Th style={{ width: 70 }}>{t.fareCharges}</Table.Th>
+                <Table.Th style={{ width: 90 }}>{t.totalAmount}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t.cash}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t.receipt}</Table.Th>
+                {lineItems.length > 1 && <Table.Th style={{ width: 40, textAlign: 'center' }}>X</Table.Th>}
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>

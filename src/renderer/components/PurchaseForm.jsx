@@ -290,6 +290,15 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
 
   // Save purchase
   const handleSave = useCallback(async () => {
+    const validLineItems = lineItems.filter(
+      (row) => row.item_id || row.rate_kg || row.weight
+    );
+
+    if (validLineItems.length === 0) {
+      notifications.show({ title: t.valErrorTitle, message: t.selectItemMsg, color: 'red' });
+      return;
+    }
+
     const supplierResult = validateRequired(selectedSupplier, t.supplier);
     if (!supplierResult.isValid) {
       notifications.show({
@@ -301,7 +310,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     }
 
     // Validate rows
-    const hasInvalidRow = lineItems.some(
+    const hasInvalidRow = validLineItems.some(
       (row) => !row.item_id || Number(row.weight) <= 0 || Number(row.rate_kg) <= 0
     );
 
@@ -332,7 +341,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         details: details || null,
         concession_amount: Number(concessionAmount) || 0,
         cash_paid: Number(cashPaid) || 0,
-        items: lineItems.map((row) => ({
+        items: validLineItems.map((row) => ({
           item_id: parseInt(row.item_id),
           weight: Number(row.weight) || 0,
           rate: Number(row.rate_kg) || 0,
@@ -393,7 +402,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     const supplierName = suppliers.find((s) => s.value === selectedSupplier)?.label || '';
     const dateStr = purchaseDate ? new Date(purchaseDate).toLocaleDateString('en-PK') : '';
 
-    const rowsHtml = lineItems.map((row) => {
+    const validLines = lineItems.filter(row => row.item_id || row.rate_kg || row.weight);
+    const rowsHtml = validLines.map((row) => {
       const itemInfo = itemsList.find((i) => String(i.id) === String(row.item_id));
       const w = Number(row.weight) || 0;
       const r = Number(row.rate_kg) || 0;
