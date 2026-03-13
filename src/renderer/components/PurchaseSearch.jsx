@@ -504,11 +504,11 @@ function PurchaseSearch({ onEdit }) {
                       {(purchase.total_weight || 0).toFixed(2)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      Rs. {(purchase.net_amount || 0).toFixed(2)}
+                      Rs. {Math.round(purchase.net_amount || 0).toLocaleString('en-US')}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                       <Text c={purchase.balance_amount > 0 ? 'red' : 'green'}>
-                        Rs. {(purchase.balance_amount || 0).toFixed(2)}
+                        Rs. {Math.round(purchase.balance_amount || 0).toLocaleString('en-US')}
                       </Text>
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'right' : 'left' }}>

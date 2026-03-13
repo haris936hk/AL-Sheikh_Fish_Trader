@@ -249,7 +249,7 @@ function SupplierSearch({ onEdit, onRefresh }) {
       <Table.Td>{supplier.mobile || supplier.phone || supplier.email || '-'}</Table.Td>
       <Table.Td>
         <Badge variant="light" color="blue">
-          {Number(supplier.advance_amount || 0).toFixed(2)}
+          {Math.round(Number(supplier.advance_amount || 0)).toLocaleString('en-US')}
         </Badge>
       </Table.Td>
       <Table.Td>

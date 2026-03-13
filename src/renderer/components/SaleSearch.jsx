@@ -293,7 +293,7 @@ function SaleSearch({ onEdit }) {
                         <td>${item.item_name || ''}</td>
                         <td style="text-align:right">${netWeight.toFixed(2)}</td>
                         <td style="text-align:right">${(item.rate || 0).toFixed(2)}</td>
-                        <td style="text-align:right">${amount.toFixed(2)}</td>
+                        <td style="text-align:right">${Math.round(amount).toLocaleString('en-US')}</td>
                     </tr>`;
             })
             .join('');
@@ -316,9 +316,9 @@ function SaleSearch({ onEdit }) {
                         <tbody>${itemRows}</tbody>
                     </table>
                     <table class="totals">
-                        <tr><td>${t.netAmtCol}:</td><td><strong>Rs. ${(sale.net_amount || 0).toFixed(2)}</strong></td></tr>
-                        <tr><td>${t.cashReceivedCol}:</td><td>Rs. ${(sale.cash_received || 0).toFixed(2)}</td></tr>
-                        <tr class="grand-total"><td>${t.balanceCol}:</td><td>Rs. ${(sale.balance_amount || 0).toFixed(2)}</td></tr>
+                        <tr><td>${t.netAmtCol}:</td><td><strong>Rs. ${Math.round(sale.net_amount || 0).toLocaleString('en-US')}</strong></td></tr>
+                        <tr><td>${t.cashReceivedCol}:</td><td>Rs. ${Math.round(sale.cash_received || 0).toLocaleString('en-US')}</td></tr>
+                        <tr class="grand-total"><td>${t.balanceCol}:</td><td>Rs. ${Math.round(sale.balance_amount || 0).toLocaleString('en-US')}</td></tr>
                     </table>
                 </div>`;
         })
@@ -606,11 +606,11 @@ function SaleSearch({ onEdit }) {
                       {sale.vehicle_number || '-'}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      Rs. {(sale.net_amount || 0).toFixed(2)}
+                      Rs. {Math.round(sale.net_amount || 0).toLocaleString('en-US')}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                       <Text c={sale.balance_amount > 0 ? 'red' : 'green'}>
-                        Rs. {(sale.balance_amount || 0).toFixed(2)}
+                        Rs. {Math.round(sale.balance_amount || 0).toLocaleString('en-US')}
                       </Text>
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'right' : 'left' }}>

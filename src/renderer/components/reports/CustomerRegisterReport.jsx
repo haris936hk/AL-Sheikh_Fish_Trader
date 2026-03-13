@@ -40,10 +40,7 @@ export function CustomerRegisterReport() {
   };
 
   const formatNumber = (num) => {
-    return (num || 0).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    return Math.round(num || 0).toLocaleString('en-US');
   };
 
   const handleGenerate = useCallback(async () => {
@@ -79,10 +76,7 @@ export function CustomerRegisterReport() {
     if (!reportData || reportData.customers.length === 0) return null;
 
     const fmt = (num) =>
-      (num || 0).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+      Math.round(num || 0).toLocaleString('en-US');
 
     const rows = reportData.customers
       .map(

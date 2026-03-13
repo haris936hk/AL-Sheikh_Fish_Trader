@@ -241,7 +241,7 @@ function CustomerSearch({ onEdit, onRefresh }) {
       <Table.Td>{customer.mobile || customer.phone || customer.email || '-'}</Table.Td>
       <Table.Td>
         <Badge variant="light" color="green">
-          {Number(customer.current_balance || 0).toFixed(2)}
+          {Math.round(Number(customer.current_balance || 0)).toLocaleString('en-US')}
         </Badge>
       </Table.Td>
       <Table.Td>

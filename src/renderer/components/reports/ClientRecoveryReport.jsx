@@ -80,10 +80,7 @@ export function ClientRecoveryReport() {
   };
 
   const formatNumber = (num) => {
-    return (num || 0).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    return Math.round(num || 0).toLocaleString('en-US');
   };
 
   const handleGenerate = useCallback(async () => {
@@ -131,10 +128,7 @@ export function ClientRecoveryReport() {
     if (!reportData || reportData.summary.length === 0) return null;
 
     const fmt = (num) =>
-      (num || 0).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+      Math.round(num || 0).toLocaleString('en-US');
 
     const totalAmount = reportData.summary.reduce((sum, r) => sum + (r.total_amount || 0), 0);
     const totalCharges = reportData.summary.reduce((sum, r) => sum + (r.total_charges || 0), 0);

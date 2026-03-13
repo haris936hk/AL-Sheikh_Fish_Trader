@@ -31,10 +31,7 @@ function SupplierAdvancesList({ data = [], loading = false, onRefresh }) {
   const isUr = useStore((s) => s.language === 'ur');
   // Format currency with 2 decimal places
   const formatAmount = (amount) => {
-    return new Intl.NumberFormat('en-PK', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount || 0);
+    return Math.round(amount || 0).toLocaleString('en-US');
   };
 
   if (loading) {

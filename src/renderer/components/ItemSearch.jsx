@@ -204,7 +204,7 @@ function ItemSearch({ onEdit, onRefresh }) {
       <Table.Td>{item.category_name || item.category_name_urdu || 'None'}</Table.Td>
       <Table.Td>
         <Badge variant="light" color="green">
-          Rs. {Number(item.unit_price || 0).toFixed(2)}
+          Rs. {Math.round(Number(item.unit_price || 0)).toLocaleString('en-US')}
         </Badge>
       </Table.Td>
       <Table.Td>

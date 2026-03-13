@@ -546,10 +546,7 @@ function Settings() {
                           {yearEndPreview.summary.customerCount} customers
                         </Text>
                         <Text size="lg" fw={700} c="blue">
-                          Rs.{' '}
-                          {yearEndPreview.summary.totalCustomerBalance.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                          })}
+                          Rs. {Math.round(yearEndPreview.summary.totalCustomerBalance).toLocaleString('en-US')}
                         </Text>
                       </Paper>
                     </Grid.Col>
@@ -560,10 +557,7 @@ function Settings() {
                           {yearEndPreview.summary.supplierCount} vendors
                         </Text>
                         <Text size="lg" fw={700} c="green">
-                          Rs.{' '}
-                          {yearEndPreview.summary.totalSupplierBalance.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                          })}
+                          Rs. {Math.round(yearEndPreview.summary.totalSupplierBalance).toLocaleString('en-US')}
                         </Text>
                       </Paper>
                     </Grid.Col>
