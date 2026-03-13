@@ -1,14 +1,15 @@
-/* global setTimeout */
 /**
  * Print Service
  * Handles printing and exporting reports to PDF/Excel
  * Implements FR-PRINT-001 through FR-PRINT-012
  */
 
-const { BrowserWindow, dialog, app } = require('electron');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+
+const { BrowserWindow, dialog, app } = require('electron');
 const ExcelJS = require('exceljs');
+
 const jsreportService = require('./jsreportService.js');
 
 /**

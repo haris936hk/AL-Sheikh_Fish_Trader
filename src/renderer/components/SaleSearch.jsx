@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Paper,
   Stack,
@@ -22,9 +21,12 @@ import { DatePickerInput } from '@mantine/dates';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import '@mantine/dates/styles.css';
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
 
 /**
  * SaleSearch Component
@@ -34,7 +36,7 @@ import useStore from '../store';
  * @param {function} onEdit - Callback to edit a sale
  */
 function SaleSearch({ onEdit }) {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [sales, setSales] = useState([]);
@@ -144,7 +146,7 @@ function SaleSearch({ onEdit }) {
           setCustomers(
             response.data.map((c) => ({
               value: String(c.id),
-              label: c.name + (c.name_english ? ` (${c.name_english})` : ''),
+              label: formatDisplayName(c.name, c.name_english, isUr),
             }))
           );
         }
@@ -153,7 +155,7 @@ function SaleSearch({ onEdit }) {
       }
     };
     loadCustomers();
-  }, []);
+  }, [isUr]);
 
   // Format date for API
   const formatDate = (date) => {
@@ -370,8 +372,8 @@ function SaleSearch({ onEdit }) {
         <Divider />
 
         {/* Filters */}
-        <Grid align="end" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
-          <Grid.Col span={3}>
+        <Grid align="flex-end" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+          <Grid.Col span={{ base: 12, md: 2 }}>
             <DatePickerInput
               label={t.dateFrom}
               placeholder=""
@@ -380,7 +382,7 @@ function SaleSearch({ onEdit }) {
               maxDate={dateTo || undefined}
             />
           </Grid.Col>
-          <Grid.Col span={3}>
+          <Grid.Col span={{ base: 12, md: 2 }}>
             <DatePickerInput
               label={t.dateTo}
               placeholder=""
@@ -389,7 +391,7 @@ function SaleSearch({ onEdit }) {
               minDate={dateFrom || undefined}
             />
           </Grid.Col>
-          <Grid.Col span={3}>
+          <Grid.Col span={{ base: 12, md: 3 }}>
             <Select
               label={t.customer}
               placeholder=""
@@ -397,21 +399,18 @@ function SaleSearch({ onEdit }) {
               value={selectedCustomer}
               onChange={setSelectedCustomer}
               searchable
+              clearable
               disabled={allCustomers}
             />
-          </Grid.Col>
-          <Grid.Col span={3}>
             <Checkbox
               label={t.allCustomers}
               checked={allCustomers}
               onChange={(e) => setAllCustomers(e.target.checked)}
-              mt="xl"
+              mt="xs"
+              size="xs"
             />
           </Grid.Col>
-        </Grid>
-
-        <Grid align="end" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
-          <Grid.Col span={3}>
+          <Grid.Col span={{ base: 12, md: 2 }}>
             <TextInput
               label={t.saleNo}
               placeholder=""
@@ -419,16 +418,15 @@ function SaleSearch({ onEdit }) {
               onChange={(e) => setSaleNumber(e.target.value)}
               disabled={!searchBySaleNumber}
             />
-          </Grid.Col>
-          <Grid.Col span={3}>
             <Checkbox
               label={t.searchBySaleNo}
               checked={searchBySaleNumber}
               onChange={(e) => setSearchBySaleNumber(e.target.checked)}
-              mt="xl"
+              mt="xs"
+              size="xs"
             />
           </Grid.Col>
-          <Grid.Col span={6}>
+          <Grid.Col span={{ base: 12, md: 3 }} pb="lg">
             <Group justify="flex-end">
               <Button
                 variant="light"
@@ -502,7 +500,7 @@ function SaleSearch({ onEdit }) {
         </Group>
 
         <ScrollArea h={400} style={{ direction: isUr ? 'rtl' : 'ltr' }}>
-          <Table striped withTableBorder highlightOnHover style={{ tableLayout: 'fixed' }}>
+          <Table striped withTableBorder withColumnBorders highlightOnHover style={{ tableLayout: 'fixed' }}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th style={{ width: 40 }}>
@@ -630,10 +628,7 @@ function SaleSearch({ onEdit }) {
                           color="blue"
                           variant="subtle"
                           onClick={() => onEdit?.(sale)}
-                          title={
-                            sale.status === 'posted' ? 'Posted sales cannot be edited' : 'Edit'
-                          }
-                          disabled={sale.status === 'posted'}
+                          title="Edit"
                         >
                           ✏️
                         </ActionIcon>
@@ -641,10 +636,7 @@ function SaleSearch({ onEdit }) {
                           color="red"
                           variant="subtle"
                           onClick={() => handleDelete(sale)}
-                          title={
-                            sale.status === 'posted' ? 'Posted sales cannot be deleted' : 'Delete'
-                          }
-                          disabled={sale.status === 'posted'}
+                          title="Delete"
                         >
                           🗑️
                         </ActionIcon>

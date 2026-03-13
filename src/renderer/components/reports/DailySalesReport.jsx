@@ -1,4 +1,3 @@
-import { useState, useCallback, useMemo } from 'react';
 import {
   Stack,
   Grid,
@@ -13,15 +12,17 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
-import { ReportViewer } from '../ReportViewer';
+import { useState, useCallback, useMemo } from 'react';
+
 import useStore from '../../store';
+import { ReportViewer } from '../ReportViewer';
 
 /**
  * Daily Sales Report (امروزہ بکری)
  * Shows aggregated daily sales summary by item type
  */
 export function DailySalesReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [dateFrom, setDateFrom] = useState(new Date());
   const [dateTo, setDateTo] = useState(new Date());
@@ -56,7 +57,11 @@ export function DailySalesReport() {
     return date.toISOString().split('T')[0];
   };
 
-  const formatNumber = (num) => {
+  const formatAmount = (num) => {
+    return Math.round(num || 0).toLocaleString('en-US');
+  };
+
+  const formatWeight = (num) => {
     return (num || 0).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -96,7 +101,8 @@ export function DailySalesReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData || reportData.byItem.length === 0) return null;
 
-    const fmt = (num) =>
+    const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
+    const fmtWeight = (num) =>
       (num || 0).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -108,8 +114,8 @@ export function DailySalesReport() {
       <tr>
         <td style="text-align: center;">${index + 1}</td>
         <td style="text-align: ${isUr ? 'right' : 'left'};">${row.item_name}</td>
-        <td class="amount-cell">${fmt(row.total_weight)}</td>
-        <td class="amount-cell">Rs. ${fmt(row.total_amount)}</td>
+        <td class="amount-cell">${fmtWeight(row.total_weight)}</td>
+        <td class="amount-cell">Rs. ${fmtAmount(row.total_amount)}</td>
       </tr>
     `
       )
@@ -149,31 +155,31 @@ export function DailySalesReport() {
       <div class="summary-grid">
         <div class="summary-box">
           <div class="summary-label">${t.grossAmount}</div>
-          <div class="summary-value">Rs. ${fmt(reportData.totals.gross_amount)}</div>
+          <div class="summary-value">Rs. ${fmtAmount(reportData.totals.gross_amount)}</div>
         </div>
         <div class="summary-box">
           <div class="summary-label">${t.charges}</div>
-          <div class="summary-value">Rs. ${fmt(reportData.totals.total_charges)}</div>
+          <div class="summary-value">Rs. ${fmtAmount(reportData.totals.total_charges)}</div>
         </div>
         <div class="summary-box">
           <div class="summary-label">${t.netAmount}</div>
-          <div class="summary-value">Rs. ${fmt(reportData.totals.net_amount)}</div>
+          <div class="summary-value">Rs. ${fmtAmount(reportData.totals.net_amount)}</div>
         </div>
         <div class="summary-box">
           <div class="summary-label">${t.cashReceived}</div>
-          <div class="summary-value">Rs. ${fmt(reportData.totals.cash_received)}</div>
+          <div class="summary-value">Rs. ${fmtAmount(reportData.totals.cash_received)}</div>
         </div>
         <div class="summary-box">
           <div class="summary-label">${t.collection}</div>
-          <div class="summary-value">Rs. ${fmt(reportData.totals.total_collection)}</div>
+          <div class="summary-value">Rs. ${fmtAmount(reportData.totals.total_collection)}</div>
         </div>
         <div class="summary-box">
           <div class="summary-label">${t.discount}</div>
-          <div class="summary-value">Rs. ${fmt(reportData.totals.total_discount)}</div>
+          <div class="summary-value">Rs. ${fmtAmount(reportData.totals.total_discount)}</div>
         </div>
         <div class="summary-box" style="grid-column: span 2;">
           <div class="summary-label">${t.balance}</div>
-          <div class="summary-value" style="color: ${reportData.totals.total_balance > 0 ? 'red' : 'green'};">Rs. ${fmt(reportData.totals.total_balance)}</div>
+          <div class="summary-value" style="color: ${reportData.totals.total_balance > 0 ? 'red' : 'green'};">Rs. ${fmtAmount(reportData.totals.total_balance)}</div>
         </div>
       </div>
     `;
@@ -245,10 +251,10 @@ export function DailySalesReport() {
                       {row.item_name}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.total_weight)}
+                      {formatWeight(row.total_weight)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.total_amount)}
+                      {formatAmount(row.total_amount)}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -266,7 +272,7 @@ export function DailySalesReport() {
                     {t.grossAmount}
                   </Text>
                   <Text fw={600} style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}>
-                    {formatNumber(reportData.totals.gross_amount)}
+                    {formatAmount(reportData.totals.gross_amount)}
                   </Text>
                 </Stack>
                 <Stack gap="xs">
@@ -274,7 +280,7 @@ export function DailySalesReport() {
                     {t.charges}
                   </Text>
                   <Text fw={600} style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}>
-                    {formatNumber(reportData.totals.total_charges)}
+                    {formatAmount(reportData.totals.total_charges)}
                   </Text>
                 </Stack>
                 <Stack gap="xs">
@@ -282,7 +288,7 @@ export function DailySalesReport() {
                     {t.netAmount}
                   </Text>
                   <Text fw={600} style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}>
-                    {formatNumber(reportData.totals.net_amount)}
+                    {formatAmount(reportData.totals.net_amount)}
                   </Text>
                 </Stack>
                 <Stack gap="xs">
@@ -290,7 +296,7 @@ export function DailySalesReport() {
                     {t.cashReceived}
                   </Text>
                   <Text fw={600} style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}>
-                    {formatNumber(reportData.totals.cash_received)}
+                    {formatAmount(reportData.totals.cash_received)}
                   </Text>
                 </Stack>
                 <Stack gap="xs">
@@ -298,7 +304,7 @@ export function DailySalesReport() {
                     {t.collection}
                   </Text>
                   <Text fw={600} style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}>
-                    {formatNumber(reportData.totals.total_collection)}
+                    {formatAmount(reportData.totals.total_collection)}
                   </Text>
                 </Stack>
                 <Stack gap="xs">
@@ -306,7 +312,7 @@ export function DailySalesReport() {
                     {t.discount}
                   </Text>
                   <Text fw={600} style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}>
-                    {formatNumber(reportData.totals.total_discount)}
+                    {formatAmount(reportData.totals.total_discount)}
                   </Text>
                 </Stack>
                 <Stack gap="xs">
@@ -318,7 +324,7 @@ export function DailySalesReport() {
                     c={reportData.totals.total_balance > 0 ? 'red' : 'green'}
                     style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}
                   >
-                    {formatNumber(reportData.totals.total_balance)}
+                    {formatAmount(reportData.totals.total_balance)}
                   </Text>
                 </Stack>
               </Group>

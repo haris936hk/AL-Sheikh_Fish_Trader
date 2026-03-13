@@ -1,13 +1,14 @@
-import { useRef } from 'react';
 import { Paper, Stack, Group, Title, Text, Button, Divider, Menu } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   IconPrinter,
   IconFileTypePdf,
   IconFileSpreadsheet,
   IconChevronDown,
 } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
+import { useRef } from 'react';
+
 import useStore from '../store';
 
 /**
@@ -26,7 +27,7 @@ export function ReportViewer({
   printContentHTML = null, // Optional: Custom print body HTML (overrides DOM capture)
 }) {
   const printRef = useRef();
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
 
   // Determine the display title based on the active language
   const displayTitle = language === 'ur' && titleUrdu ? titleUrdu : title;

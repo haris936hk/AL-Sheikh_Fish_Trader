@@ -1,6 +1,9 @@
-import { useRef } from 'react';
 import { Paper, Stack, Group, Text, Title, Table, Divider, Button, Center } from '@mantine/core';
 import PropTypes from 'prop-types';
+import { useRef } from 'react';
+
+import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
 
 /**
  * SupplierBillPreview Component
@@ -11,6 +14,7 @@ import PropTypes from 'prop-types';
  */
 function SupplierBillPreview({ previewData }) {
   const printRef = useRef();
+  const isUr = useStore((s) => s.language === 'ur');
 
   // Format date for display
   const formatDisplayDate = (dateStr) => {
@@ -161,12 +165,7 @@ function SupplierBillPreview({ previewData }) {
                   <Table.Tr key={item.id}>
                     <Table.Td style={{ textAlign: 'center' }}>{index + 1}</Table.Td>
                     <Table.Td>
-                      {item.item_name}
-                      {item.item_name_english && (
-                        <Text size="xs" c="dimmed">
-                          {item.item_name_english}
-                        </Text>
-                      )}
+                      {formatDisplayName(item.item_name, item.item_name_english, isUr)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: 'right' }}>{item.vehicle_number || '-'}</Table.Td>
                     <Table.Td style={{ textAlign: 'right' }}>
@@ -179,7 +178,7 @@ function SupplierBillPreview({ previewData }) {
                       {(item.rate || 0).toFixed(2)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: 'right' }}>
-                      {(item.amount || 0).toFixed(2)}
+                      {Math.round(item.amount || 0).toLocaleString('en-US')}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -190,8 +189,8 @@ function SupplierBillPreview({ previewData }) {
                     Total:
                   </Table.Td>
                   <Table.Td style={{ textAlign: 'right' }}>{totalWeight.toFixed(2)} kg</Table.Td>
-                  <Table.Td></Table.Td>
-                  <Table.Td style={{ textAlign: 'right' }}>Rs. {grossAmount.toFixed(2)}</Table.Td>
+                  <Table.Td />
+                  <Table.Td style={{ textAlign: 'right' }}>Rs. {Math.round(grossAmount).toLocaleString('en-US')}</Table.Td>
                 </Table.Tr>
               </Table.Tfoot>
             </Table>
@@ -216,7 +215,7 @@ function SupplierBillPreview({ previewData }) {
                 <Text size="sm" c="dimmed">
                   نقل رقم (Gross Amount)
                 </Text>
-                <Text fw={600}>Rs. {grossAmount.toFixed(2)}</Text>
+                <Text fw={600}>Rs. {Math.round(grossAmount).toLocaleString('en-US')}</Text>
               </Stack>
               <Stack gap={2}>
                 <Text size="sm" c="dimmed">

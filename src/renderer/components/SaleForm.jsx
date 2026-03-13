@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Paper,
   Stack,
@@ -15,16 +14,35 @@ import {
   Grid,
   Badge,
   Checkbox,
+  ActionIcon,
+  Tooltip,
+  Table,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import '@mantine/dates/styles.css';
 import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
+
+const DEFAULT_LINE = {
+  item_id: null,
+  customer_id: null,
+  is_stock: false,
+  rate_per_maund: '',
+  rate_kg: '',
+  weight: '',
+  ice_charges: '',
+  fare_charges: '',
+  cash_amount: '',
+  receipt_amount: '',
+};
 
 /**
  * SaleForm Component
- * Single-transaction sale form: one item, one customer per sale.
+ * Multi-transaction sale form supporting multiple line items.
  * Implements FR-SALE-001 through FR-SALE-055.
  *
  * @param {Object} editSale - Sale object to edit (null for new)
@@ -32,7 +50,7 @@ import useStore from '../store';
  * @param {function} onCancel - Callback to cancel/close form
  */
 function SaleForm({ editSale, onSaved, onCancel }) {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -69,6 +87,8 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       printReceipt: isUr ? 'رسید پرنٹ کریں' : 'Print Receipt',
       cancel: isUr ? 'منسوخ کریں' : 'Cancel',
       clear: isUr ? 'صاف کریں' : 'Clear',
+      addLine: isUr ? 'لائن شامل کریں' : 'Add Line',
+      removeLine: isUr ? 'لائن ہٹائیں' : 'Remove Line',
       saveSale: editSale
         ? isUr
           ? 'بکری اپ ڈیٹ کریں'
@@ -76,8 +96,9 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         : isUr
           ? 'بکری محفوظ کریں'
           : 'Save Sale',
-      valErrorItem: isUr ? 'براہ کرم آئٹم منتخب کریں' : 'Please select an item',
-      valErrorCustomer: isUr ? 'ہر آئٹم کے لیے گاہک منتخب کریں' : 'Please select a customer',
+      valErrorItem: isUr ? 'براہ کرم تمام آئٹمز منتخب کریں' : 'Please select all items',
+      valErrorCustomer: isUr ? 'ہر آئٹم کے لیے گاہک منتخب کریں' : 'Please select a customer for each item',
+      valErrorWeightRate: isUr ? 'وزن اور ریٹ صفر سے زیادہ ہونا چاہیے' : 'Weight and rate must be greater than zero',
       insufficientStockTitle: isUr ? 'ناکافی سٹاک' : 'Insufficient Stock',
       insufficientStockMsg: (name, need, avail) =>
         isUr
@@ -104,22 +125,15 @@ function SaleForm({ editSale, onSaved, onCancel }) {
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [details, setDetails] = useState('');
 
-  // Single sale row fields
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [isStock, setIsStock] = useState(false);
-  const [rateMaund, setRateMaund] = useState('');
-  const [rateKg, setRateKg] = useState('');
-  const [weight, setWeight] = useState('');
-  const [iceCharges, setIceCharges] = useState('');
-  const [fareCharges, setFareCharges] = useState('');
-  const [cashAmount, setCashAmount] = useState('');
-  const [receiptAmount, setReceiptAmount] = useState('');
+  // Line items
+  const [lineItems, setLineItems] = useState([{ ...DEFAULT_LINE }]);
 
-  // Load data on mount
+  // Load initial data
   useEffect(() => {
     const loadData = async () => {
       try {
+        if (!window.api)
+          throw new Error('Electron API not available. Please run the app via Electron.');
         const [customersRes, suppliersRes, itemsRes, nextNumRes] = await Promise.all([
           window.api.customers.getAll(),
           window.api.suppliers.getAll(),
@@ -131,7 +145,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           setCustomers(
             customersRes.data.map((c) => ({
               value: String(c.id),
-              label: c.name + (c.name_english ? ` (${c.name_english})` : ''),
+              label: formatDisplayName(c.name, c.name_english, isUr),
             }))
           );
         }
@@ -140,12 +154,13 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           setSuppliers(
             suppliersRes.data.map((s) => ({
               value: String(s.id),
-              label: s.name + (s.name_english ? ` (${s.name_english})` : ''),
+              label: formatDisplayName(s.name, s.name_english, isUr),
             }))
           );
         }
 
         if (itemsRes.success) {
+          // We filter out deleted items or keep all so we don't break old sales if not fully handled by backend
           setItemsList(itemsRes.data);
         }
 
@@ -156,13 +171,13 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         console.error('Failed to load data:', error);
         notifications.show({
           title: 'Error',
-          message: 'Failed to load form data',
+          message: `Failed to load form data: ${error.message || 'Unknown error'}`,
           color: 'red',
         });
       }
     };
     loadData();
-  }, [editSale]);
+  }, [editSale, isUr]);
 
   // Load existing sale for editing
   useEffect(() => {
@@ -173,78 +188,129 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       setVehicleNumber(editSale.vehicle_number || '');
       setDetails(editSale.details || '');
 
-      // Load the first (and only) line item
-      const item = editSale.items?.[0];
-      if (item) {
-        setSelectedItem(String(item.item_id));
-        setSelectedCustomer(item.customer_id ? String(item.customer_id) : null);
-        setIsStock(!!item.is_stock);
-        setRateMaund(item.rate_per_maund || '');
-        setRateKg(item.rate || '');
-        setWeight(item.weight || '');
-        setIceCharges(item.ice_charges || '');
-        setFareCharges(item.fare_charges || '');
-        setCashAmount(item.cash_amount || '');
-        setReceiptAmount(item.receipt_amount || '');
+      if (editSale.items && editSale.items.length > 0) {
+        setLineItems(
+          editSale.items.map((item) => ({
+            item_id: String(item.item_id),
+            customer_id: item.customer_id ? String(item.customer_id) : null,
+            is_stock: !!item.is_stock,
+            rate_per_maund: item.rate_per_maund || '',
+            rate_kg: item.rate || '',
+            weight: item.weight || '',
+            ice_charges: item.ice_charges || '',
+            fare_charges: item.fare_charges || '',
+            cash_amount: item.cash_amount || '',
+            receipt_amount: item.receipt_amount || '',
+          }))
+        );
       }
     }
   }, [editSale]);
 
-  // Items dropdown options
   const itemOptions = useMemo(
     () =>
       itemsList.map((item) => ({
         value: String(item.id),
-        label: item.name + (item.name_english ? ` (${item.name_english})` : ''),
+        label: formatDisplayName(item.name, item.name_english, isUr),
       })),
-    [itemsList]
+    [itemsList, isUr]
   );
 
+  // Row handlers
+  const handleAddLine = useCallback(() => {
+    setLineItems((prev) => [...prev, { ...DEFAULT_LINE }]);
+  }, []);
+
+  const handleRemoveLine = useCallback((index) => {
+    setLineItems((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleLineChange = useCallback((index, field, value) => {
+    setLineItems((prev) => {
+      const newItems = [...prev];
+      newItems[index] = { ...newItems[index], [field]: value };
+      return newItems;
+    });
+  }, []);
+
   // Dual-rate sync: 1 Maund = 40 kg
-  const handleRateMaundChange = (val) => {
-    if (val === '') {
-      setRateMaund('');
-      setRateKg('');
-      return;
-    }
-    const v = Number(val) || 0;
-    setRateMaund(v);
-    setRateKg(v / 40);
-  };
+  const handleRateMaundChange = useCallback((index, val) => {
+    setLineItems((prev) => {
+      const newItems = [...prev];
+      if (val === '') {
+        newItems[index].rate_per_maund = '';
+        newItems[index].rate_kg = '';
+      } else {
+        const v = Number(val) || 0;
+        newItems[index].rate_per_maund = v;
+        newItems[index].rate_kg = v / 40;
+      }
+      return newItems;
+    });
+  }, []);
 
-  const handleRateKgChange = (val) => {
-    if (val === '') {
-      setRateKg('');
-      setRateMaund('');
-      return;
-    }
-    const v = Number(val) || 0;
-    setRateKg(v);
-    setRateMaund(v * 40);
-  };
+  const handleRateKgChange = useCallback((index, val) => {
+    setLineItems((prev) => {
+      const newItems = [...prev];
+      if (val === '') {
+        newItems[index].rate_kg = '';
+        newItems[index].rate_per_maund = '';
+      } else {
+        const v = Number(val) || 0;
+        newItems[index].rate_kg = v;
+        newItems[index].rate_per_maund = v * 40;
+      }
+      return newItems;
+    });
+  }, []);
 
-  // Calculated totals
+  // Auto-add line when the last row is filled
+  useEffect(() => {
+    if (lineItems.length === 0) return;
+    const lastRow = lineItems[lineItems.length - 1];
+
+    // A row is considered "filled" if it has an item, a rate, and a weight
+    if (
+      lastRow.item_id &&
+      lastRow.rate_kg !== '' && Number(lastRow.rate_kg) > 0 &&
+      lastRow.weight !== '' && Number(lastRow.weight) > 0
+    ) {
+      handleAddLine();
+    }
+  }, [lineItems, handleAddLine]);
+
+  // Calculated totals across all line items
   const totals = useMemo(() => {
-    const w = Number(weight) || 0;
-    const r = Number(rateKg) || 0;
-    const fc = Number(fareCharges) || 0;
-    const ic = Number(iceCharges) || 0;
-    const ca = Number(cashAmount) || 0;
-    const ra = Number(receiptAmount) || 0;
+    return lineItems.reduce(
+      (acc, row) => {
+        const w = Number(row.weight) || 0;
+        const r = Number(row.rate_kg) || 0;
+        const fc = Number(row.fare_charges) || 0;
+        const ic = Number(row.ice_charges) || 0;
+        const ca = Number(row.cash_amount) || 0;
+        const ra = Number(row.receipt_amount) || 0;
 
-    const lineAmount = w * r;
-    const netAmount = lineAmount + fc + ic;
-    const balanceAmount = netAmount - ca - ra;
-    return {
-      grossAmount: lineAmount,
-      fareCharges: fc,
-      iceCharges: ic,
-      netAmount,
-      cashReceived: ca,
-      receiptAmount: ra,
-      balanceAmount,
-    };
-  }, [weight, rateKg, fareCharges, iceCharges, cashAmount, receiptAmount]);
+        const lineAmount = w * r;
+        acc.grossAmount += lineAmount;
+        acc.fareCharges += fc;
+        acc.iceCharges += ic;
+        acc.netAmount += lineAmount + fc + ic;
+        acc.cashReceived += ca;
+        acc.receiptAmount += ra;
+        return acc;
+      },
+      {
+        grossAmount: 0,
+        fareCharges: 0,
+        iceCharges: 0,
+        netAmount: 0,
+        cashReceived: 0,
+        receiptAmount: 0,
+      }
+    );
+  }, [lineItems]);
+
+  const balanceAmount = totals.netAmount - totals.cashReceived - totals.receiptAmount;
 
   // Format date for API
   const formatDate = (date) => {
@@ -255,25 +321,33 @@ function SaleForm({ editSale, onSaved, onCancel }) {
 
   // Save sale
   const handleSave = useCallback(async () => {
-    if (!selectedItem) {
-      notifications.show({
-        title: t.saveErrorTitle,
-        message: t.valErrorItem,
-        color: 'red',
-      });
+    const validLineItems = lineItems.filter(
+      (row) => row.item_id || row.rate_kg || row.weight || row.customer_id
+    );
+
+    if (validLineItems.length === 0) {
+      notifications.show({ title: t.saveErrorTitle, message: t.valErrorItem, color: 'red' });
       return;
     }
 
-    if (!selectedCustomer) {
-      notifications.show({
-        title: t.saveErrorTitle,
-        message: t.valErrorCustomer,
-        color: 'red',
-      });
-      return;
+    // Validate all rows
+    for (let i = 0; i < validLineItems.length; i++) {
+      const row = validLineItems[i];
+      if (!row.item_id) {
+        notifications.show({ title: t.saveErrorTitle, message: t.valErrorItem, color: 'red' });
+        return;
+      }
+      if (!row.customer_id) {
+        notifications.show({ title: t.saveErrorTitle, message: t.valErrorCustomer, color: 'red' });
+        return;
+      }
+      if (Number(row.weight) <= 0 || Number(row.rate_kg) <= 0) {
+        notifications.show({ title: t.saveErrorTitle, message: t.valErrorWeightRate, color: 'red' });
+        return;
+      }
     }
 
-    // Stock availability check (FR-SALE-033, FR-VALID-006)
+    // Stock availability check
     try {
       const stockResult = await window.api.items.getAll();
       if (stockResult.success) {
@@ -282,7 +356,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           stockMap[String(item.id)] = { stock: item.current_stock || 0, name: item.name };
         });
 
-        // When editing, add back weight already allocated to this sale
+        // Add back existing sale weight to map if we are editing
         if (editSale?.items) {
           for (const existingItem of editSale.items) {
             const key = String(existingItem.item_id);
@@ -292,55 +366,65 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           }
         }
 
-        const stockInfo = stockMap[String(selectedItem)];
-        const numWeight = Number(weight) || 0;
-        if (isStock && stockInfo && numWeight > stockInfo.stock) {
-          notifications.show({
-            title: t.insufficientStockTitle,
-            message: t.insufficientStockMsg(
-              stockInfo.name,
-              numWeight.toFixed(2),
-              stockInfo.stock.toFixed(2)
-            ),
-            color: 'red',
-            autoClose: 8000,
-          });
-          return;
+        // Compute required weight from all selected line items
+        const requiredWeightMap = {};
+        for (const row of validLineItems) {
+          if (row.is_stock && row.item_id) {
+            const w = Number(row.weight) || 0;
+            requiredWeightMap[row.item_id] = (requiredWeightMap[row.item_id] || 0) + w;
+          }
+        }
+
+        // Validate vs available
+        for (const [itemId, needWeight] of Object.entries(requiredWeightMap)) {
+          const stockInfo = stockMap[itemId];
+          if (stockInfo && needWeight > stockInfo.stock) {
+            notifications.show({
+              title: t.insufficientStockTitle,
+              message: t.insufficientStockMsg(
+                stockInfo.name,
+                needWeight.toFixed(2),
+                stockInfo.stock.toFixed(2)
+              ),
+              color: 'red',
+              autoClose: 8000,
+            });
+            return;
+          }
         }
       }
     } catch (error) {
       console.error('Stock check error:', error);
-      notifications.show({
-        title: t.saveErrorTitle,
-        message: t.saveErrorMsg,
-        color: 'red',
-      });
+      notifications.show({ title: t.saveErrorTitle, message: t.saveErrorMsg, color: 'red' });
       return;
     }
 
     setLoading(true);
     try {
+      // Backend automatically calculates per-customer totals from items array.
+      // We pass the first customer_id as the header customer_id per existing pattern
+      // since the database sales table has a customer_id column.
+      const primaryCustomerId = validLineItems.length > 0 ? parseInt(validLineItems[0].customer_id) : null;
+
       const saleData = {
-        customer_id: selectedCustomer ? parseInt(selectedCustomer) : null,
+        customer_id: primaryCustomerId,
         supplier_id: selectedSupplier ? parseInt(selectedSupplier) : null,
         vehicle_number: vehicleNumber || null,
         sale_date: formatDate(saleDate),
         details: details || null,
-        items: [
-          {
-            item_id: parseInt(selectedItem),
-            customer_id: selectedCustomer ? parseInt(selectedCustomer) : null,
-            is_stock: isStock,
-            rate_per_maund: rateMaund || 0,
-            rate: rateKg || 0,
-            weight: weight || 0,
-            fare_charges: fareCharges || 0,
-            ice_charges: iceCharges || 0,
-            cash_amount: cashAmount || 0,
-            receipt_amount: receiptAmount || 0,
-            notes: null,
-          },
-        ],
+        items: validLineItems.map((row) => ({
+          item_id: parseInt(row.item_id),
+          customer_id: parseInt(row.customer_id),
+          is_stock: row.is_stock,
+          rate_per_maund: row.rate_per_maund || 0,
+          rate: row.rate_kg || 0,
+          weight: row.weight || 0,
+          fare_charges: row.fare_charges || 0,
+          ice_charges: row.ice_charges || 0,
+          cash_amount: row.cash_amount || 0,
+          receipt_amount: row.receipt_amount || 0,
+          notes: null,
+        })),
       };
 
       let response;
@@ -366,29 +450,16 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       }
     } catch (error) {
       console.error('Save sale error:', error);
-      notifications.show({
-        title: t.saveErrorTitle,
-        message: t.saveErrorMsg,
-        color: 'red',
-      });
+      notifications.show({ title: t.saveErrorTitle, message: t.saveErrorMsg, color: 'red' });
     } finally {
       setLoading(false);
     }
   }, [
-    selectedItem,
-    selectedCustomer,
+    lineItems,
     selectedSupplier,
     vehicleNumber,
     saleDate,
     details,
-    isStock,
-    rateMaund,
-    rateKg,
-    weight,
-    fareCharges,
-    iceCharges,
-    cashAmount,
-    receiptAmount,
     editSale,
     onSaved,
     t,
@@ -397,17 +468,25 @@ function SaleForm({ editSale, onSaved, onCancel }) {
   // Print receipt for saved sale
   const handlePrint = useCallback(() => {
     const dateStr = saleDate ? new Date(saleDate).toLocaleDateString('en-PK') : '';
-    const itemInfo = itemsList.find((i) => String(i.id) === String(selectedItem));
-    const custInfo = customers.find((c) => c.value === String(selectedCustomer));
 
-    const numWeight = Number(weight) || 0;
-    const numRateKg = Number(rateKg) || 0;
-    const numFare = Number(fareCharges) || 0;
-    const numIce = Number(iceCharges) || 0;
-    const numCash = Number(cashAmount) || 0;
+    const validLines = lineItems.filter(row => row.item_id || row.rate_kg || row.weight || row.customer_id);
+    const rowsHtml = validLines.map((row) => {
+      const itemInfo = itemsList.find((i) => String(i.id) === String(row.item_id));
+      const custInfo = customers.find((c) => c.value === String(row.customer_id));
+      const numWeight = Number(row.weight) || 0;
+      const numRateKg = Number(row.rate_kg) || 0;
+      const numFare = Number(row.fare_charges) || 0;
+      const numIce = Number(row.ice_charges) || 0;
+      const totalAmount = Math.round((numWeight * numRateKg) + numFare + numIce);
 
-    const lineAmount = numWeight * numRateKg;
-    const totalAmount = lineAmount + numFare + numIce;
+      return `<tr>
+        <td style="text-align:${isUr ? 'right' : 'left'}">${itemInfo?.name || ''}</td>
+        <td style="text-align:${isUr ? 'right' : 'left'}">${custInfo?.label || ''}</td>
+        <td style="text-align:${isUr ? 'right' : 'left'}">${numWeight.toFixed(2)}</td>
+        <td style="text-align:${isUr ? 'right' : 'left'}">${numRateKg.toFixed(2)}</td>
+        <td style="text-align:${isUr ? 'right' : 'left'}">${totalAmount.toLocaleString('en-US')}</td>
+      </tr>`;
+    }).join('');
 
     const html = `<!DOCTYPE html><html dir="${isUr ? 'rtl' : 'ltr'}"><head><title>${t.printReceiptTitle} - ${saleNumber}</title>
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet" />
@@ -439,22 +518,16 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         <table>
             <thead><tr><th style="text-align:${isUr ? 'right' : 'left'}">${t.item}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.customer}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.weightKg}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.rateKg}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.totalAmount}</th></tr></thead>
             <tbody>
-              <tr>
-                <td style="text-align:${isUr ? 'right' : 'left'}">${itemInfo?.name || ''}</td>
-                <td style="text-align:${isUr ? 'right' : 'left'}">${custInfo?.label || ''}</td>
-                <td style="text-align:${isUr ? 'right' : 'left'}">${numWeight.toFixed(2)}</td>
-                <td style="text-align:${isUr ? 'right' : 'left'}">${numRateKg.toFixed(2)}</td>
-                <td style="text-align:${isUr ? 'right' : 'left'}">${totalAmount.toFixed(2)}</td>
-              </tr>
+              ${rowsHtml}
             </tbody>
         </table>
         <table class="totals">
-            <tr><td>${t.grossAmount}:</td><td>Rs. ${lineAmount.toFixed(2)}</td></tr>
-            <tr><td>${t.fareCharges}:</td><td>Rs. ${numFare.toFixed(2)}</td></tr>
-            <tr><td>${t.iceCharges}:</td><td>Rs. ${numIce.toFixed(2)}</td></tr>
-            <tr><td>${t.netAmount}:</td><td><strong>Rs. ${totals.netAmount.toFixed(2)}</strong></td></tr>
-            <tr><td>${t.cash}:</td><td>Rs. ${numCash.toFixed(2)}</td></tr>
-            <tr class="grand-total"><td>${t.balance}:</td><td>Rs. ${totals.balanceAmount.toFixed(2)}</td></tr>
+            <tr><td>${t.grossAmount}:</td><td>Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t.fareCharges}:</td><td>Rs. ${Math.round(totals.fareCharges).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t.iceCharges}:</td><td>Rs. ${Math.round(totals.iceCharges).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t.netAmount}:</td><td><strong>Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}</strong></td></tr>
+            <tr><td>${t.cash}:</td><td>Rs. ${Math.round(totals.cashReceived).toLocaleString('en-US')}</td></tr>
+            <tr class="grand-total"><td>${t.balance}:</td><td>Rs. ${Math.round(balanceAmount).toLocaleString('en-US')}</td></tr>
         </table>
         </body></html>`;
 
@@ -466,25 +539,16 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       });
     } catch (error) {
       console.error('Print error:', error);
-      notifications.show({
-        title: t.saveErrorTitle,
-        message: t.printErrorMsg,
-        color: 'red',
-      });
+      notifications.show({ title: t.saveErrorTitle, message: t.printErrorMsg, color: 'red' });
     }
   }, [
+    lineItems,
     customers,
     saleDate,
     saleNumber,
-    selectedItem,
-    selectedCustomer,
     itemsList,
-    weight,
-    rateKg,
-    fareCharges,
-    iceCharges,
-    cashAmount,
     totals,
+    balanceAmount,
     t,
     isUr,
   ]);
@@ -494,16 +558,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
     setSelectedSupplier(null);
     setVehicleNumber('');
     setDetails('');
-    setSelectedItem(null);
-    setSelectedCustomer(null);
-    setIsStock(false);
-    setRateMaund('');
-    setRateKg('');
-    setWeight('');
-    setIceCharges('');
-    setFareCharges('');
-    setCashAmount('');
-    setReceiptAmount('');
+    setLineItems([{ ...DEFAULT_LINE }]);
   }, []);
 
   return (
@@ -523,7 +578,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         <Divider />
 
         {/* Header Fields */}
-        <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+        <Grid>
           <Grid.Col span={4}>
             <DatePickerInput
               label={t.saleDate}
@@ -552,13 +607,11 @@ function SaleForm({ editSale, onSaved, onCancel }) {
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value)}
               className="ltr-field"
-              dir="ltr"
-              styles={{ input: { textAlign: 'left' } }}
             />
           </Grid.Col>
         </Grid>
 
-        <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+        <Grid>
           <Grid.Col span={12}>
             <Textarea
               label={t.details}
@@ -573,127 +626,191 @@ function SaleForm({ editSale, onSaved, onCancel }) {
 
         <Divider label={t.saleDetails} labelPosition="center" />
 
-        {/* Single Sale Row — flat fields */}
-        <Grid gutter="md" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
-          {/* Row 1: Item + Customer + Is Stock */}
-          <Grid.Col span={5}>
-            <Select
-              label={t.item}
-              placeholder=""
-              data={itemOptions}
-              value={selectedItem}
-              onChange={setSelectedItem}
-              searchable
-              required
-            />
-          </Grid.Col>
-          <Grid.Col span={5}>
-            <Select
-              label={t.customer}
-              placeholder=""
-              data={customers}
-              value={selectedCustomer}
-              onChange={setSelectedCustomer}
-              searchable
-              required
-            />
-          </Grid.Col>
-          <Grid.Col span={2} style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 6 }}>
-            <Checkbox
-              label={t.stock}
-              checked={isStock}
-              onChange={(e) => setIsStock(e.currentTarget.checked)}
-            />
-          </Grid.Col>
+        {/* Dynamic Line Items - Tabular Layout */}
+        <Paper withBorder radius="md" style={{ overflowX: 'auto', overflowY: 'visible' }}>
+          <Table verticalSpacing="xs" striped withTableBorder withColumnBorders style={{ minWidth: 950 }}>
+            <Table.Thead bg="gray.1">
+              <Table.Tr>
+                <Table.Th style={{ width: 40, textAlign: 'center' }}>{t.stock}</Table.Th>
+                <Table.Th style={{ width: 170 }}>{t.item}</Table.Th>
+                <Table.Th style={{ width: 85 }}>{t.rateMaund}</Table.Th>
+                <Table.Th style={{ width: 85 }}>{t.rateKg}</Table.Th>
+                <Table.Th style={{ width: 170 }}>{t.customer}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t.weightKg}</Table.Th>
+                <Table.Th style={{ width: 70 }}>{t.iceCharges}</Table.Th>
+                <Table.Th style={{ width: 70 }}>{t.fareCharges}</Table.Th>
+                <Table.Th style={{ width: 90 }}>{t.totalAmount}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t.cash}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t.receipt}</Table.Th>
+                {lineItems.length > 1 && <Table.Th style={{ width: 40, textAlign: 'center' }}>X</Table.Th>}
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {lineItems.map((row, index) => {
+                const rowLineAmount = (Number(row.weight) || 0) * (Number(row.rate_kg) || 0);
+                const rowNetAmount = rowLineAmount + (Number(row.fare_charges) || 0) + (Number(row.ice_charges) || 0);
 
-          {/* Row 2: Rates + Weight */}
-          <Grid.Col span={3}>
-            <NumberInput
-              label={t.rateMaund}
-              value={rateMaund}
-              onChange={handleRateMaundChange}
-              min={0}
-              decimalScale={2}
-              hideControls
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <NumberInput
-              label={t.rateKg}
-              value={rateKg}
-              onChange={handleRateKgChange}
-              min={0}
-              decimalScale={2}
-              hideControls
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <NumberInput
-              label={t.weightKg}
-              value={weight}
-              onChange={(val) => setWeight(val === '' ? '' : val)}
-              min={0}
-              decimalScale={2}
-              hideControls
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <Paper p="xs" radius="sm" withBorder style={{ background: '#eff6ff' }}>
-              <Text size="xs" c="dimmed" mb={2}>
-                {t.totalAmount}
-              </Text>
-              <Text fw={700} size="md" c="blue" dir="ltr" ta={isUr ? 'right' : 'left'}>
-                Rs. {totals.netAmount.toFixed(2)}
-              </Text>
-            </Paper>
-          </Grid.Col>
+                return (
+                  <Table.Tr key={index}>
+                    {/* Stock */}
+                    <Table.Td style={{ textAlign: 'center', padding: '4px' }}>
+                      <Checkbox
+                        checked={row.is_stock}
+                        onChange={(e) => handleLineChange(index, 'is_stock', e.currentTarget.checked)}
+                        size="sm"
+                      />
+                    </Table.Td>
 
-          {/* Row 3: Charges + Payments */}
-          <Grid.Col span={3}>
-            <NumberInput
-              label={t.iceCharges}
-              value={iceCharges}
-              onChange={(val) => setIceCharges(val === '' ? '' : val)}
-              min={0}
-              decimalScale={2}
-              hideControls
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <NumberInput
-              label={t.fareCharges}
-              value={fareCharges}
-              onChange={(val) => setFareCharges(val === '' ? '' : val)}
-              min={0}
-              decimalScale={2}
-              hideControls
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <NumberInput
-              label={t.cash}
-              value={cashAmount}
-              onChange={(val) => setCashAmount(val === '' ? '' : val)}
-              min={0}
-              decimalScale={2}
-              hideControls
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <NumberInput
-              label={t.receipt}
-              value={receiptAmount}
-              onChange={(val) => setReceiptAmount(val === '' ? '' : val)}
-              min={0}
-              decimalScale={2}
-              hideControls
-            />
-          </Grid.Col>
-        </Grid>
+                    {/* Item */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <Select
+                        placeholder=""
+                        data={itemOptions}
+                        value={row.item_id}
+                        onChange={(val) => handleLineChange(index, 'item_id', val)}
+                        searchable
+                        required
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Rate/Maund */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <NumberInput
+                        value={row.rate_per_maund}
+                        onChange={(val) => handleRateMaundChange(index, val)}
+                        min={0}
+                        decimalScale={2}
+                        hideControls
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Rate/Kg */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <NumberInput
+                        value={row.rate_kg}
+                        onChange={(val) => handleRateKgChange(index, val)}
+                        min={0}
+                        decimalScale={2}
+                        hideControls
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Customer */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <Select
+                        placeholder=""
+                        data={customers}
+                        value={row.customer_id}
+                        onChange={(val) => handleLineChange(index, 'customer_id', val)}
+                        searchable
+                        required
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Weight */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <NumberInput
+                        value={row.weight}
+                        onChange={(val) => handleLineChange(index, 'weight', val === '' ? '' : val)}
+                        min={0}
+                        decimalScale={2}
+                        hideControls
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Ice */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <NumberInput
+                        value={row.ice_charges}
+                        onChange={(val) => handleLineChange(index, 'ice_charges', val === '' ? '' : val)}
+                        min={0}
+                        decimalScale={0}
+                        hideControls
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Fare */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <NumberInput
+                        value={row.fare_charges}
+                        onChange={(val) => handleLineChange(index, 'fare_charges', val === '' ? '' : val)}
+                        min={0}
+                        decimalScale={0}
+                        hideControls
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Total Amount */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <Text fw={700} size="sm" c="blue" dir="ltr" ta={isUr ? 'right' : 'left'}>
+                        {Math.round(rowNetAmount).toLocaleString('en-US')}
+                      </Text>
+                    </Table.Td>
+
+                    {/* Cash */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <NumberInput
+                        value={row.cash_amount}
+                        onChange={(val) => handleLineChange(index, 'cash_amount', val === '' ? '' : val)}
+                        min={0}
+                        decimalScale={0}
+                        hideControls
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Receipt */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <NumberInput
+                        value={row.receipt_amount}
+                        onChange={(val) => handleLineChange(index, 'receipt_amount', val === '' ? '' : val)}
+                        min={0}
+                        decimalScale={0}
+                        hideControls
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Delete */}
+                    {lineItems.length > 1 && (
+                      <Table.Td style={{ textAlign: 'center', padding: '4px' }}>
+                        <Tooltip label={t.removeLine}>
+                          <ActionIcon
+                            color="red"
+                            variant="subtle"
+                            onClick={() => handleRemoveLine(index)}
+                          >
+                            ❌
+                          </ActionIcon>
+                        </Tooltip>
+                      </Table.Td>
+                    )}
+                  </Table.Tr>
+                );
+              })}
+            </Table.Tbody>
+          </Table>
+        </Paper>
 
         <Divider label={t.summary} labelPosition="center" />
 
-        {/* Summary */}
+        {/* Global Summary */}
         <Paper
           p="md"
           radius="sm"
@@ -703,26 +820,26 @@ function SaleForm({ editSale, onSaved, onCancel }) {
             direction: isUr ? 'rtl' : 'ltr',
           }}
         >
-          {/* Row 1: weight + amounts */}
+          {/* Row 1: amounts */}
           <Grid mb="xs" gutter="sm">
             {[
               {
                 label: t.grossAmount,
-                val: `Rs. ${totals.grossAmount.toFixed(2)}`,
+                val: `Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}`,
                 color: 'dark',
               },
               {
                 label: t.charges,
-                val: `Rs. ${(totals.fareCharges + totals.iceCharges).toFixed(2)}`,
+                val: `Rs. ${Math.round(totals.fareCharges + totals.iceCharges).toLocaleString('en-US')}`,
                 color: 'dark',
               },
               {
                 label: t.netAmount,
-                val: `Rs. ${totals.netAmount.toFixed(2)}`,
+                val: `Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}`,
                 color: 'blue',
               },
-            ].map(({ label, val, color }) => (
-              <Grid.Col key={label} span={4}>
+            ].map(({ label, val, color }, idx) => (
+              <Grid.Col key={idx} span={4}>
                 <Paper p="xs" radius="sm" withBorder style={{ background: '#fff' }}>
                   <Text size="xs" c="dimmed" mb={2}>
                     {label}
@@ -743,7 +860,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                   {t.cashReceipt}
                 </Text>
                 <Text fw={600} size="sm" dir="ltr" ta={isUr ? 'right' : 'left'}>
-                  Rs. {(totals.cashReceived + totals.receiptAmount).toFixed(2)}
+                  Rs. {Math.round(totals.cashReceived + totals.receiptAmount).toLocaleString('en-US')}
                 </Text>
               </Paper>
             </Grid.Col>
@@ -753,8 +870,8 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                 radius="sm"
                 withBorder
                 style={{
-                  background: totals.balanceAmount > 0 ? '#fef2f2' : '#f0fdf4',
-                  borderColor: totals.balanceAmount > 0 ? '#fca5a5' : '#86efac',
+                  background: balanceAmount > 0 ? '#fef2f2' : '#f0fdf4',
+                  borderColor: balanceAmount > 0 ? '#fca5a5' : '#86efac',
                 }}
               >
                 <Text size="xs" c="dimmed" mb={2}>
@@ -763,11 +880,11 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                 <Text
                   fw={700}
                   size="md"
-                  c={totals.balanceAmount > 0 ? 'red' : 'green'}
+                  c={balanceAmount > 0 ? 'red' : 'green'}
                   dir="ltr"
                   ta={isUr ? 'right' : 'left'}
                 >
-                  Rs. {totals.balanceAmount.toFixed(2)}
+                  Rs. {Math.round(balanceAmount).toLocaleString('en-US')}
                 </Text>
               </Paper>
             </Grid.Col>
@@ -775,7 +892,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         </Paper>
 
         {/* Action Buttons */}
-        <Group justify="flex-end" mt="md" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+        <Group justify="flex-end" mt="md">
           {editSale && (
             <Button variant="light" color="teal" onClick={handlePrint}>
               🖨️ {t.printReceipt}

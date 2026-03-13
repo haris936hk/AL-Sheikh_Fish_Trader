@@ -14,6 +14,9 @@ import { IconPackage } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 
+import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
+
 /**
  * ItemStockDisplay Component
  * Displays a list of items with their current stock quantities.
@@ -24,6 +27,7 @@ import { useTranslation } from 'react-i18next';
  */
 function ItemStockDisplay({ data = [], loading = false }) {
   const { t } = useTranslation();
+  const isUr = useStore((s) => s.language === 'ur');
   // Format quantity with 2 decimal places
   const formatQuantity = (qty) => {
     return new Intl.NumberFormat('en-PK', {
@@ -82,13 +86,8 @@ function ItemStockDisplay({ data = [], loading = false }) {
               <Table.Tbody>
                 {data.map((item) => (
                   <Table.Tr key={item.id}>
-                    <Table.Td style={{ textAlign: 'right', direction: 'rtl' }}>
-                      <Text fw={500}>{item.name}</Text>
-                      {item.name_english && (
-                        <Text size="xs" c="dimmed" style={{ direction: 'ltr' }}>
-                          {item.name_english}
-                        </Text>
-                      )}
+                    <Table.Td style={{ textAlign: 'right', direction: isUr ? 'rtl' : 'ltr' }}>
+                      <Text fw={500}>{formatDisplayName(item.name, item.name_english, isUr)}</Text>
                     </Table.Td>
                     <Table.Td style={{ textAlign: 'center' }}>
                       <Badge color={getStockColor(item.current_stock)} variant="light" size="lg">

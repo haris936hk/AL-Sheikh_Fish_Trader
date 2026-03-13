@@ -200,6 +200,53 @@ export function validatePositiveNumber(value, fieldName = 'Value', allowZero = t
 }
 
 /**
+ * Validate single date is valid
+ * @param {Date|string} date - Date to validate
+ * @param {string} fieldName - Field name for error message
+ * @returns {ValidationResult}
+ */
+export function validateDate(date, fieldName = 'Date') {
+  if (!date) {
+    return { isValid: true };
+  }
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) {
+    return { isValid: false, error: `${fieldName} is an invalid date` };
+  }
+  return { isValid: true };
+}
+
+/**
+ * Validate integer
+ * @param {number|string} value - Value to validate
+ * @param {string} fieldName - Field name for error message
+ * @returns {ValidationResult}
+ */
+export function validateInteger(value, fieldName = 'Value') {
+  if (value === null || value === undefined || value === '') {
+    return { isValid: true };
+  }
+  const num = Number(value);
+  if (!Number.isInteger(num)) {
+    return { isValid: false, error: `${fieldName} must be a whole number` };
+  }
+  return { isValid: true };
+}
+
+/**
+ * Validate non-empty array
+ * @param {Array} arr - Array to validate
+ * @param {string} fieldName - Field name for error message
+ * @returns {ValidationResult}
+ */
+export function validateNonEmptyArray(arr, fieldName = 'List') {
+  if (!Array.isArray(arr) || arr.length === 0) {
+    return { isValid: false, error: `${fieldName} cannot be empty` };
+  }
+  return { isValid: true };
+}
+
+/**
  * Validate string length
  * @param {string} value - String to validate
  * @param {Object} options - Validation options
@@ -303,4 +350,23 @@ export function minLength(min, fieldName) {
  */
 export function maxLength(max, fieldName) {
   return (value) => validateLength(value, { max, fieldName });
+}
+
+/**
+ * Create a positive number validator
+ * @param {string} fieldName - Field name for error message
+ * @param {boolean} allowZero - Whether zero is allowed
+ * @returns {Function} Validator function
+ */
+export function positiveNumber(fieldName, allowZero = true) {
+  return (value) => validatePositiveNumber(value, fieldName, allowZero);
+}
+
+/**
+ * Create a percentage validator
+ * @param {string} fieldName - Field name for error message
+ * @returns {Function} Validator function
+ */
+export function percentage(fieldName) {
+  return (value) => validatePercentage(value, fieldName);
 }

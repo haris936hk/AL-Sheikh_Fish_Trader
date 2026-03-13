@@ -17,7 +17,13 @@ export function useAppVersion() {
   const [version, setVersion] = useState('');
 
   useEffect(() => {
-    window.api.app.getVersion().then(setVersion);
+    window.api.app
+      .getVersion()
+      .then((v) => {
+        setVersion(v);
+        return v;
+      })
+      .catch((err) => console.error('Failed to get version:', err));
   }, []);
 
   return version;
@@ -30,7 +36,13 @@ export function usePlatform() {
   const [platform, setPlatform] = useState('');
 
   useEffect(() => {
-    window.api.app.getPlatform().then(setPlatform);
+    window.api.app
+      .getPlatform()
+      .then((p) => {
+        setPlatform(p);
+        return p;
+      })
+      .catch((err) => console.error('Failed to get platform:', err));
   }, []);
 
   return platform;

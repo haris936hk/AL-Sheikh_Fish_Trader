@@ -1,76 +1,46 @@
-import {
-  Stack,
-  Grid,
-  Select,
-  Button,
-  Table,
-  LoadingOverlay,
-  Text,
-  ScrollArea,
-} from '@mantine/core';
+import { Stack, Grid, Button, Table, LoadingOverlay, Text, ScrollArea, Badge } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 import useStore from '../../store';
-import { formatDisplayName } from '../../utils/formatters';
 import { ReportViewer } from '../ReportViewer';
 
 /**
- * Vendor Stock Bill Report (بیوپاری سٹاک بل)
- * Shows stock-sourced items for a supplier on a given date.
- * Matches original system: date picker + supplier dropdown → table with
- * columns: سیریل نمبر, گاہک, قسم, ریٹ (kg), وزن (kg), رقم
+ * Stock Sale History Report (سٹاک بکری تاریخ)
+ * Shows all sales made from stock (is_stock = 1) within a date range.
+ * Columns: #, Date, Sale #, Customer, Item, Rate, Weight, Amount
  */
-export function VendorStockBillReport() {
+export function StockSaleHistoryReport() {
   const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
-  const [suppliers, setSuppliers] = useState([]);
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [date, setDate] = useState(new Date());
+  const [dateFrom, setDateFrom] = useState(new Date());
+  const [dateTo, setDateTo] = useState(new Date());
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
   const t = useMemo(
     () => ({
-      vendor: isUr ? 'بیوپاری' : 'Vendor',
-      dateLabel: isUr ? 'تاریخ' : 'Date',
+      dateFrom: isUr ? 'تاریخ سے' : 'Date From',
+      dateTo: isUr ? 'تاریخ تک' : 'Date To',
       go: isUr ? 'تلاش' : 'Go',
-      reportTitle: isUr ? 'بیوپاری سٹاک بل' : 'Vendor Stock Bill',
+      reportTitle: isUr ? 'سٹاک بکری تاریخ' : 'Stock Sale History',
+      date: isUr ? 'تاریخ' : 'Date',
+      saleNo: isUr ? 'بکری نمبر' : 'Sale #',
       customer: isUr ? 'گاہک' : 'Customer',
       item: isUr ? 'قسم' : 'Item',
+      supplier: isUr ? 'بیوپاری' : 'Supplier',
       rate: isUr ? 'ریٹ' : 'Rate',
-      weight: isUr ? 'وزن' : 'Weight',
+      weight: isUr ? 'وزن' : 'Weight (kg)',
       amount: isUr ? 'رقم' : 'Amount',
       total: isUr ? 'ٹوٹل' : 'Total',
-      selectVendorMsg: isUr ? 'بیوپاری منتخب کریں' : 'Please select a vendor',
       noRecords: isUr
-        ? 'منتخب کردہ معیار کے لئے کوئی سٹاک آئٹم نہیں ملا'
-        : 'No stock items found for the selected criteria',
+        ? 'منتخب کردہ تاریخ کے لئے کوئی سٹاک بکری نہیں ملی'
+        : 'No stock sales found for the selected date range',
     }),
     [isUr]
   );
-
-  // Fetch suppliers for dropdown
-  useEffect(() => {
-    const fetchSuppliers = async () => {
-      try {
-        const response = await window.api.suppliers.getAll();
-        if (response.success) {
-          setSuppliers(
-            response.data.map((s) => ({
-              value: String(s.id),
-              label: formatDisplayName(s.name, s.name_english, isUr),
-            }))
-          );
-        }
-      } catch (error) {
-        console.error('Error fetching suppliers:', error);
-      }
-    };
-    fetchSuppliers();
-  }, [isUr]);
 
   const formatDate = (d) => d.toISOString().split('T')[0];
 
@@ -88,25 +58,29 @@ export function VendorStockBillReport() {
       maximumFractionDigits: 3,
     });
 
-  const handleGenerate = useCallback(async () => {
-    if (!selectedSupplier) {
-      notifications.show({
-        title: 'Validation Error',
-        message: t.selectVendorMsg,
-        color: 'red',
-      });
-      return;
-    }
+  const formatDisplayDate = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-PK');
+  };
 
+  const handleGenerate = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await window.api.reports.getVendorStockBill({
-        supplierId: parseInt(selectedSupplier),
-        date: formatDate(date),
+      const response = await window.api.reports.getStockSaleHistory({
+        dateFrom: formatDate(dateFrom),
+        dateTo: formatDate(dateTo),
       });
 
       if (response.success) {
         setReportData(response.data);
+        if (response.data.transactions.length === 0) {
+          notifications.show({
+            title: isUr ? 'کوئی نتیجہ نہیں' : 'No Results',
+            message: t.noRecords,
+            color: 'blue',
+          });
+        }
       } else {
         notifications.show({
           title: 'Error',
@@ -124,11 +98,11 @@ export function VendorStockBillReport() {
     } finally {
       setLoading(false);
     }
-  }, [selectedSupplier, date, t]);
+  }, [dateFrom, dateTo, t, isUr]);
 
-  // ——— Professional Urdu-only print layout ———
+  // ——— Professional print layout ———
   const printContentHTML = useMemo(() => {
-    if (!reportData || reportData.items.length === 0) return null;
+    if (!reportData || reportData.transactions.length === 0) return null;
 
     const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
 
@@ -144,11 +118,13 @@ export function VendorStockBillReport() {
         maximumFractionDigits: 3,
       });
 
-    const rows = reportData.items
+    const rows = reportData.transactions
       .map(
         (item, index) => `
             <tr>
                 <td style="text-align: center;">${index + 1}</td>
+                <td style="text-align: center;">${new Date(item.sale_date).toLocaleDateString('en-PK')}</td>
+                <td style="text-align: center;">${item.sale_number}</td>
                 <td style="text-align: ${isUr ? 'right' : 'left'};">${item.customer_name}</td>
                 <td style="text-align: ${isUr ? 'right' : 'left'};">${item.item_name}</td>
                 <td class="amount-cell">Rs. ${fmtRate(item.rate)}</td>
@@ -172,10 +148,12 @@ export function VendorStockBillReport() {
             <table class="print-table">
                 <thead>
                     <tr>
-                        <th colspan="6" class="section-header">${t.reportTitle}</th>
+                        <th colspan="8" class="section-header">${t.reportTitle}</th>
                     </tr>
                     <tr>
                         <th style="width: 40px; text-align: center;">#</th>
+                        <th style="text-align: center;">${t.date}</th>
+                        <th style="text-align: center;">${t.saleNo}</th>
                         <th style="text-align: ${isUr ? 'right' : 'left'};">${t.customer}</th>
                         <th style="text-align: ${isUr ? 'right' : 'left'};">${t.item}</th>
                         <th style="width: 100px; text-align: left; direction: ltr;">${t.rate}</th>
@@ -186,7 +164,7 @@ export function VendorStockBillReport() {
                 <tbody>
                     ${rows}
                     <tr class="grand-total-row">
-                        <td colspan="3" style="text-align: ${isUr ? 'right' : 'left'};">${t.total}</td>
+                        <td colspan="5" style="text-align: ${isUr ? 'right' : 'left'};">${t.total}</td>
                         <td></td>
                         <td class="amount-cell">${fmtWeight(reportData.totalWeight)}</td>
                         <td class="amount-cell">Rs. ${fmtAmount(reportData.totalAmount)}</td>
@@ -204,25 +182,23 @@ export function VendorStockBillReport() {
       <Grid align="flex-end" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
         <Grid.Col span={4}>
           <DatePickerInput
-            label={t.dateLabel}
-            value={date}
-            onChange={setDate}
+            label={t.dateFrom}
+            value={dateFrom}
+            onChange={setDateFrom}
             maxDate={new Date()}
             required
           />
         </Grid.Col>
-        <Grid.Col span={5}>
-          <Select
-            label={t.vendor}
-            placeholder=""
-            data={suppliers}
-            value={selectedSupplier}
-            onChange={setSelectedSupplier}
-            searchable
+        <Grid.Col span={4}>
+          <DatePickerInput
+            label={t.dateTo}
+            value={dateTo}
+            onChange={setDateTo}
+            maxDate={new Date()}
             required
           />
         </Grid.Col>
-        <Grid.Col span={3}>
+        <Grid.Col span={4}>
           <Button leftSection={<IconSearch size={16} />} onClick={handleGenerate} fullWidth>
             {t.go}
           </Button>
@@ -231,40 +207,73 @@ export function VendorStockBillReport() {
 
       {reportData && (
         <ReportViewer
-          title="Vendor Stock Bill"
-          titleUrdu="بیوپاری سٹاک بل"
-          dateRange={{ from: formatDate(date), to: formatDate(date) }}
+          title="Stock Sale History"
+          titleUrdu="سٹاک بکری تاریخ"
+          dateRange={{ from: formatDate(dateFrom), to: formatDate(dateTo) }}
           printContentHTML={printContentHTML}
-          exportData={reportData.items}
+          exportData={reportData.transactions}
           exportColumns={[
+            { key: 'sale_date', label: t.date },
+            { key: 'sale_number', label: t.saleNo },
             { key: 'customer_name', label: t.customer },
             { key: 'item_name', label: t.item },
+            { key: 'supplier_name', label: t.supplier },
             { key: 'rate', label: t.rate },
             { key: 'weight', label: t.weight },
             { key: 'amount', label: t.amount },
           ]}
         >
+          {reportData.transactions.length > 0 && (
+            <Grid mb="sm" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+              <Grid.Col span={4}>
+                <Badge size="lg" variant="light" color="blue">
+                  {reportData.transactions.length} {isUr ? 'سٹاک بکریاں' : 'stock sales'}
+                </Badge>
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <Badge size="lg" variant="light" color="teal">
+                  {formatWeight(reportData.totalWeight)} kg
+                </Badge>
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <Badge size="lg" variant="light" color="green">
+                  Rs. {formatAmount(reportData.totalAmount)}
+                </Badge>
+              </Grid.Col>
+            </Grid>
+          )}
+
           <ScrollArea style={{ direction: isUr ? 'rtl' : 'ltr' }}>
             <Table striped highlightOnHover withTableBorder withColumnBorders>
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th style={{ textAlign: 'center' }}>#</Table.Th>
+                  <Table.Th style={{ textAlign: 'center' }}>{t.date}</Table.Th>
+                  <Table.Th style={{ textAlign: 'center' }}>{t.saleNo}</Table.Th>
                   <Table.Th style={{ textAlign: isUr ? 'right' : 'left' }}>{t.customer}</Table.Th>
                   <Table.Th style={{ textAlign: isUr ? 'right' : 'left' }}>{t.item}</Table.Th>
+                  <Table.Th style={{ textAlign: isUr ? 'right' : 'left' }}>{t.supplier}</Table.Th>
                   <Table.Th style={{ textAlign: isUr ? 'left' : 'right' }}>{t.rate}</Table.Th>
                   <Table.Th style={{ textAlign: isUr ? 'left' : 'right' }}>{t.weight}</Table.Th>
                   <Table.Th style={{ textAlign: isUr ? 'left' : 'right' }}>{t.amount}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {reportData.items.map((item, index) => (
+                {reportData.transactions.map((item, index) => (
                   <Table.Tr key={item.id}>
                     <Table.Td style={{ textAlign: 'center' }}>{index + 1}</Table.Td>
+                    <Table.Td style={{ textAlign: 'center' }}>
+                      {formatDisplayDate(item.sale_date)}
+                    </Table.Td>
+                    <Table.Td style={{ textAlign: 'center' }}>{item.sale_number}</Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'right' : 'left' }}>
                       {item.customer_name}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'right' : 'left' }}>
                       {item.item_name}
+                    </Table.Td>
+                    <Table.Td style={{ textAlign: isUr ? 'right' : 'left' }}>
+                      {item.supplier_name || '-'}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                       {formatRate(item.rate)}
@@ -280,7 +289,7 @@ export function VendorStockBillReport() {
               </Table.Tbody>
               <Table.Tfoot>
                 <Table.Tr style={{ fontWeight: 'bold', backgroundColor: '#d0e0f0' }}>
-                  <Table.Td colSpan={3} style={{ textAlign: isUr ? 'right' : 'left' }}>
+                  <Table.Td colSpan={6} style={{ textAlign: isUr ? 'right' : 'left' }}>
                     <strong>{t.total}</strong>
                   </Table.Td>
                   <Table.Td />
@@ -294,7 +303,7 @@ export function VendorStockBillReport() {
               </Table.Tfoot>
             </Table>
 
-            {reportData.items.length === 0 && (
+            {reportData.transactions.length === 0 && (
               <Text c="dimmed" ta="center" py="xl">
                 {t.noRecords}
               </Text>
@@ -306,4 +315,4 @@ export function VendorStockBillReport() {
   );
 }
 
-export default VendorStockBillReport;
+export default StockSaleHistoryReport;

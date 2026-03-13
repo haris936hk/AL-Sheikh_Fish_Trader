@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Stack,
   Grid,
@@ -13,8 +12,11 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
-import { ReportViewer } from '../ReportViewer';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import useStore from '../../store';
+import { formatDisplayName } from '../../utils/formatters';
+import { ReportViewer } from '../ReportViewer';
 
 /**
  * Vendor Sales Report (8.10) - بیوپاری بکری
@@ -22,7 +24,7 @@ import useStore from '../../store';
  * Matches the original system layout: transactions grouped by vendor with subtotals.
  */
 export function VendorSalesReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -68,7 +70,7 @@ export function VendorSalesReport() {
           setSuppliers(
             response.data.map((s) => ({
               value: String(s.id),
-              label: s.name + (s.name_english ? ` (${s.name_english})` : ''),
+              label: formatDisplayName(s.name, s.name_english, isUr),
             }))
           );
         }
@@ -77,13 +79,17 @@ export function VendorSalesReport() {
       }
     };
     fetchSuppliers();
-  }, []);
+  }, [isUr]);
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];
   };
 
-  const formatNumber = (num) => {
+  const formatAmount = (num) => {
+    return Math.round(num || 0).toLocaleString('en-US');
+  };
+
+  const formatRate = (num) => {
     return (num || 0).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -141,22 +147,22 @@ export function VendorSalesReport() {
   const groupedByVendor = useMemo(() => {
     return reportData
       ? reportData.transactions.reduce((groups, txn) => {
-          const key = txn.supplier_id || 0;
-          if (!groups[key]) {
-            groups[key] = {
-              supplierName: txn.supplier_name || 'Unknown',
-              transactions: [],
-              totalWeight: 0,
-              totalAmount: 0,
-              vehicleNumbers: new Set(),
-            };
-          }
-          groups[key].transactions.push(txn);
-          groups[key].totalWeight += txn.weight || 0;
-          groups[key].totalAmount += txn.amount || 0;
-          if (txn.vehicle_number) groups[key].vehicleNumbers.add(txn.vehicle_number);
-          return groups;
-        }, {})
+        const key = txn.supplier_id || 0;
+        if (!groups[key]) {
+          groups[key] = {
+            supplierName: txn.supplier_name || 'Unknown',
+            transactions: [],
+            totalWeight: 0,
+            totalAmount: 0,
+            vehicleNumbers: new Set(),
+          };
+        }
+        groups[key].transactions.push(txn);
+        groups[key].totalWeight += txn.weight || 0;
+        groups[key].totalAmount += txn.amount || 0;
+        if (txn.vehicle_number) groups[key].vehicleNumbers.add(txn.vehicle_number);
+        return groups;
+      }, {})
       : {};
   }, [reportData]);
 
@@ -176,7 +182,9 @@ export function VendorSalesReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData || reportData.transactions.length === 0) return null;
 
-    const fmt = (num) =>
+    const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
+
+    const fmtRate = (num) =>
       (num || 0).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -207,9 +215,9 @@ export function VendorSalesReport() {
             <td style="text-align: ${isUr ? 'right' : 'left'};">${row.customer_name}</td>
             <td style="text-align: ${isUr ? 'right' : 'left'};">${row.item_name}</td>
             <td style="text-align: ${isUr ? 'right' : 'left'}; direction: ltr;">${row.vehicle_number || '-'}</td>
-            <td class="amount-cell">Rs. ${fmt(row.rate)}</td>
+            <td class="amount-cell">Rs. ${fmtRate(row.rate)}</td>
             <td class="amount-cell">${fmtWeight(row.weight)}</td>
-            <td class="amount-cell">Rs. ${fmt(row.amount)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(row.amount)}</td>
           </tr>
         `;
       });
@@ -218,7 +226,7 @@ export function VendorSalesReport() {
         <tr style="background-color: #e8e8e8; font-weight: bold; border-bottom: 2px solid #000;">
           <td colspan="5" style="text-align: ${isUr ? 'right' : 'left'};">${t.vendorTotal}:</td>
           <td class="amount-cell">${fmtWeight(group.totalWeight)}</td>
-          <td class="amount-cell">Rs. ${fmt(group.totalAmount)}</td>
+          <td class="amount-cell">Rs. ${fmtAmount(group.totalAmount)}</td>
         </tr>
       `;
     });
@@ -255,7 +263,7 @@ export function VendorSalesReport() {
             <td style="text-align: left; direction: ltr;">${t.totalVehicles}: ${grandTotalVehicles}</td>
             <td></td>
             <td class="amount-cell">${fmtWeight(grandTotalWeight)}</td>
-            <td class="amount-cell">Rs. ${fmt(grandTotalAmount)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(grandTotalAmount)}</td>
           </tr>
         </tbody>
       </table>
@@ -393,7 +401,7 @@ export function VendorSalesReport() {
                           <Table.Td
                             style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}
                           >
-                            {formatNumber(row.rate)}
+                            {formatRate(row.rate)}
                           </Table.Td>
                           <Table.Td
                             style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}
@@ -403,7 +411,7 @@ export function VendorSalesReport() {
                           <Table.Td
                             style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}
                           >
-                            {formatNumber(row.amount)}
+                            {formatAmount(row.amount)}
                           </Table.Td>
                         </Table.Tr>
                       );
@@ -420,7 +428,7 @@ export function VendorSalesReport() {
                         <strong>{formatWeight(group.totalWeight)}</strong>
                       </Table.Td>
                       <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                        <strong>{formatNumber(group.totalAmount)}</strong>
+                        <strong>{formatAmount(group.totalAmount)}</strong>
                       </Table.Td>
                     </Table.Tr>,
                   ];
@@ -437,12 +445,12 @@ export function VendorSalesReport() {
                       {t.totalVehicles}: {grandTotalVehicles}
                     </strong>
                   </Table.Td>
-                  <Table.Td></Table.Td>
+                  <Table.Td />
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                     <strong>{formatWeight(grandTotalWeight)}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(grandTotalAmount)}</strong>
+                    <strong>{formatAmount(grandTotalAmount)}</strong>
                   </Table.Td>
                 </Table.Tr>
               </Table.Tfoot>

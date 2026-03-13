@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Paper, Stack, Tabs, Title, Group, ActionIcon } from '@mantine/core';
 import {
   IconChartBar,
@@ -14,10 +13,12 @@ import {
   IconTruck,
   IconCalculator,
   IconClipboardList,
+  IconHistory,
 } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import useStore from '../store';
+
 
 import {
   ClientRecoveryReport,
@@ -32,7 +33,9 @@ import {
   VendorSalesReport,
   VendorStockBillReport,
   DailyNetAmountSummaryReport,
+  StockSaleHistoryReport,
 } from '../components/reports';
+import useStore from '../store';
 
 // Report tab definitions
 const REPORT_TABS = [
@@ -63,6 +66,12 @@ const REPORT_TABS = [
     icon: IconClipboardList,
   },
   { key: 'net-summary', label: 'Net Summary', urdu: 'رجسٹر ٹوٹل رقم', icon: IconCalculator },
+  {
+    key: 'stock-sale-history',
+    label: 'Stock Sale History',
+    urdu: 'سٹاک بکری تاریخ',
+    icon: IconHistory,
+  },
 ];
 
 /**
@@ -74,7 +83,7 @@ const REPORT_TABS = [
  */
 export function Reports({ onBack, initialTab = null }) {
   const { t } = useTranslation();
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const isUrdu = language === 'ur';
   // Use state with initialTab on first render only
   const [activeTab, setActiveTab] = useState(() => {
@@ -122,6 +131,8 @@ export function Reports({ onBack, initialTab = null }) {
         return <VendorStockBillReport />;
       case 'net-summary':
         return <DailyNetAmountSummaryReport />;
+      case 'stock-sale-history':
+        return <StockSaleHistoryReport />;
       default:
         return <ClientRecoveryReport />;
     }

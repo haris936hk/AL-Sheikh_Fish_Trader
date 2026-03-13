@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS suppliers (
     opening_balance REAL DEFAULT 0,
     current_balance REAL DEFAULT 0,
     advance_amount REAL DEFAULT 0,
-    default_commission_pct REAL DEFAULT 5.0,
+    default_commission_pct REAL DEFAULT 5.0 CHECK(default_commission_pct >= 0 AND default_commission_pct <= 100),
     is_active INTEGER DEFAULT 1,
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -151,22 +151,22 @@ CREATE TABLE IF NOT EXISTS supplier_bills (
     bill_number TEXT NOT NULL UNIQUE,
     supplier_id INTEGER NOT NULL,
     vehicle_number TEXT,
-    date_from DATE NOT NULL,
-    date_to DATE NOT NULL,
-    total_weight REAL DEFAULT 0,
-    gross_amount REAL DEFAULT 0,
-    commission_pct REAL DEFAULT 5.0,
-    commission_amount REAL DEFAULT 0,
-    drugs_charges REAL DEFAULT 0,
-    fare_charges REAL DEFAULT 0,
-    labor_charges REAL DEFAULT 0,
-    ice_charges REAL DEFAULT 0,
-    other_charges REAL DEFAULT 0,
-    total_charges REAL DEFAULT 0,
-    total_payable REAL DEFAULT 0,
-    concession_amount REAL DEFAULT 0,
-    cash_paid REAL DEFAULT 0,
-    collection_amount REAL DEFAULT 0,
+    date_from DATE NOT NULL CHECK(date_from <> ''),
+    date_to DATE NOT NULL CHECK(date_to <> ''),
+    total_weight REAL DEFAULT 0 CHECK(total_weight >= 0),
+    gross_amount REAL DEFAULT 0 CHECK(gross_amount >= 0),
+    commission_pct REAL DEFAULT 5.0 CHECK(commission_pct >= 0 AND commission_pct <= 100),
+    commission_amount REAL DEFAULT 0 CHECK(commission_amount >= 0),
+    drugs_charges REAL DEFAULT 0 CHECK(drugs_charges >= 0),
+    fare_charges REAL DEFAULT 0 CHECK(fare_charges >= 0),
+    labor_charges REAL DEFAULT 0 CHECK(labor_charges >= 0),
+    ice_charges REAL DEFAULT 0 CHECK(ice_charges >= 0),
+    other_charges REAL DEFAULT 0 CHECK(other_charges >= 0),
+    total_charges REAL DEFAULT 0 CHECK(total_charges >= 0),
+    total_payable REAL DEFAULT 0 CHECK(total_payable >= 0),
+    concession_amount REAL DEFAULT 0 CHECK(concession_amount >= 0),
+    cash_paid REAL DEFAULT 0 CHECK(cash_paid >= 0),
+    collection_amount REAL DEFAULT 0 CHECK(collection_amount >= 0),
     balance_amount REAL DEFAULT 0,
     status TEXT DEFAULT 'draft',
     notes TEXT,
@@ -208,21 +208,21 @@ CREATE TABLE IF NOT EXISTS payments (
 CREATE TABLE IF NOT EXISTS sales (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sale_number TEXT NOT NULL UNIQUE,
-    sale_date DATE NOT NULL,
+    sale_date DATE NOT NULL CHECK(sale_date <> ''),
     customer_id INTEGER NOT NULL,
     supplier_id INTEGER,
     vehicle_number TEXT,
     details TEXT,
-    total_weight REAL DEFAULT 0,
-    total_tare_weight REAL DEFAULT 0,
-    net_weight REAL DEFAULT 0,
-    gross_amount REAL DEFAULT 0,
-    fare_charges REAL DEFAULT 0,
-    ice_charges REAL DEFAULT 0,
-    discount_amount REAL DEFAULT 0,
-    net_amount REAL DEFAULT 0,
-    cash_received REAL DEFAULT 0,
-    receipt_amount REAL DEFAULT 0,
+    total_weight REAL DEFAULT 0 CHECK(total_weight >= 0),
+    total_tare_weight REAL DEFAULT 0 CHECK(total_tare_weight >= 0),
+    net_weight REAL DEFAULT 0 CHECK(net_weight >= 0),
+    gross_amount REAL DEFAULT 0 CHECK(gross_amount >= 0),
+    fare_charges REAL DEFAULT 0 CHECK(fare_charges >= 0),
+    ice_charges REAL DEFAULT 0 CHECK(ice_charges >= 0),
+    discount_amount REAL DEFAULT 0 CHECK(discount_amount >= 0),
+    net_amount REAL DEFAULT 0 CHECK(net_amount >= 0),
+    cash_received REAL DEFAULT 0 CHECK(cash_received >= 0),
+    receipt_amount REAL DEFAULT 0 CHECK(receipt_amount >= 0),
     balance_amount REAL DEFAULT 0,
     previous_balance REAL DEFAULT 0,
     status TEXT DEFAULT 'draft',
@@ -245,15 +245,15 @@ CREATE TABLE IF NOT EXISTS sale_items (
     item_id INTEGER NOT NULL,
     customer_id INTEGER,
     is_stock INTEGER DEFAULT 0,
-    rate_per_maund REAL DEFAULT 0,
-    rate REAL NOT NULL,
-    weight REAL NOT NULL,
-    amount REAL NOT NULL,
-    fare_charges REAL DEFAULT 0,
-    ice_charges REAL DEFAULT 0,
-    other_charges REAL DEFAULT 0,
-    cash_amount REAL DEFAULT 0,
-    receipt_amount REAL DEFAULT 0,
+    rate_per_maund REAL DEFAULT 0 CHECK(rate_per_maund >= 0),
+    rate REAL NOT NULL CHECK(rate >= 0),
+    weight REAL NOT NULL CHECK(weight > 0),
+    amount REAL NOT NULL CHECK(amount >= 0),
+    fare_charges REAL DEFAULT 0 CHECK(fare_charges >= 0),
+    ice_charges REAL DEFAULT 0 CHECK(ice_charges >= 0),
+    other_charges REAL DEFAULT 0 CHECK(other_charges >= 0),
+    cash_amount REAL DEFAULT 0 CHECK(cash_amount >= 0),
+    receipt_amount REAL DEFAULT 0 CHECK(receipt_amount >= 0),
     notes TEXT,
     supplier_bill_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -271,15 +271,15 @@ CREATE TABLE IF NOT EXISTS sale_items (
 CREATE TABLE IF NOT EXISTS purchases (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     purchase_number TEXT NOT NULL UNIQUE,
-    purchase_date DATE NOT NULL,
+    purchase_date DATE NOT NULL CHECK(purchase_date <> ''),
     supplier_id INTEGER NOT NULL,
     vehicle_number TEXT,
     details TEXT,
-    total_weight REAL DEFAULT 0,
-    gross_amount REAL DEFAULT 0,
-    concession_amount REAL DEFAULT 0,
-    net_amount REAL DEFAULT 0,
-    cash_paid REAL DEFAULT 0,
+    total_weight REAL DEFAULT 0 CHECK(total_weight >= 0),
+    gross_amount REAL DEFAULT 0 CHECK(gross_amount >= 0),
+    concession_amount REAL DEFAULT 0 CHECK(concession_amount >= 0),
+    net_amount REAL DEFAULT 0 CHECK(net_amount >= 0),
+    cash_paid REAL DEFAULT 0 CHECK(cash_paid >= 0),
     previous_balance REAL DEFAULT 0,
     balance_amount REAL DEFAULT 0,
     status TEXT DEFAULT 'draft',
@@ -299,9 +299,9 @@ CREATE TABLE IF NOT EXISTS purchase_items (
     purchase_id INTEGER NOT NULL,
     line_number INTEGER NOT NULL,
     item_id INTEGER NOT NULL,
-    weight REAL NOT NULL,
-    rate REAL NOT NULL,
-    amount REAL NOT NULL,
+    weight REAL NOT NULL CHECK(weight >= 0),
+    rate REAL NOT NULL CHECK(rate >= 0),
+    amount REAL NOT NULL CHECK(amount >= 0),
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE CASCADE,
@@ -435,6 +435,34 @@ INSERT OR IGNORE INTO number_sequences (name, prefix, current_number) VALUES
 -- Default admin user (password: admin123 - should be changed)
 INSERT OR IGNORE INTO users (id, username, password_hash, full_name) 
 VALUES (1, 'admin', '$2b$10$placeholder_hash_change_this', 'Administrator');
+
+-- ============================================================================
+-- PERFORMANCE INDEXES
+-- ============================================================================
+
+-- Sales: filtered by supplier + date range (supplier bills, reports)
+CREATE INDEX IF NOT EXISTS idx_sales_supplier_date ON sales(supplier_id, sale_date);
+
+-- Sales: filtered by customer + date range (client recovery reports)
+CREATE INDEX IF NOT EXISTS idx_sales_customer_date ON sales(customer_id, sale_date);
+
+-- Sales: filtered by status (most queries exclude 'deleted')
+CREATE INDEX IF NOT EXISTS idx_sales_status ON sales(status);
+
+-- Sale items: join to parent sale
+CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id ON sale_items(sale_id);
+
+-- Sale items: filtered by supplier_bill_id (bill generation)
+CREATE INDEX IF NOT EXISTS idx_sale_items_bill_id ON sale_items(supplier_bill_id);
+
+-- Purchases: filtered by supplier + date range
+CREATE INDEX IF NOT EXISTS idx_purchases_supplier_date ON purchases(supplier_id, purchase_date);
+
+-- Purchases: filtered by status
+CREATE INDEX IF NOT EXISTS idx_purchases_status ON purchases(status);
+
+-- Purchase items: join to parent purchase
+CREATE INDEX IF NOT EXISTS idx_purchase_items_purchase_id ON purchase_items(purchase_id);
 
 -- ============================================================================
 -- END OF SCHEMA

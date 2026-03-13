@@ -1,17 +1,18 @@
-import { useState, useCallback, useMemo } from 'react';
 import { Stack, Grid, Button, Table, LoadingOverlay, Text, ScrollArea } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
-import { ReportViewer } from '../ReportViewer';
+import { useState, useCallback, useMemo } from 'react';
+
 import useStore from '../../store';
+import { ReportViewer } from '../ReportViewer';
 
 /**
  * Customer Register Report (رجسٹر کھاتہ رقم)
  * Shows account balances for all customers as of a specific date
  */
 export function CustomerRegisterReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [asOfDate, setAsOfDate] = useState(new Date());
   const [reportData, setReportData] = useState(null);

@@ -1,17 +1,18 @@
-import { useState, useCallback, useMemo } from 'react';
 import { Stack, Grid, Button, Table, LoadingOverlay, Text, ScrollArea } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
-import { ReportViewer } from '../ReportViewer';
+import { useState, useCallback, useMemo } from 'react';
+
 import useStore from '../../store';
+import { ReportViewer } from '../ReportViewer';
 
 /**
  * Daily Sales Details Report (امروزہ بکری تفصیلات)
  * Shows detailed line-item sales for a specific date
  */
 export function DailySalesDetailsReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [reportData, setReportData] = useState(null);
@@ -41,7 +42,18 @@ export function DailySalesDetailsReport() {
     return date.toISOString().split('T')[0];
   };
 
-  const formatNumber = (num) => {
+  const formatAmount = (num) => {
+    return Math.round(num || 0).toLocaleString('en-US');
+  };
+
+  const formatWeight = (num) => {
+    return (num || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const formatRate = (num) => {
     return (num || 0).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -80,7 +92,8 @@ export function DailySalesDetailsReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData || reportData.transactions.length === 0) return null;
 
-    const fmt = (num) =>
+    const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
+    const fmtDecimal = (num) =>
       (num || 0).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -95,9 +108,9 @@ export function DailySalesDetailsReport() {
         <td style="text-align: ${isUr ? 'right' : 'left'};">${row.supplier_name || '-'}</td>
         <td style="text-align: ${isUr ? 'right' : 'left'};">${row.item_name}</td>
         <td class="amount-cell" style="text-align: left;">${row.sale_number}</td>
-        <td class="amount-cell">${fmt(row.weight)}</td>
-        <td class="amount-cell">Rs. ${fmt(row.rate)}</td>
-        <td class="amount-cell">Rs. ${fmt(row.amount)}</td>
+        <td class="amount-cell">${fmtDecimal(row.weight)}</td>
+        <td class="amount-cell">Rs. ${fmtDecimal(row.rate)}</td>
+        <td class="amount-cell">Rs. ${fmtAmount(row.amount)}</td>
       </tr>
     `
       )
@@ -133,9 +146,9 @@ export function DailySalesDetailsReport() {
           ${rows}
           <tr class="total-row">
             <td colspan="5" style="text-align: ${isUr ? 'right' : 'left'};">${t.total}</td>
-            <td class="amount-cell">${fmt(reportData.totals.total_weight)}</td>
+            <td class="amount-cell">${fmtDecimal(reportData.totals.total_weight)}</td>
             <td class="amount-cell"></td>
-            <td class="amount-cell">Rs. ${fmt(reportData.totals.total_amount)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.totals.total_amount)}</td>
           </tr>
         </tbody>
       </table>
@@ -211,13 +224,13 @@ export function DailySalesDetailsReport() {
                       {row.item_name}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.weight)}
+                      {formatWeight(row.weight)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.rate)}
+                      {formatRate(row.rate)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.amount)}
+                      {formatAmount(row.amount)}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -228,11 +241,11 @@ export function DailySalesDetailsReport() {
                     <strong>{t.total}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.totals.total_weight)}</strong>
+                    <strong>{formatWeight(reportData.totals.total_weight)}</strong>
                   </Table.Td>
-                  <Table.Td></Table.Td>
+                  <Table.Td />
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.totals.total_amount)}</strong>
+                    <strong>{formatAmount(reportData.totals.total_amount)}</strong>
                   </Table.Td>
                 </Table.Tr>
               </Table.Tfoot>

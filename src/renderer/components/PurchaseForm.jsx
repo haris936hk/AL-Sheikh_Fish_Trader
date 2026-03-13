@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Paper,
   Stack,
@@ -14,13 +13,26 @@ import {
   Divider,
   Grid,
   Badge,
+  Table,
+  ActionIcon,
+  Tooltip,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import '@mantine/dates/styles.css';
-import { validateRequired } from '../utils/validators';
 import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
+import { validateRequired } from '../utils/validators';
+
+const DEFAULT_LINE = {
+  item_id: null,
+  rate_per_maund: '',
+  rate_kg: '',
+  weight: '',
+};
 
 /**
  * PurchaseForm Component
@@ -32,7 +44,7 @@ import useStore from '../store';
  * @param {function} onCancel - Callback to cancel/close form
  */
 function PurchaseForm({ editPurchase, onSaved, onCancel }) {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [itemsList, setItemsList] = useState([]);
@@ -71,6 +83,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       valErrorTitle: isUr ? 'توثیق کی خرابی' : 'Validation Error',
       selectSupplierMsg: isUr ? 'براہ کرم بیوپاری منتخب کریں' : 'Please select a supplier',
       selectItemMsg: isUr ? 'براہ کرم آئٹم (قسم) منتخب کریں' : 'Please select an item',
+      valErrorWeightRate: isUr ? 'وزن اور ریٹ صفر سے زیادہ ہونا چاہیے' : 'Weight and rate must be greater than zero',
+      valErrorAmount: isUr ? 'مجموعی رقم صفر سے زیادہ ہونی چاہیے' : 'Gross amount must be greater than zero',
       saveSuccessTitle: isUr ? 'خریداری محفوظ' : 'Purchase Saved',
       updateSuccessMsg: isUr ? 'خریداری کامیابی سے اپ ڈیٹ ہو گئی' : 'Purchase updated successfully',
       createSuccessMsg: (num) =>
@@ -79,7 +93,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       saveErrorMsg: isUr ? 'خریداری محفوظ کرنے میں خرابی' : 'Failed to save purchase',
       loadErrorMsg: isUr ? 'فارم ڈیٹا لوڈ کرنے میں خرابی' : 'Failed to load form data',
       printErrorTitle: isUr ? 'پرنٹ کی خرابی' : 'Print Error',
-      printErrorMsg: isUr ? 'پرنٹ پیش نظارہ खोलने में خرابی' : 'Failed to open print preview',
+      printErrorMsg: isUr ? 'پرنٹ پیش نظارہ کھولنے میں خرابی' : 'Failed to open print preview',
       receiptTitle: isUr ? 'خریداری رسید' : 'Purchase Receipt',
       receiptNo: isUr ? 'رسید نمبر' : 'Receipt #',
       date: isUr ? 'تاریخ' : 'Date',
@@ -94,10 +108,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [details, setDetails] = useState('');
 
-  // Single purchase row fields
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [rate, setRate] = useState('');
-  const [weight, setWeight] = useState('');
+  // Dynamic line items
+  const [lineItems, setLineItems] = useState([{ ...DEFAULT_LINE }]);
 
   // Payment fields
   const [concessionAmount, setConcessionAmount] = useState('');
@@ -110,6 +122,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
   useEffect(() => {
     const loadData = async () => {
       try {
+        if (!window.api)
+          throw new Error('Electron API not available. Please run the app via Electron.');
         const [suppliersRes, itemsRes, nextNumRes] = await Promise.all([
           window.api.suppliers.getAll(),
           window.api.items.getAll(),
@@ -120,7 +134,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           setSuppliers(
             suppliersRes.data.map((s) => ({
               value: String(s.id),
-              label: s.name + (s.name_english ? ` (${s.name_english})` : ''),
+              label: formatDisplayName(s.name, s.name_english, isUr),
               balance: s.current_balance || 0,
             }))
           );
@@ -136,14 +150,14 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       } catch (error) {
         console.error('Failed to load data:', error);
         notifications.show({
-          title: t.saveErrorTitle, // Using error title
-          message: t.loadErrorMsg,
+          title: t.saveErrorTitle,
+          message: `${t.loadErrorMsg}: ${error.message || 'Unknown error'}`,
           color: 'red',
         });
       }
     };
     loadData();
-  }, [editPurchase, t]);
+  }, [editPurchase, isUr, t]);
 
   // Load existing purchase for editing
   useEffect(() => {
@@ -157,15 +171,80 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       setCashPaid(editPurchase.cash_paid || '');
       setPreviousBalance(editPurchase.previous_balance || 0);
 
-      // Load the first (and only) line item
-      const item = editPurchase.items?.[0];
-      if (item) {
-        setSelectedItem(String(item.item_id));
-        setRate(Number(item.rate) || '');
-        setWeight(Number(item.weight) || '');
+      // Load line items
+      if (editPurchase.items && editPurchase.items.length > 0) {
+        setLineItems(
+          editPurchase.items.map((item) => ({
+            item_id: String(item.item_id),
+            rate_per_maund: item.rate ? Number(item.rate) * 40 : '',
+            rate_kg: Number(item.rate) || '',
+            weight: Number(item.weight) || '',
+          }))
+        );
+      } else {
+        setLineItems([{ ...DEFAULT_LINE }]);
       }
     }
   }, [editPurchase]);
+
+  // Line item operations
+  const handleAddLine = useCallback(() => {
+    setLineItems((prev) => [...prev, { ...DEFAULT_LINE }]);
+  }, []);
+
+  const handleRemoveLine = useCallback((index) => {
+    setLineItems((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
+  }, []);
+
+  const handleLineChange = useCallback((index, field, value) => {
+    setLineItems((prev) => {
+      const newItems = [...prev];
+      newItems[index] = { ...newItems[index], [field]: value };
+      return newItems;
+    });
+  }, []);
+
+  const handleRateMaundChange = useCallback(
+    (index, val) => {
+      handleLineChange(index, 'rate_per_maund', val === '' ? '' : val);
+      if (val !== '' && !isNaN(val)) {
+        handleLineChange(index, 'rate_kg', val / 40);
+      } else {
+        handleLineChange(index, 'rate_kg', '');
+      }
+    },
+    [handleLineChange]
+  );
+
+  const handleRateKgChange = useCallback(
+    (index, val) => {
+      handleLineChange(index, 'rate_kg', val === '' ? '' : val);
+      if (val !== '' && !isNaN(val)) {
+        handleLineChange(index, 'rate_per_maund', val * 40);
+      } else {
+        handleLineChange(index, 'rate_per_maund', '');
+      }
+    },
+    [handleLineChange]
+  );
+
+  // Auto-add line when the last row is filled
+  useEffect(() => {
+    if (lineItems.length === 0) return;
+    const lastRow = lineItems[lineItems.length - 1];
+
+    // A row is considered "filled" if it has an item, a rate, and a weight
+    if (
+      lastRow.item_id &&
+      lastRow.rate_kg !== '' && Number(lastRow.rate_kg) > 0 &&
+      lastRow.weight !== '' && Number(lastRow.weight) > 0
+    ) {
+      handleAddLine();
+    }
+  }, [lineItems, handleAddLine]);
 
   // Update previous balance when supplier changes (new purchase only)
   useEffect(() => {
@@ -180,24 +259,28 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     () =>
       itemsList.map((item) => ({
         value: String(item.id),
-        label: item.name + (item.name_english ? ` (${item.name_english})` : ''),
+        label: formatDisplayName(item.name, item.name_english, isUr),
       })),
-    [itemsList]
+    [itemsList, isUr]
   );
 
   // Calculated totals
   const totals = useMemo(() => {
-    const numWeight = Number(weight) || 0;
-    const numRate = Number(rate) || 0;
     const numConcession = Number(concessionAmount) || 0;
     const numCash = Number(cashPaid) || 0;
     const numPrevBalance = Number(previousBalance) || 0;
 
-    const grossAmount = numWeight * numRate;
+    let grossAmount = 0;
+    lineItems.forEach((row) => {
+      const w = Number(row.weight) || 0;
+      const r = Number(row.rate_kg) || 0;
+      grossAmount += w * r;
+    });
+
     const netAmount = grossAmount - numConcession;
     const balanceAmount = netAmount - numCash + numPrevBalance;
     return { grossAmount, netAmount, balanceAmount };
-  }, [weight, rate, concessionAmount, cashPaid, previousBalance]);
+  }, [lineItems, concessionAmount, cashPaid, previousBalance]);
 
   // Format date for API
   const formatDate = (date) => {
@@ -207,6 +290,15 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
 
   // Save purchase
   const handleSave = useCallback(async () => {
+    const validLineItems = lineItems.filter(
+      (row) => row.item_id || row.rate_kg || row.weight
+    );
+
+    if (validLineItems.length === 0) {
+      notifications.show({ title: t.valErrorTitle, message: t.selectItemMsg, color: 'red' });
+      return;
+    }
+
     const supplierResult = validateRequired(selectedSupplier, t.supplier);
     if (!supplierResult.isValid) {
       notifications.show({
@@ -217,10 +309,24 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       return;
     }
 
-    if (!selectedItem) {
+    // Validate rows
+    const hasInvalidRow = validLineItems.some(
+      (row) => !row.item_id || Number(row.weight) <= 0 || Number(row.rate_kg) <= 0
+    );
+
+    if (hasInvalidRow) {
       notifications.show({
         title: t.valErrorTitle,
-        message: t.selectItemMsg,
+        message: t.valErrorWeightRate,
+        color: 'red',
+      });
+      return;
+    }
+
+    if (totals.grossAmount <= 0) {
+      notifications.show({
+        title: t.valErrorTitle,
+        message: t.valErrorAmount,
         color: 'red',
       });
       return;
@@ -235,15 +341,13 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         details: details || null,
         concession_amount: Number(concessionAmount) || 0,
         cash_paid: Number(cashPaid) || 0,
-        items: [
-          {
-            item_id: parseInt(selectedItem),
-            weight: Number(weight) || 0,
-            rate: Number(rate) || 0,
-            amount: (Number(weight) || 0) * (Number(rate) || 0),
-            notes: null,
-          },
-        ],
+        items: validLineItems.map((row) => ({
+          item_id: parseInt(row.item_id),
+          weight: Number(row.weight) || 0,
+          rate: Number(row.rate_kg) || 0,
+          amount: (Number(row.weight) || 0) * (Number(row.rate_kg) || 0),
+          notes: null,
+        })),
       };
 
       let response;
@@ -281,27 +385,38 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     }
   }, [
     selectedSupplier,
-    selectedItem,
     vehicleNumber,
     purchaseDate,
     details,
     concessionAmount,
     cashPaid,
-    weight,
-    rate,
+    lineItems,
     editPurchase,
     onSaved,
     t,
+    totals.grossAmount,
   ]);
 
   // Print receipt
   const handlePrint = useCallback(() => {
     const supplierName = suppliers.find((s) => s.value === selectedSupplier)?.label || '';
     const dateStr = purchaseDate ? new Date(purchaseDate).toLocaleDateString('en-PK') : '';
-    const itemInfo = itemsList.find((i) => String(i.id) === String(selectedItem));
-    const numWeight = Number(weight) || 0;
-    const numRate = Number(rate) || 0;
-    const lineAmount = numWeight * numRate;
+
+    const validLines = lineItems.filter(row => row.item_id || row.rate_kg || row.weight);
+    const rowsHtml = validLines.map((row) => {
+      const itemInfo = itemsList.find((i) => String(i.id) === String(row.item_id));
+      const w = Number(row.weight) || 0;
+      const r = Number(row.rate_kg) || 0;
+      const amt = w * r;
+      return `
+        <tr>
+          <td>${itemInfo?.name || ''}</td>
+          <td style="text-align:${isUr ? 'right' : 'left'}">${w.toFixed(2)}</td>
+          <td style="text-align:${isUr ? 'right' : 'left'}">${r.toFixed(2)}</td>
+          <td style="text-align:${isUr ? 'right' : 'left'}">${Math.round(amt).toLocaleString('en-US')}</td>
+        </tr>
+      `;
+    }).join('');
 
     const html = `<!DOCTYPE html><html dir="${isUr ? 'rtl' : 'ltr'}"><head><title>${t.receiptTitle} - ${purchaseNumber}</title>
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet" />
@@ -334,20 +449,15 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         <table>
             <thead><tr><th style="text-align:${isUr ? 'right' : 'left'}">${t.item}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.weight}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.rate}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.amount}</th></tr></thead>
             <tbody>
-              <tr>
-                <td>${itemInfo?.name || ''}</td>
-                <td style="text-align:${isUr ? 'right' : 'left'}">${numWeight.toFixed(2)}</td>
-                <td style="text-align:${isUr ? 'right' : 'left'}">${numRate.toFixed(2)}</td>
-                <td style="text-align:${isUr ? 'right' : 'left'}">${lineAmount.toFixed(2)}</td>
-              </tr>
+              ${rowsHtml}
             </tbody>
         </table>
         <table class="totals">
-            <tr><td>${t.grossAmount}:</td><td>Rs. ${totals.grossAmount.toFixed(2)}</td></tr>
-            <tr><td>${t.concession}:</td><td>Rs. ${(concessionAmount || 0).toFixed(2)}</td></tr>
-            <tr><td>${t.netAmount}:</td><td><strong>Rs. ${totals.netAmount.toFixed(2)}</strong></td></tr>
-            <tr><td>${t.cashPaid}:</td><td>Rs. ${(cashPaid || 0).toFixed(2)}</td></tr>
-            <tr class="grand-total"><td>${t.balanceDue}:</td><td>Rs. ${totals.balanceAmount.toFixed(2)}</td></tr>
+            <tr><td>${t.grossAmount}:</td><td>Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t.concession}:</td><td>Rs. ${Math.round(concessionAmount || 0).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t.netAmount}:</td><td><strong>Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}</strong></td></tr>
+            <tr><td>${t.cashPaid}:</td><td>Rs. ${Math.round(cashPaid || 0).toLocaleString('en-US')}</td></tr>
+            <tr class="grand-total"><td>${t.balanceDue}:</td><td>Rs. ${Math.round(totals.balanceAmount).toLocaleString('en-US')}</td></tr>
         </table>
         </body></html>`;
 
@@ -370,10 +480,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     selectedSupplier,
     purchaseDate,
     purchaseNumber,
-    selectedItem,
     itemsList,
-    weight,
-    rate,
+    lineItems,
     concessionAmount,
     cashPaid,
     totals,
@@ -386,9 +494,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     setSelectedSupplier(null);
     setVehicleNumber('');
     setDetails('');
-    setSelectedItem(null);
-    setRate('');
-    setWeight('');
+    setLineItems([{ ...DEFAULT_LINE }]);
     setConcessionAmount('');
     setCashPaid('');
     setPreviousBalance(0);
@@ -411,7 +517,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         <Divider />
 
         {/* Header Fields */}
-        <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+        <Grid>
           <Grid.Col span={4}>
             <DatePickerInput
               label={t.purchaseDate}
@@ -440,13 +546,11 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value)}
               className="ltr-field"
-              dir="ltr"
-              styles={{ input: { textAlign: 'left' } }}
             />
           </Grid.Col>
         </Grid>
 
-        <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+        <Grid>
           <Grid.Col span={12}>
             <Textarea
               label={t.details}
@@ -461,56 +565,107 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
 
         <Divider label={t.purchaseDetails} labelPosition="center" />
 
-        {/* Single Purchase Row — flat fields */}
-        <Grid gutter="md" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
-          {/* Row 1: Item + Rate + Weight + Amount */}
-          <Grid.Col span={4}>
-            <Select
-              label={t.item}
-              placeholder=""
-              data={itemOptions}
-              value={selectedItem}
-              onChange={setSelectedItem}
-              searchable
-              required
-            />
-          </Grid.Col>
-          <Grid.Col span={2}>
-            <NumberInput
-              label={t.rate}
-              value={rate}
-              onChange={(val) => setRate(val === '' ? '' : val)}
-              min={0}
-              decimalScale={2}
-              hideControls
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <NumberInput
-              label={t.weight}
-              value={weight}
-              onChange={(val) => setWeight(val === '' ? '' : val)}
-              min={0}
-              decimalScale={2}
-              hideControls
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <Paper p="xs" radius="sm" withBorder style={{ background: '#f0fdf4' }}>
-              <Text size="xs" c="dimmed" mb={2}>
-                {t.amount}
-              </Text>
-              <Text
-                fw={700}
-                size="md"
-                c="green"
-                style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}
-              >
-                Rs. {((Number(weight) || 0) * (Number(rate) || 0)).toFixed(2)}
-              </Text>
-            </Paper>
-          </Grid.Col>
+        {/* Dynamic Line Items - Tabular Layout */}
+        <Paper withBorder radius="md" style={{ overflowX: 'auto' }}>
+          <Table verticalSpacing="xs" striped withTableBorder withColumnBorders style={{ minWidth: 800 }}>
+            <Table.Thead bg="gray.1">
+              <Table.Tr>
+                <Table.Th style={{ width: 220 }}>{t.item}</Table.Th>
+                <Table.Th style={{ width: 100 }}>{t.rateMaund}</Table.Th>
+                <Table.Th style={{ width: 100 }}>{t.rate}</Table.Th>
+                <Table.Th style={{ width: 100 }}>{t.weight}</Table.Th>
+                <Table.Th style={{ width: 120 }}>{t.amount}</Table.Th>
+                {lineItems.length > 1 && <Table.Th style={{ width: 50, textAlign: 'center' }}>Delete</Table.Th>}
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {lineItems.map((row, index) => {
+                const rowLineAmount = (Number(row.weight) || 0) * (Number(row.rate_kg) || 0);
 
+                return (
+                  <Table.Tr key={index}>
+                    {/* Item */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <Select
+                        placeholder=""
+                        data={itemOptions}
+                        value={row.item_id}
+                        onChange={(val) => handleLineChange(index, 'item_id', val)}
+                        searchable
+                        required
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Rate/Maund */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <NumberInput
+                        value={row.rate_per_maund}
+                        onChange={(val) => handleRateMaundChange(index, val)}
+                        min={0}
+                        decimalScale={2}
+                        hideControls
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Rate/kg */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <NumberInput
+                        value={row.rate_kg}
+                        onChange={(val) => handleRateKgChange(index, val)}
+                        min={0}
+                        decimalScale={2}
+                        hideControls
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Weight */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <NumberInput
+                        value={row.weight}
+                        onChange={(val) => handleLineChange(index, 'weight', val === '' ? '' : val)}
+                        min={0}
+                        decimalScale={2}
+                        hideControls
+                        size="xs"
+                        variant="unstyled"
+                      />
+                    </Table.Td>
+
+                    {/* Amount */}
+                    <Table.Td style={{ padding: '4px' }}>
+                      <Text fw={700} size="sm" c="blue" dir="ltr" ta={isUr ? 'right' : 'left'}>
+                        {Math.round(rowLineAmount).toLocaleString('en-US')}
+                      </Text>
+                    </Table.Td>
+
+                    {/* Delete */}
+                    {lineItems.length > 1 && (
+                      <Table.Td style={{ textAlign: 'center', padding: '4px' }}>
+                        <Tooltip label="Remove Line">
+                          <ActionIcon
+                            color="red"
+                            variant="subtle"
+                            onClick={() => handleRemoveLine(index)}
+                          >
+                            ❌
+                          </ActionIcon>
+                        </Tooltip>
+                      </Table.Td>
+                    )}
+                  </Table.Tr>
+                );
+              })}
+            </Table.Tbody>
+          </Table>
+        </Paper>
+
+        <Grid gutter="md">
           {/* Row 2: Concession + Cash Paid */}
           <Grid.Col span={4}>
             <NumberInput
@@ -518,10 +673,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
               value={concessionAmount}
               onChange={(val) => setConcessionAmount(val === '' ? '' : val)}
               min={0}
-              decimalScale={2}
+              decimalScale={0}
               hideControls
-              dir="ltr"
-              styles={{ input: { textAlign: 'left' } }}
             />
           </Grid.Col>
           <Grid.Col span={4}>
@@ -530,10 +683,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
               value={cashPaid}
               onChange={(val) => setCashPaid(val === '' ? '' : val)}
               min={0}
-              decimalScale={2}
+              decimalScale={0}
               hideControls
-              dir="ltr"
-              styles={{ input: { textAlign: 'left' } }}
             />
           </Grid.Col>
           <Grid.Col span={4}>
@@ -544,9 +695,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
               <Text
                 fw={600}
                 size="sm"
-                style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}
               >
-                Rs. {previousBalance.toFixed(2)}
+                Rs. {Math.round(previousBalance).toLocaleString('en-US')}
               </Text>
             </Paper>
           </Grid.Col>
@@ -561,7 +711,6 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           style={{
             background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
             border: '1px solid #86efac',
-            direction: isUr ? 'rtl' : 'ltr',
           }}
         >
           <Grid gutter="sm">
@@ -573,9 +722,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
                 <Text
                   fw={600}
                   size="sm"
-                  style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}
                 >
-                  Rs. {totals.grossAmount.toFixed(2)}
+                  Rs. {Math.round(totals.grossAmount).toLocaleString('en-US')}
                 </Text>
               </Paper>
             </Grid.Col>
@@ -588,9 +736,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
                   fw={700}
                   size="md"
                   c="green"
-                  style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}
                 >
-                  Rs. {totals.netAmount.toFixed(2)}
+                  Rs. {Math.round(totals.netAmount).toLocaleString('en-US')}
                 </Text>
               </Paper>
             </Grid.Col>
@@ -611,9 +758,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
                   fw={700}
                   size="md"
                   c={totals.balanceAmount > 0 ? 'red' : 'green'}
-                  style={{ direction: 'ltr', textAlign: isUr ? 'right' : 'left' }}
                 >
-                  Rs. {totals.balanceAmount.toFixed(2)}
+                  Rs. {Math.round(totals.balanceAmount).toLocaleString('en-US')}
                 </Text>
               </Paper>
             </Grid.Col>
@@ -621,7 +767,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         </Paper>
 
         {/* Action Buttons */}
-        <Group justify="flex-end" mt="md" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+        <Group justify="flex-end" mt="md">
           {editPurchase && (
             <Button variant="light" color="teal" onClick={handlePrint}>
               🖨️ {t.printReceipt}

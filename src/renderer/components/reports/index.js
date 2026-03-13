@@ -11,3 +11,4 @@ export { DailySalesDetailsReport } from './DailySalesDetailsReport';
 export { VendorSalesReport } from './VendorSalesReport';
 export { VendorStockBillReport } from './VendorStockBillReport';
 export { DailyNetAmountSummaryReport } from './DailyNetAmountSummaryReport';
+export { StockSaleHistoryReport } from './StockSaleHistoryReport';

@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Stack,
   Grid,
@@ -12,15 +11,18 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
-import { ReportViewer } from '../ReportViewer';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import useStore from '../../store';
+import { formatDisplayName } from '../../utils/formatters';
+import { ReportViewer } from '../ReportViewer';
 
 /**
  * Item Purchase Report (خریداری)
  * Shows purchases for a specific item within date range
  */
 export function ItemPurchaseReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -61,7 +63,7 @@ export function ItemPurchaseReport() {
           setItems(
             response.data.map((i) => ({
               value: String(i.id),
-              label: i.name + (i.name_english ? ` (${i.name_english})` : ''),
+              label: formatDisplayName(i.name, i.name_english, isUr),
             }))
           );
         }
@@ -70,18 +72,25 @@ export function ItemPurchaseReport() {
       }
     };
     fetchItems();
-  }, []);
+  }, [isUr]);
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];
   };
 
-  const formatNumber = (num) => {
-    return (num || 0).toLocaleString('en-US', {
+  const formatAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
+
+  const formatWeight = (num) =>
+    (num || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    });
+
+  const formatRate = (num) =>
+    (num || 0).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-  };
 
   const handleGenerate = useCallback(async () => {
     if (!selectedItem) {
@@ -126,7 +135,15 @@ export function ItemPurchaseReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData || reportData.transactions.length === 0) return null;
 
-    const fmt = (num) =>
+    const fmtAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
+
+    const fmtWeight = (num) =>
+      (num || 0).toLocaleString('en-US', {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+      });
+
+    const fmtRate = (num) =>
       (num || 0).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -141,9 +158,9 @@ export function ItemPurchaseReport() {
         <td style="text-align: ${isUr ? 'right' : 'left'};">${row.item_name}</td>
         <td class="amount-cell" style="text-align: left;">${row.purchase_number}</td>
         <td class="amount-cell" style="text-align: left;">${new Date(row.purchase_date).toLocaleDateString()}</td>
-        <td class="amount-cell">${fmt(row.weight)}</td>
-        <td class="amount-cell">Rs. ${fmt(row.rate)}</td>
-        <td class="amount-cell">Rs. ${fmt(row.amount)}</td>
+        <td class="amount-cell">${fmtWeight(row.weight)}</td>
+        <td class="amount-cell">Rs. ${fmtRate(row.rate)}</td>
+        <td class="amount-cell">Rs. ${fmtAmount(row.amount)}</td>
       </tr>
     `
       )
@@ -179,9 +196,9 @@ export function ItemPurchaseReport() {
           ${rows}
           <tr class="total-row">
             <td colspan="5" style="text-align: ${isUr ? 'right' : 'left'};">${t.total}</td>
-            <td class="amount-cell">${fmt(reportData.summary.total_weight)}</td>
-            <td class="amount-cell" style="font-size: 12px;">${t.avg} Rs. ${fmt(reportData.summary.avg_rate)}</td>
-            <td class="amount-cell">Rs. ${fmt(reportData.summary.total_amount)}</td>
+            <td class="amount-cell">${fmtWeight(reportData.summary.total_weight)}</td>
+            <td class="amount-cell" style="font-size: 12px;">${t.avg} Rs. ${fmtRate(reportData.summary.avg_rate)}</td>
+            <td class="amount-cell">Rs. ${fmtAmount(reportData.summary.total_amount)}</td>
           </tr>
         </tbody>
       </table>
@@ -283,13 +300,13 @@ export function ItemPurchaseReport() {
                       {row.item_name}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.weight)}
+                      {formatWeight(row.weight)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.rate)}
+                      {formatRate(row.rate)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(row.amount)}
+                      {formatAmount(row.amount)}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -300,15 +317,15 @@ export function ItemPurchaseReport() {
                     <strong>{t.total}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.summary.total_weight)}</strong>
+                    <strong>{formatWeight(reportData.summary.total_weight)}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                     <strong>
-                      {t.avg}: {formatNumber(reportData.summary.avg_rate)}
+                      {t.avg}: {formatRate(reportData.summary.avg_rate)}
                     </strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.summary.total_amount)}</strong>
+                    <strong>{formatAmount(reportData.summary.total_amount)}</strong>
                   </Table.Td>
                 </Table.Tr>
               </Table.Tfoot>

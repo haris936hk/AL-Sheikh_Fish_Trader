@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Stack,
   Grid,
@@ -13,15 +12,18 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
-import { ReportViewer } from '../ReportViewer';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import useStore from '../../store';
+import { formatDisplayName } from '../../utils/formatters';
+import { ReportViewer } from '../ReportViewer';
 
 /**
  * Client Recovery Report (کلائنٹ بکری)
  * Shows sales summary for clients with collection and balance details
  */
 export function ClientRecoveryReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -62,7 +64,7 @@ export function ClientRecoveryReport() {
           setCustomers(
             response.data.map((c) => ({
               value: String(c.id),
-              label: c.name + (c.name_english ? ` (${c.name_english})` : ''),
+              label: formatDisplayName(c.name, c.name_english, isUr),
             }))
           );
         }
@@ -71,7 +73,7 @@ export function ClientRecoveryReport() {
       }
     };
     fetchCustomers();
-  }, []);
+  }, [isUr]);
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];

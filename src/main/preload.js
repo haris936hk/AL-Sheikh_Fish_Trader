@@ -2,6 +2,7 @@
 // See: https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 const { contextBridge, ipcRenderer } = require('electron');
+
 const channels = require('./ipc/channels.js');
 
 // Expose protected methods that allow the renderer process to use
@@ -117,14 +118,13 @@ contextBridge.exposeInMainWorld('api', {
     getLedger: (params) => ipcRenderer.invoke(channels.REPORT_LEDGER, params),
     getItemPurchases: (params) => ipcRenderer.invoke(channels.REPORT_ITEM_PURCHASES, params),
     getStock: (params) => ipcRenderer.invoke(channels.REPORT_STOCK, params),
-    getCustomerRegister: (params) =>
-      ipcRenderer.invoke(channels.REPORT_CUSTOMER_REGISTER, params),
+    getCustomerRegister: (params) => ipcRenderer.invoke(channels.REPORT_CUSTOMER_REGISTER, params),
     getConcession: (params) => ipcRenderer.invoke(channels.REPORT_CONCESSION, params),
     getDailyDetails: (params) => ipcRenderer.invoke(channels.REPORT_DAILY_DETAILS, params),
     getVendorSales: (params) => ipcRenderer.invoke(channels.REPORT_VENDOR_SALES, params),
-    getVendorStockBill: (params) =>
-      ipcRenderer.invoke(channels.REPORT_VENDOR_STOCK_BILL, params),
+    getVendorStockBill: (params) => ipcRenderer.invoke(channels.REPORT_VENDOR_STOCK_BILL, params),
     getDailyNetSummary: (params) => ipcRenderer.invoke(channels.REPORT_NET_SUMMARY, params),
+    getStockSaleHistory: (params) => ipcRenderer.invoke(channels.REPORT_STOCK_SALE_HISTORY, params),
   },
 
   // Print/Export APIs (FR-PRINT-001 through FR-PRINT-012)
@@ -158,15 +158,19 @@ contextBridge.exposeInMainWorld('api', {
     // Whitelist channels to prevent security issues
     const validChannels = [channels.DB_UPDATED];
     if (validChannels.includes(channel)) {
-      ipcRenderer.on(channel, (event, ...args) => callback(...args));
+      const wrappedCallback = (event, ...args) => callback(...args);
+      // Attach wrapped callback to original callback for removal later
+      callback._wrappedCallback = wrappedCallback;
+      ipcRenderer.on(channel, wrappedCallback);
     }
   },
 
   // Remove event listeners
   off: (channel, callback) => {
     const validChannels = [channels.DB_UPDATED];
-    if (validChannels.includes(channel)) {
-      ipcRenderer.removeListener(channel, callback);
+    if (validChannels.includes(channel) && callback._wrappedCallback) {
+      ipcRenderer.removeListener(channel, callback._wrappedCallback);
+      delete callback._wrappedCallback;
     }
   },
 });

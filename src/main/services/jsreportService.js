@@ -1,4 +1,3 @@
-/* global setTimeout, Buffer */
 /**
  * jsreport Service (Electron printToPDF)
  * Renders HTML to PDF using Electron's built-in webContents.printToPDF

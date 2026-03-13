@@ -1,17 +1,18 @@
-import { useState, useCallback, useMemo } from 'react';
 import { Stack, Grid, Button, Table, LoadingOverlay, Text, ScrollArea } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
-import { ReportViewer } from '../ReportViewer';
+import { useState, useCallback, useMemo } from 'react';
+
 import useStore from '../../store';
+import { ReportViewer } from '../ReportViewer';
 
 /**
  * Stock Report (سٹاک رپورٹ)
  * Shows stock levels for all items as of a specific date
  */
 export function StockReport() {
-  const { language } = useStore();
+  const language = useStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [asOfDate, setAsOfDate] = useState(new Date());
   const [reportData, setReportData] = useState(null);
@@ -37,10 +38,10 @@ export function StockReport() {
     return date.toISOString().split('T')[0];
   };
 
-  const formatNumber = (num) => {
+  const formatWeight = (num) => {
     return (num || 0).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
     });
   };
 
@@ -76,10 +77,10 @@ export function StockReport() {
   const printContentHTML = useMemo(() => {
     if (!reportData || reportData.items.length === 0) return null;
 
-    const fmt = (num) =>
+    const fmtWeight = (num) =>
       (num || 0).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
       });
 
     const rows = reportData.items
@@ -88,11 +89,11 @@ export function StockReport() {
       <tr>
         <td style="text-align: center;">${index + 1}</td>
         <td style="text-align: ${isUr ? 'right' : 'left'};">${item.item_name}</td>
-        <td class="amount-cell">${fmt(item.previous_stock)}</td>
-        <td class="amount-cell">${fmt(item.today_purchases)}</td>
-        <td class="amount-cell">${fmt(item.today_sales)}</td>
+        <td class="amount-cell">${fmtWeight(item.previous_stock)}</td>
+        <td class="amount-cell">${fmtWeight(item.today_purchases)}</td>
+        <td class="amount-cell">${fmtWeight(item.today_sales)}</td>
         <td class="amount-cell" style="color: ${item.remaining_stock < 0 ? 'red' : 'black'}; font-weight: ${item.remaining_stock < 0 ? 'bold' : 'normal'};">
-          ${fmt(item.remaining_stock)}
+          ${fmtWeight(item.remaining_stock)}
         </td>
       </tr>
     `
@@ -127,10 +128,10 @@ export function StockReport() {
           ${rows}
           <tr class="total-row">
             <td colspan="2" style="text-align: ${isUr ? 'right' : 'left'};">${t.total}</td>
-            <td class="amount-cell">${fmt(reportData.totals.previous_stock)}</td>
-            <td class="amount-cell">${fmt(reportData.totals.today_purchases)}</td>
-            <td class="amount-cell">${fmt(reportData.totals.today_sales)}</td>
-            <td class="amount-cell">${fmt(reportData.totals.remaining_stock)}</td>
+            <td class="amount-cell">${fmtWeight(reportData.totals.previous_stock)}</td>
+            <td class="amount-cell">${fmtWeight(reportData.totals.today_purchases)}</td>
+            <td class="amount-cell">${fmtWeight(reportData.totals.today_sales)}</td>
+            <td class="amount-cell">${fmtWeight(reportData.totals.remaining_stock)}</td>
           </tr>
         </tbody>
       </table>
@@ -195,13 +196,13 @@ export function StockReport() {
                       {item.item_name}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(item.previous_stock)}
+                      {formatWeight(item.previous_stock)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(item.today_purchases)}
+                      {formatWeight(item.today_purchases)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {formatNumber(item.today_sales)}
+                      {formatWeight(item.today_sales)}
                     </Table.Td>
                     <Table.Td
                       style={{
@@ -211,7 +212,7 @@ export function StockReport() {
                         fontWeight: item.remaining_stock < 0 ? 'bold' : 'normal',
                       }}
                     >
-                      {formatNumber(item.remaining_stock)}
+                      {formatWeight(item.remaining_stock)}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -222,16 +223,16 @@ export function StockReport() {
                     <strong>{t.total}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.totals.previous_stock)}</strong>
+                    <strong>{formatWeight(reportData.totals.previous_stock)}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.totals.today_purchases)}</strong>
+                    <strong>{formatWeight(reportData.totals.today_purchases)}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.totals.today_sales)}</strong>
+                    <strong>{formatWeight(reportData.totals.today_sales)}</strong>
                   </Table.Td>
                   <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                    <strong>{formatNumber(reportData.totals.remaining_stock)}</strong>
+                    <strong>{formatWeight(reportData.totals.remaining_stock)}</strong>
                   </Table.Td>
                 </Table.Tr>
               </Table.Tfoot>

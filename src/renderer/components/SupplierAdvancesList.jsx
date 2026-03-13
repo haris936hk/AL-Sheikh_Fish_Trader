@@ -13,6 +13,9 @@ import { IconListDetails } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 
+import useStore from '../store';
+import { formatDisplayName } from '../utils/formatters';
+
 /**
  * SupplierAdvancesList Component
  * Displays a list of suppliers with their outstanding advance amounts.
@@ -25,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-unused-vars
 function SupplierAdvancesList({ data = [], loading = false, onRefresh }) {
   const { t } = useTranslation();
+  const isUr = useStore((s) => s.language === 'ur');
   // Format currency with 2 decimal places
   const formatAmount = (amount) => {
     return new Intl.NumberFormat('en-PK', {
@@ -76,13 +80,8 @@ function SupplierAdvancesList({ data = [], loading = false, onRefresh }) {
               <Table.Tbody>
                 {data.map((supplier) => (
                   <Table.Tr key={supplier.id}>
-                    <Table.Td style={{ textAlign: 'right', direction: 'rtl' }}>
-                      <Text fw={500}>{supplier.name}</Text>
-                      {supplier.name_english && (
-                        <Text size="xs" c="dimmed" style={{ direction: 'ltr' }}>
-                          {supplier.name_english}
-                        </Text>
-                      )}
+                    <Table.Td style={{ textAlign: 'right', direction: isUr ? 'rtl' : 'ltr' }}>
+                      <Text fw={500}>{formatDisplayName(supplier.name, supplier.name_english, isUr)}</Text>
                     </Table.Td>
                     <Table.Td style={{ textAlign: 'right' }}>
                       <Text fw={600} c="blue">
