@@ -13,6 +13,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { formatDisplayName } from '../../utils/formatters';
@@ -33,23 +34,22 @@ export function ConcessionReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      fromDate: isUr ? 'تاریخ (سے)' : 'From Date',
-      toDate: isUr ? 'تاریخ (تک)' : 'To Date',
-      customer: isUr ? 'صارف' : 'Customer',
-      all: isUr ? 'سب' : 'All',
-      go: isUr ? 'تلاش' : 'Go',
-      date: isUr ? 'تاریخ' : 'Date',
-      saleNumber: isUr ? 'بل نمبر' : 'Sale #',
-      concessionAmount: isUr ? 'رعایت کی رقم' : 'Concession Amount',
-      totalConcession: isUr ? 'کل رعایت' : 'Total Concession',
-      noRecords: isUr
-        ? 'منتخب کردہ معیار کے لئے کوئی رعایت نہیں ملی'
-        : 'No concessions found for the selected criteria',
-      reportTitle: isUr ? 'رعایت رپورٹ' : 'Concession Report',
+      fromDate: translate('common.dateFrom', 'From Date'),
+      toDate: translate('common.dateTo', 'To Date'),
+      customer: translate('common.customer', 'Customer'),
+      all: translate('common.all', 'All'),
+      go: translate('common.go', 'Go'),
+      date: translate('common.date', 'Date'),
+      saleNumber: translate('common.saleNo', 'Sale #'),
+      concessionAmount: translate('concession.concessionAmount', 'Concession Amount'),
+      totalConcession: translate('concession.totalConcession', 'Total Concession'),
+      noRecords: translate('concession.noRecords', 'No concessions found for the selected criteria'),
+      reportTitle: translate('concession.title', 'Concession Report'),
     }),
-    [isUr]
+    [translate]
   );
 
   // Fetch customers for dropdown
@@ -73,6 +73,7 @@ export function ConcessionReport() {
   }, [isUr]);
 
   const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
     return date.toISOString().split('T')[0];
   };
 

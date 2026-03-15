@@ -3,6 +3,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { ReportViewer } from '../ReportViewer';
@@ -20,29 +21,31 @@ export function StockSaleHistoryReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      dateFrom: isUr ? 'تاریخ سے' : 'Date From',
-      dateTo: isUr ? 'تاریخ تک' : 'Date To',
-      go: isUr ? 'تلاش' : 'Go',
-      reportTitle: isUr ? 'سٹاک بکری تاریخ' : 'Stock Sale History',
-      date: isUr ? 'تاریخ' : 'Date',
-      saleNo: isUr ? 'بکری نمبر' : 'Sale #',
-      customer: isUr ? 'گاہک' : 'Customer',
-      item: isUr ? 'قسم' : 'Item',
-      supplier: isUr ? 'بیوپاری' : 'Supplier',
-      rate: isUr ? 'ریٹ' : 'Rate',
-      weight: isUr ? 'وزن' : 'Weight (kg)',
-      amount: isUr ? 'رقم' : 'Amount',
-      total: isUr ? 'ٹوٹل' : 'Total',
-      noRecords: isUr
-        ? 'منتخب کردہ تاریخ کے لئے کوئی سٹاک بکری نہیں ملی'
-        : 'No stock sales found for the selected date range',
+      dateFrom: translate('common.dateFrom', 'Date From'),
+      dateTo: translate('common.dateTo', 'Date To'),
+      go: translate('common.go', 'Go'),
+      reportTitle: translate('stockSaleHistory.title', 'Stock Sale History'),
+      date: translate('common.date', 'Date'),
+      saleNo: translate('common.saleNo', 'Sale #'),
+      customer: translate('common.customer', 'Customer'),
+      item: translate('common.item', 'Item'),
+      supplier: translate('common.supplier', 'Supplier'),
+      rate: translate('common.rate', 'Rate'),
+      weight: translate('common.weight', 'Weight (kg)'),
+      amount: translate('common.amount', 'Amount'),
+      total: translate('common.total', 'Total'),
+      noRecords: translate('stockSaleHistory.noRecords', 'No stock sales found for the selected date range'),
     }),
-    [isUr]
+    [translate]
   );
 
-  const formatDate = (d) => d.toISOString().split('T')[0];
+  const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
+    return date.toISOString().split('T')[0];
+  };
 
   const formatAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
 

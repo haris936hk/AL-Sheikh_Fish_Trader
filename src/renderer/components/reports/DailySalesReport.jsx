@@ -13,6 +13,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { ReportViewer } from '../ReportViewer';
@@ -29,31 +30,31 @@ export function DailySalesReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      fromDate: isUr ? 'تاریخ (سے)' : 'From Date',
-      toDate: isUr ? 'تاریخ (تک)' : 'To Date',
-      go: isUr ? 'تلاش' : 'Go',
-      reportTitle: isUr ? 'امروزہ بکری' : 'Daily Sales Report',
-      item: isUr ? 'آئٹم' : 'Item Name',
-      totalWeight: isUr ? 'کل وزن' : 'Total Weight',
-      totalAmount: isUr ? 'کل رقم' : 'Total Amount',
-      grossAmount: isUr ? 'کل رقم' : 'Gross Amount',
-      charges: isUr ? 'اخراجات' : 'Charges',
-      netAmount: isUr ? 'خالص رقم' : 'Net Amount',
-      cashReceived: isUr ? 'نقد وصولی' : 'Cash Received',
-      collection: isUr ? 'کل وصولی' : 'Collection',
-      discount: isUr ? 'رعایت' : 'Discount',
-      balance: isUr ? 'بقایا' : 'Balance',
-      summary: isUr ? 'خلاصہ' : 'Summary',
-      noRecords: isUr
-        ? 'منتخب کردہ معیار کے لئے کوئی ریکارڈ نہیں ملا'
-        : 'No records found for the selected criteria',
+      fromDate: translate('common.dateFrom', 'From Date'),
+      toDate: translate('common.dateTo', 'To Date'),
+      go: translate('common.go', 'Go'),
+      reportTitle: translate('dailySales.title', 'Daily Sales Report'),
+      item: translate('common.itemName', 'Item Name'),
+      totalWeight: translate('common.totalWeight', 'Total Weight'),
+      totalAmount: translate('common.totalAmount', 'Total Amount'),
+      grossAmount: translate('common.grossAmount', 'Gross Amount'),
+      charges: translate('common.charges', 'Charges'),
+      netAmount: translate('common.netAmount', 'Net Amount'),
+      cashReceived: translate('common.cashReceived', 'Cash Received'),
+      collection: translate('common.collection', 'Collection'),
+      discount: translate('common.discount', 'Discount'),
+      balance: translate('common.balance', 'Balance'),
+      summary: translate('common.summary', 'Summary'),
+      noRecords: translate('common.noRecords', 'No records found for the selected criteria'),
     }),
-    [isUr]
+    [translate]
   );
 
   const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
     return date.toISOString().split('T')[0];
   };
 

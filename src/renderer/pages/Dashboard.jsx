@@ -148,7 +148,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
   // Navigation button configuration — translated
   const adminButtons = [
     {
-      label: t('bill.title'),
+      label: t('dashboard.supplierBills'),
       icon: <IconFileInvoice size={18} />,
       key: 'supplier-bill',
       navigate: 'supplier-bills',

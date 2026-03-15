@@ -21,10 +21,11 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import '@mantine/dates/styles.css';
 import useStore from '../store';
-import { formatDisplayName } from '../utils/formatters';
+import { formatDisplayName, formatDateForAPI } from '../utils/formatters';
 import { validateRequired } from '../utils/validators';
 
 const DEFAULT_LINE = {
@@ -50,56 +51,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
   const [itemsList, setItemsList] = useState([]);
 
   const isUr = language === 'ur';
-  const t = useMemo(
-    () => ({
-      title: editPurchase
-        ? isUr
-          ? 'خریداری ترمیم کریں'
-          : 'Edit Purchase'
-        : isUr
-          ? 'نئی خریداری'
-          : 'New Purchase',
-      purchaseDate: isUr ? 'خریداری تاریخ' : 'Purchase Date',
-      supplier: isUr ? 'بیوپاری' : 'Supplier',
-      vehicleNo: isUr ? 'گاڑی نمبر' : 'Vehicle No',
-      details: isUr ? 'تفصیل' : 'Details',
-      purchaseDetails: isUr ? 'خریداری تفصیل' : 'Purchase Details',
-      item: isUr ? 'قسم' : 'Item',
-      rate: isUr ? 'ریٹ' : 'Rate/kg',
-      weight: isUr ? 'وزن کلوگرام' : 'Weight kg',
-      amount: isUr ? 'رقم' : 'Amount',
-      concession: isUr ? 'رعایت' : 'Concession',
-      cashPaid: isUr ? 'نقد ادا' : 'Cash Paid',
-      prevBalance: isUr ? 'سابقہ بقایا' : 'Previous Balance',
-      summary: isUr ? 'خلاصہ' : 'Summary',
-      grossAmount: isUr ? 'مجموعی رقم' : 'Gross Amount',
-      netAmount: isUr ? 'خالص رقم' : 'Net Amount',
-      balanceDue: isUr ? 'ادائیگی رقم' : 'Balance Due',
-      printReceipt: isUr ? 'رسید پرنٹ کریں' : 'Print Receipt',
-      cancel: isUr ? 'منسوخ' : 'Cancel',
-      clear: isUr ? 'صاف کریں' : 'Clear',
-      updatePurchase: isUr ? 'خریداری اپ ڈیٹ کریں' : 'Update Purchase',
-      savePurchase: isUr ? 'خریداری محفوظ کریں' : 'Save Purchase',
-      valErrorTitle: isUr ? 'توثیق کی خرابی' : 'Validation Error',
-      selectSupplierMsg: isUr ? 'براہ کرم بیوپاری منتخب کریں' : 'Please select a supplier',
-      selectItemMsg: isUr ? 'براہ کرم آئٹم (قسم) منتخب کریں' : 'Please select an item',
-      valErrorWeightRate: isUr ? 'وزن اور ریٹ صفر سے زیادہ ہونا چاہیے' : 'Weight and rate must be greater than zero',
-      valErrorAmount: isUr ? 'مجموعی رقم صفر سے زیادہ ہونی چاہیے' : 'Gross amount must be greater than zero',
-      saveSuccessTitle: isUr ? 'خریداری محفوظ' : 'Purchase Saved',
-      updateSuccessMsg: isUr ? 'خریداری کامیابی سے اپ ڈیٹ ہو گئی' : 'Purchase updated successfully',
-      createSuccessMsg: (num) =>
-        isUr ? `خریداری نمبر ${num} کامیابی سے محفوظ` : `Purchase ${num} created successfully`,
-      saveErrorTitle: isUr ? 'خرابی' : 'Error',
-      saveErrorMsg: isUr ? 'خریداری محفوظ کرنے میں خرابی' : 'Failed to save purchase',
-      loadErrorMsg: isUr ? 'فارم ڈیٹا لوڈ کرنے میں خرابی' : 'Failed to load form data',
-      printErrorTitle: isUr ? 'پرنٹ کی خرابی' : 'Print Error',
-      printErrorMsg: isUr ? 'پرنٹ پیش نظارہ کھولنے میں خرابی' : 'Failed to open print preview',
-      receiptTitle: isUr ? 'خریداری رسید' : 'Purchase Receipt',
-      receiptNo: isUr ? 'رسید نمبر' : 'Receipt #',
-      date: isUr ? 'تاریخ' : 'Date',
-    }),
-    [isUr, editPurchase]
-  );
+  const { t } = useTranslation();
 
   // Header fields
   const [purchaseNumber, setPurchaseNumber] = useState('00000');
@@ -150,8 +102,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       } catch (error) {
         console.error('Failed to load data:', error);
         notifications.show({
-          title: t.saveErrorTitle,
-          message: `${t.loadErrorMsg}: ${error.message || 'Unknown error'}`,
+          title: t('error.title', 'Error'),
+          message: `${t('error.loadFailed', 'Failed to load data')}: ${error.message || 'Unknown error'}`,
           color: 'red',
         });
       }
@@ -283,10 +235,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
   }, [lineItems, concessionAmount, cashPaid, previousBalance]);
 
   // Format date for API
-  const formatDate = (date) => {
-    if (!date) return null;
-    return new Date(date).toISOString().split('T')[0];
-  };
+  const formatDate = (date) => formatDateForAPI(date);
 
   // Save purchase
   const handleSave = useCallback(async () => {
@@ -295,15 +244,15 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     );
 
     if (validLineItems.length === 0) {
-      notifications.show({ title: t.valErrorTitle, message: t.selectItemMsg, color: 'red' });
+      notifications.show({ title: t('validation.title', 'Validation Error'), message: t('purchase.validationItem', 'Please add at least one item'), color: 'red' });
       return;
     }
 
-    const supplierResult = validateRequired(selectedSupplier, t.supplier);
+    const supplierResult = validateRequired(selectedSupplier, t('purchase.supplier', 'Supplier'));
     if (!supplierResult.isValid) {
       notifications.show({
-        title: t.valErrorTitle,
-        message: t.selectSupplierMsg,
+        title: t('validation.title', 'Validation Error'),
+        message: t('validation.selectSupplier', 'Please select a vendor'),
         color: 'red',
       });
       return;
@@ -316,8 +265,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
 
     if (hasInvalidRow) {
       notifications.show({
-        title: t.valErrorTitle,
-        message: t.valErrorWeightRate,
+        title: t('validation.title', 'Validation Error'),
+        message: t('purchase.validationWeightRate', 'Weight and rate must be greater than zero'),
         color: 'red',
       });
       return;
@@ -325,8 +274,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
 
     if (totals.grossAmount <= 0) {
       notifications.show({
-        title: t.valErrorTitle,
-        message: t.valErrorAmount,
+        title: t('validation.title', 'Validation Error'),
+        message: t('purchase.validationAmount', 'Gross amount must be greater than zero'),
         color: 'red',
       });
       return;
@@ -359,25 +308,25 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
 
       if (response.success) {
         notifications.show({
-          title: t.saveSuccessTitle,
+          title: t('purchase.saved', 'Purchase Saved'),
           message: editPurchase
-            ? t.updateSuccessMsg
-            : t.createSuccessMsg(response.data.purchaseNumber),
+            ? t('purchase.updated', 'Purchase updated successfully')
+            : (isUr ? `خریداری نمبر ${response.data.purchaseNumber} کامیابی سے محفوظ` : `Purchase ${response.data.purchaseNumber} created successfully`),
           color: 'green',
         });
         onSaved?.(response.data);
       } else {
         notifications.show({
-          title: t.saveErrorTitle,
-          message: response.error || t.saveErrorMsg,
+          title: t('error.title', 'Error'),
+          message: response.error || t('purchase.error', 'Failed to save purchase'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Save purchase error:', error);
       notifications.show({
-        title: t.saveErrorTitle,
-        message: t.saveErrorMsg,
+        title: t('error.title', 'Error'),
+        message: t('purchase.error', 'Failed to save purchase'),
         color: 'red',
       });
     } finally {
@@ -394,6 +343,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     editPurchase,
     onSaved,
     t,
+    isUr,
     totals.grossAmount,
   ]);
 
@@ -418,7 +368,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       `;
     }).join('');
 
-    const html = `<!DOCTYPE html><html dir="${isUr ? 'rtl' : 'ltr'}"><head><title>${t.receiptTitle} - ${purchaseNumber}</title>
+    const html = `<!DOCTYPE html><html dir="${isUr ? 'rtl' : 'ltr'}"><head><title>${t('purchase.receiptTitle', 'Purchase Receipt')} - ${purchaseNumber}</title>
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet" />
         <style>
             @page { margin: 1cm; }
@@ -439,39 +389,39 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
             <p style="font-size:18px;direction:rtl">اے ایل شیخ فش ٹریڈر اینڈ ڈسٹری بیوٹر</p>
             <p>Shop No. W-644 Gunj Mandi Rawalpindi</p>
             <p>Ph: +92-3008501724 | 051-5534607</p>
-            <h3 style="margin:10px 0 0">${t.receiptTitle}</h3>
+            <h3 style="margin:10px 0 0">${t('purchase.receiptTitle', 'Purchase Receipt')}</h3>
         </div>
         <div class="info">
-            <div><strong>${t.receiptNo}:</strong> ${purchaseNumber}</div>
-            <div><strong>${t.date}:</strong> ${dateStr}</div>
-            <div><strong>${t.supplier}:</strong> ${supplierName}</div>
+            <div><strong>${t('purchase.receiptNo', 'Receipt #')}:</strong> ${purchaseNumber}</div>
+            <div><strong>${t('common.date', 'Date')}:</strong> ${dateStr}</div>
+            <div><strong>${t('purchase.supplier', 'Vendor')}:</strong> ${supplierName}</div>
         </div>
         <table>
-            <thead><tr><th style="text-align:${isUr ? 'right' : 'left'}">${t.item}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.weight}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.rate}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.amount}</th></tr></thead>
+            <thead><tr><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.item', 'Item')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.weight', 'Weight (kg)')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.rate', 'Rate')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.amount', 'Amount')}</th></tr></thead>
             <tbody>
               ${rowsHtml}
             </tbody>
         </table>
         <table class="totals">
-            <tr><td>${t.grossAmount}:</td><td>Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}</td></tr>
-            <tr><td>${t.concession}:</td><td>Rs. ${Math.round(concessionAmount || 0).toLocaleString('en-US')}</td></tr>
-            <tr><td>${t.netAmount}:</td><td><strong>Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}</strong></td></tr>
-            <tr><td>${t.cashPaid}:</td><td>Rs. ${Math.round(cashPaid || 0).toLocaleString('en-US')}</td></tr>
-            <tr class="grand-total"><td>${t.balanceDue}:</td><td>Rs. ${Math.round(totals.balanceAmount).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t('purchase.grossAmount', 'Gross Amount')}:</td><td>Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t('purchase.concession', 'Concession')}:</td><td>Rs. ${Math.round(concessionAmount || 0).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t('purchase.netAmount', 'Net Amount')}:</td><td><strong>Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}</strong></td></tr>
+            <tr><td>${t('purchase.cashPaid', 'Cash Paid')}:</td><td>Rs. ${Math.round(cashPaid || 0).toLocaleString('en-US')}</td></tr>
+            <tr class="grand-total"><td>${t('purchase.balanceDue', 'Balance Due')}:</td><td>Rs. ${Math.round(totals.balanceAmount).toLocaleString('en-US')}</td></tr>
         </table>
         </body></html>`;
 
     try {
       window.api.print.preview(html, {
-        title: `${t.receiptTitle} - ${purchaseNumber}`,
+        title: `${t('purchase.receiptTitle', 'Purchase Receipt')} - ${purchaseNumber}`,
         width: 1000,
         height: 800,
       });
     } catch (error) {
       console.error('Print error:', error);
       notifications.show({
-        title: t.printErrorTitle,
-        message: t.printErrorMsg,
+        title: t('error.title', 'Error'),
+        message: t('error.printFailed', 'Failed to open print preview'),
         color: 'red',
       });
     }
@@ -507,7 +457,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       <Stack gap="md">
         <Group justify="space-between" align="center">
           <Title order={4} className="text-green-700">
-            📦 {t.title}
+            📦 {editPurchase ? t('purchase.edit', 'Edit Purchase') : t('purchase.addNew', 'New Purchase')}
           </Title>
           <Badge size="lg" variant="light" color="green">
             {purchaseNumber}
@@ -520,7 +470,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         <Grid>
           <Grid.Col span={4}>
             <DatePickerInput
-              label={t.purchaseDate}
+              label={t('purchase.purchaseDate', 'Purchase Date')}
               placeholder=""
               value={purchaseDate}
               onChange={setPurchaseDate}
@@ -530,7 +480,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <Select
-              label={t.supplier}
+              label={t('purchase.supplier', 'Vendor')}
               placeholder=""
               data={suppliers}
               value={selectedSupplier}
@@ -541,7 +491,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <TextInput
-              label={t.vehicleNo}
+              label={t('purchase.vehicleNo', 'Vehicle No')}
               placeholder=""
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value)}
@@ -553,7 +503,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         <Grid>
           <Grid.Col span={12}>
             <Textarea
-              label={t.details}
+              label={t('purchase.details', 'Details')}
               placeholder=""
               value={details}
               onChange={(e) => setDetails(e.target.value)}
@@ -563,19 +513,19 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           </Grid.Col>
         </Grid>
 
-        <Divider label={t.purchaseDetails} labelPosition="center" />
+        <Divider label={t('purchase.lineItems', 'Line Items')} labelPosition="center" />
 
         {/* Dynamic Line Items - Tabular Layout */}
         <Paper withBorder radius="md" style={{ overflowX: 'auto' }}>
           <Table verticalSpacing="xs" striped withTableBorder withColumnBorders style={{ minWidth: 800 }}>
             <Table.Thead bg="gray.1">
               <Table.Tr>
-                <Table.Th style={{ width: 220 }}>{t.item}</Table.Th>
-                <Table.Th style={{ width: 100 }}>{t.rateMaund}</Table.Th>
-                <Table.Th style={{ width: 100 }}>{t.rate}</Table.Th>
-                <Table.Th style={{ width: 100 }}>{t.weight}</Table.Th>
-                <Table.Th style={{ width: 120 }}>{t.amount}</Table.Th>
-                {lineItems.length > 1 && <Table.Th style={{ width: 50, textAlign: 'center' }}>Delete</Table.Th>}
+                <Table.Th style={{ width: 220 }}>{t('purchase.item', 'Item')}</Table.Th>
+                <Table.Th style={{ width: 100 }}>{t('purchase.rateMaund', 'Rate/Maund')}</Table.Th>
+                <Table.Th style={{ width: 100 }}>{t('purchase.rate', 'Rate')}</Table.Th>
+                <Table.Th style={{ width: 100 }}>{t('purchase.weight', 'Weight kg')}</Table.Th>
+                <Table.Th style={{ width: 120 }}>{t('purchase.amount', 'Amount')}</Table.Th>
+                {lineItems.length > 1 && <Table.Th style={{ width: 50, textAlign: 'center' }}>{t('app.delete', 'Delete')}</Table.Th>}
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -669,7 +619,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           {/* Row 2: Concession + Cash Paid */}
           <Grid.Col span={4}>
             <NumberInput
-              label={t.concession}
+              label={t('purchase.concession', 'Concession')}
               value={concessionAmount}
               onChange={(val) => setConcessionAmount(val === '' ? '' : val)}
               min={0}
@@ -679,7 +629,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <NumberInput
-              label={t.cashPaid}
+              label={t('purchase.cashPaid', 'Cash Paid')}
               value={cashPaid}
               onChange={(val) => setCashPaid(val === '' ? '' : val)}
               min={0}
@@ -690,7 +640,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           <Grid.Col span={4}>
             <Paper p="xs" radius="sm" withBorder style={{ background: '#fff' }}>
               <Text size="xs" c="dimmed" mb={2}>
-                {t.prevBalance}
+                {t('purchase.previous', 'Previous Balance')}
               </Text>
               <Text
                 fw={600}
@@ -702,7 +652,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           </Grid.Col>
         </Grid>
 
-        <Divider label={t.summary} labelPosition="center" />
+        <Divider label={t('purchase.summary', 'Summary')} labelPosition="center" />
 
         {/* Summary */}
         <Paper
@@ -717,7 +667,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
             <Grid.Col span={4}>
               <Paper p="xs" radius="sm" withBorder style={{ background: '#fff' }}>
                 <Text size="xs" c="dimmed" mb={2}>
-                  {t.grossAmount}
+                  {t('purchase.grossAmount', 'Gross Amount')}
                 </Text>
                 <Text
                   fw={600}
@@ -730,7 +680,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
             <Grid.Col span={4}>
               <Paper p="xs" radius="sm" withBorder style={{ background: '#eff6ff' }}>
                 <Text size="xs" c="dimmed" mb={2}>
-                  {t.netAmount}
+                  {t('purchase.netAmount', 'Net Amount')}
                 </Text>
                 <Text
                   fw={700}
@@ -752,7 +702,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
                 }}
               >
                 <Text size="xs" c="dimmed" mb={2}>
-                  {t.balanceDue}
+                  {t('purchase.balanceDue', 'Balance Due')}
                 </Text>
                 <Text
                   fw={700}
@@ -770,14 +720,14 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         <Group justify="flex-end" mt="md">
           {editPurchase && (
             <Button variant="light" color="teal" onClick={handlePrint}>
-              🖨️ {t.printReceipt}
+              🖨️ {t('purchase.printReceipt', 'Print Receipt')}
             </Button>
           )}
           <Button variant="light" color="gray" onClick={onCancel || handleClear}>
-            {onCancel ? t.cancel : t.clear}
+            {onCancel ? t('app.cancel', 'Cancel') : t('app.clear', 'Clear')}
           </Button>
           <Button variant="filled" color="green" onClick={handleSave}>
-            {editPurchase ? t.updatePurchase : t.savePurchase}
+            {editPurchase ? t('purchase.updatePurchase', 'Update Purchase') : t('purchase.savePurchase', 'Save Purchase')}
           </Button>
         </Group>
       </Stack>

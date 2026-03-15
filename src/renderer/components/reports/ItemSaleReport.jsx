@@ -12,6 +12,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { formatDisplayName } from '../../utils/formatters';
@@ -31,27 +32,26 @@ export function ItemSaleReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      fromDate: isUr ? 'تاریخ (سے)' : 'From Date',
-      toDate: isUr ? 'تاریخ (تک)' : 'To Date',
-      go: isUr ? 'تلاش' : 'Go',
-      item: isUr ? 'آئٹم' : 'Item',
-      reportTitle: isUr ? 'مجملہ بکری' : 'Item Sale Report',
-      customer: isUr ? 'صارف' : 'Customer',
-      date: isUr ? 'تاریخ' : 'Date',
-      saleNumber: isUr ? 'بکری نمبر' : 'Sale #',
-      weight: isUr ? 'وزن' : 'Weight',
-      rate: isUr ? 'ریٹ' : 'Rate',
-      amount: isUr ? 'رقم' : 'Amount',
-      total: isUr ? 'کل' : 'Total',
-      avg: isUr ? 'اوسط' : 'Avg',
-      selectItemMsg: isUr ? 'آئٹم منتخب کریں' : 'Please select an item',
-      noRecords: isUr
-        ? 'منتخب کردہ معیار کے لئے کوئی ریکارڈ نہیں ملا'
-        : 'No records found for the selected criteria',
+      fromDate: translate('common.dateFrom', 'From Date'),
+      toDate: translate('common.dateTo', 'To Date'),
+      go: translate('common.go', 'Go'),
+      item: translate('common.item', 'Item'),
+      reportTitle: translate('itemSale.title', 'Item Sale Report'),
+      customer: translate('common.customer', 'Customer'),
+      date: translate('common.date', 'Date'),
+      saleNumber: translate('common.saleNo', 'Sale #'),
+      weight: translate('common.weight', 'Weight'),
+      rate: translate('common.rate', 'Rate'),
+      amount: translate('common.amount', 'Amount'),
+      total: translate('common.total', 'Total'),
+      avg: translate('common.avg', 'Avg'),
+      selectItemMsg: translate('error.selectItem', 'Please select an item'),
+      noRecords: translate('common.noRecords', 'No records found for the selected criteria'),
     }),
-    [isUr]
+    [translate]
   );
 
   // Fetch items for dropdown
@@ -75,6 +75,7 @@ export function ItemSaleReport() {
   }, [isUr]);
 
   const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
     return date.toISOString().split('T')[0];
   };
 

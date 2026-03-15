@@ -22,11 +22,12 @@ import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import '@mantine/dates/styles.css';
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import useStore from '../store';
-import { formatDisplayName } from '../utils/formatters';
+import { formatDisplayName, formatDateForAPI } from '../utils/formatters';
 
 /**
  * SaleSearch Component
@@ -44,73 +45,62 @@ function SaleSearch({ onEdit }) {
   const PAGE_SIZE = 25;
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      title: isUr ? 'بکری تلاش' : 'Search Sales',
-      dateFrom: isUr ? 'شروع تاریخ' : 'From Date',
-      dateTo: isUr ? 'اختتام تاریخ' : 'To Date',
-      customer: isUr ? 'گاہک' : 'Customer',
-      allCustomers: isUr ? 'تمام گاہک' : 'All Customers',
-      saleNo: isUr ? 'بکری نمبر' : 'Sale #',
-      searchBySaleNo: isUr ? 'بکری نمبر سے تلاش' : 'Search by Sale #',
-      printSlips: isUr ? 'تمام رسیدیں پرنٹ' : 'Print All Customer Slips',
-      search: isUr ? 'تلاش' : 'Search',
-      selected: isUr ? 'منتخب' : 'selected',
-      deleteSelectedTitle: isUr ? 'منتخب بکریاں حذف کریں' : 'Delete Selected Sales',
-      deleteSelectedMsg: (count) =>
-        isUr
-          ? `کیا آپ ${count} منتخب بکری(یاں) حذف کرنا چاہتے ہیں؟`
-          : `Are you sure you want to delete ${count} selected sale(s)?`,
-      deleteAll: isUr ? 'حذف کریں' : 'Delete All',
-      cancel: isUr ? 'منسوخ' : 'Cancel',
-      deleteSelectedBtn: isUr ? 'منتخب حذف کریں' : 'Delete Selected',
-      clearSelection: isUr ? 'انتخاب صاف کریں' : 'Clear Selection',
-      recordsFound: isUr ? 'ریکارڈ ملے' : 'Records Found',
-      noSalesFound: isUr
-        ? 'کوئی بکری نہیں ملی — اوپر کے فلٹر استعمال کریں۔'
-        : 'No sales found. Use the filters above to search.',
-      noSalesFoundEn: isUr ? '' : '',
-      saleNumCol: isUr ? 'بکری نمبر' : 'Sale #',
-      dateCol: isUr ? 'تاریخ' : 'Date',
-      customerCol: isUr ? 'گاہک' : 'Customer',
-      supplierCol: isUr ? 'بیوپاری' : 'Supplier',
-      vehicleCol: isUr ? 'گاڑی نمبر' : 'Vehicle No',
-      netAmtCol: isUr ? 'خالص رقم' : 'Net Amount',
-      balanceCol: isUr ? 'بقایا' : 'Balance',
-      statusCol: isUr ? 'حالت' : 'Status',
-      actionsCol: isUr ? 'عمل' : 'Actions',
-      deleteTitle: isUr ? 'بکری حذف کریں' : 'Delete Sale',
-      deleteMsg: (num) =>
-        isUr
-          ? `کیا آپ واقعی بکری <strong>${num}</strong> حذف کرنا چاہتے ہیں؟ یہ عمل ناقابل واپسی ہے۔ سٹاک اور گاہک کا بیلنس بحال ہو جائے گا۔`
-          : `Are you sure you want to delete sale <strong>${num}</strong>? This action cannot be undone. Stock and customer balance will be restored.`,
-      deleteConfirm: isUr ? 'حذف کریں' : 'Delete',
-      deleteSuccessTitle: isUr ? 'کامیابی' : 'Success',
-      deleteSuccessMsg: isUr ? 'بکری کامیابی سے حذف ہو گئی' : 'Sale deleted successfully',
-      deleteErrorTitle: isUr ? 'خرابی' : 'Error',
-      deleteErrorMsg: isUr ? 'بکری حذف کرنے میں خرابی' : 'Failed to delete sale',
-      valErrorTitle: isUr ? 'توثیق کی خرابی' : 'Validation Error',
-      valErrorDateMsg: isUr
-        ? 'شروع کی تاریخ اختتام کی تاریخ کے بعد نہیں ہو سکتی'
-        : 'Start date cannot be after end date',
-      noResultsTitle: isUr ? 'کوئی نتیجہ نہیں' : 'No Results',
-      noResultsMsg: isUr
-        ? 'معیار کے مطابق کوئی بکری نہیں ملی'
-        : 'No sales found matching the criteria',
-      searchErrorTitle: isUr ? 'خرابی' : 'Error',
-      searchErrorMsg: isUr ? 'بکریاں تلاش کرنے میں خرابی' : 'Failed to search sales',
-      noDataTitle: isUr ? 'کوئی ڈیٹا نہیں' : 'No Data',
-      noDataMsg: isUr ? 'پرنٹ کرنے کے لیے کوئی بکریاں نہیں ہیں' : 'No sales to print',
-      printErrorMsg: isUr ? 'گاہک کی رسیدیں بنانے میں ناکام' : 'Failed to generate customer slips',
-      printAllTitle: isUr ? 'تمام گاہک کی رسیدیں' : 'All Customer Slips',
-      receiptTitle: isUr ? 'بکری رسید' : 'Sale Receipt',
-      itemCol: isUr ? 'مچھلی' : 'Item',
-      weightCol: isUr ? 'وزن' : 'Weight',
-      rateCol: isUr ? 'ریٹ' : 'Rate',
-      amountCol: isUr ? 'رقم' : 'Amount',
-      cashReceivedCol: isUr ? 'نقد وصولی' : 'Cash Received',
+      title: translate('saleSearch.title', 'Search Sales'),
+      dateFrom: translate('common.dateFrom', 'From Date'),
+      dateTo: translate('common.dateTo', 'To Date'),
+      customer: translate('common.customer', 'Customer'),
+      allCustomers: translate('saleSearch.allCustomers', 'All Customers'),
+      saleNo: translate('saleSearch.saleNo', 'Sale #'),
+      searchBySaleNo: translate('saleSearch.searchBySaleNo', 'Search by Sale #'),
+      printSlips: translate('saleSearch.printSlips', 'Print All Customer Slips'),
+      search: translate('common.search', 'Search'),
+      selected: translate('common.selected', 'selected'),
+      deleteSelectedTitle: translate('saleSearch.deleteSelectedTitle', 'Delete Selected Sales'),
+      deleteSelectedMsg: (count) => translate('saleSearch.deleteSelectedMsg', 'Are you sure you want to delete {{count}} selected sale(s)?', { count }),
+      deleteAll: translate('common.deleteAll', 'Delete All'),
+      cancel: translate('common.cancel', 'Cancel'),
+      deleteSelectedBtn: translate('common.deleteSelectedBtn', 'Delete Selected'),
+      clearSelection: translate('common.clearSelection', 'Clear Selection'),
+      recordsFound: translate('common.recordsFound', 'Records Found'),
+      noSalesFound: translate('saleSearch.noSalesFound', 'No sales found. Use the filters above to search.'),
+      noSalesFoundEn: '',
+      saleNumCol: translate('saleSearch.saleNo', 'Sale #'),
+      dateCol: translate('common.date', 'Date'),
+      customerCol: translate('common.customer', 'Customer'),
+      supplierCol: translate('common.supplier', 'Supplier'),
+      vehicleCol: translate('common.vehicleNo', 'Vehicle No'),
+      netAmtCol: translate('common.netAmount', 'Net Amount'),
+      balanceCol: translate('common.balance', 'Balance'),
+      statusCol: translate('common.status', 'Status'),
+      actionsCol: translate('common.actions', 'Actions'),
+      deleteTitle: translate('saleSearch.deleteTitle', 'Delete Sale'),
+      deleteMsg: (num) => translate('saleSearch.deleteMsg', 'Are you sure you want to delete sale <strong>{{num}}</strong>? This action cannot be undone. Stock and customer balance will be restored.', { num }),
+      deleteConfirm: translate('common.delete', 'Delete'),
+      deleteSuccessTitle: translate('common.success', 'Success'),
+      deleteSuccessMsg: translate('saleSearch.deleteSuccessMsg', 'Sale deleted successfully'),
+      deleteErrorTitle: translate('error.title', 'Error'),
+      deleteErrorMsg: translate('saleSearch.deleteErrorMsg', 'Failed to delete sale'),
+      valErrorTitle: translate('error.validationError', 'Validation Error'),
+      valErrorDateMsg: translate('error.dateOrderMsg', 'Start date cannot be after end date'),
+      noResultsTitle: translate('search.noResultsTitle', 'No Results'),
+      noResultsMsg: translate('saleSearch.noResultsMsg', 'No sales found matching the criteria'),
+      searchErrorTitle: translate('error.title', 'Error'),
+      searchErrorMsg: translate('saleSearch.searchErrorMsg', 'Failed to search sales'),
+      noDataTitle: translate('common.noDataTitle', 'No Data'),
+      noDataMsg: translate('saleSearch.noDataMsg', 'No sales to print'),
+      printErrorMsg: translate('saleSearch.printErrorMsg', 'Failed to generate customer slips'),
+      printAllTitle: translate('saleSearch.printAllTitle', 'All Customer Slips'),
+      receiptTitle: translate('saleSearch.receiptTitle', 'Sale Receipt'),
+      itemCol: translate('common.item', 'Item'),
+      weightCol: translate('common.weight', 'Weight'),
+      rateCol: translate('common.rate', 'Rate'),
+      amountCol: translate('common.amount', 'Amount'),
+      cashReceivedCol: translate('saleSearch.cashReceivedCol', 'Cash Received'),
     }),
-    [isUr]
+    [translate]
   );
 
   // Filters
@@ -157,13 +147,6 @@ function SaleSearch({ onEdit }) {
     loadCustomers();
   }, [isUr]);
 
-  // Format date for API
-  const formatDate = (date) => {
-    if (!date) return null;
-    const d = new Date(date);
-    return d.toISOString().split('T')[0];
-  };
-
   // Search sales
   const handleSearch = useCallback(async () => {
     if (dateFrom > dateTo) {
@@ -178,8 +161,8 @@ function SaleSearch({ onEdit }) {
     setLoading(true);
     try {
       const filters = {
-        dateFrom: formatDate(dateFrom),
-        dateTo: formatDate(dateTo),
+        dateFrom: formatDateForAPI(dateFrom),
+        dateTo: formatDateForAPI(dateTo),
         customerId: !allCustomers ? parseInt(selectedCustomer) : null,
         allCustomers,
         saleNumber: searchBySaleNumber ? saleNumber : null,

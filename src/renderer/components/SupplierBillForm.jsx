@@ -15,12 +15,13 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import '@mantine/dates/styles.css';
 import useStore from '../store';
-import { formatDisplayName } from '../utils/formatters';
-import { validateRequired } from '../utils/validators';
+import { formatDisplayName, formatDateForAPI } from '../utils/formatters';
+
 
 /**
  * SupplierBillForm Component
@@ -33,48 +34,7 @@ import { validateRequired } from '../utils/validators';
 function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
   const language = useStore((s) => s.language);
   const isUr = language === 'ur';
-
-  const t = useMemo(() => ({
-    title: isUr ? 'بیوپاری بل' : 'Vendor Bill',
-    dateFrom: isUr ? 'تاریخ' : 'From Date',
-    dateTo: isUr ? 'سے تاریخ' : 'To Date',
-    supplier: isUr ? 'بیوپاری' : 'Supplier',
-    supplierPh: isUr ? 'بیوپاری منتخب کریں' : 'Select supplier',
-    vehicleNo: isUr ? 'گاڑی نمبر' : 'Vehicle Number',
-    chargesTitle: isUr ? 'خرچ' : 'Charges',
-    drugsCharges: isUr ? 'منشیانا' : 'Drugs/Chemicals',
-    fareCharges: isUr ? 'کرایہ' : 'Fare',
-    laborCharges: isUr ? 'مزدوری' : 'Labor',
-    iceCharges: isUr ? 'برف' : 'Ice',
-    commissionPct: isUr ? 'کمیش %' : 'Commission %',
-    commissionAmount: isUr ? 'کمیش' : 'Commission Amount',
-    concession: isUr ? 'رعایت' : 'Concession',
-    cashPaid: isUr ? 'نقل' : 'Cash Paid',
-    summaryTitle: isUr ? 'خلاصہ' : 'Summary',
-    totalWeight: isUr ? 'کل وزن' : 'Total Weight',
-    grossAmount: isUr ? 'مجموعی رقم' : 'Gross Amount',
-    totalCharges: isUr ? 'کل خرچ' : 'Total Charges',
-    netPayable: isUr ? 'قابل ادا' : 'Net Payable',
-    balanceAmount: isUr ? 'اداینگی رقم' : 'Balance',
-    clearBtn: isUr ? 'صاف کریں' : 'Clear',
-    goBtn: isUr ? 'پیش نظارہ (Go)' : 'Go (Preview)',
-    saveBtn: isUr ? 'بل محفوظ کریں' : 'Save Bill',
-    valErrorTitle: isUr ? 'توثیق کی خرابی' : 'Validation Error',
-    supplierReqMsg: isUr ? 'براہ کرم بیوپاری منتخب کریں' : 'Please select a supplier',
-    dateErrorMsg: isUr ? 'شروع کی تاریخ ختم ہونے کی تاریخ سے بعد نہیں ہو سکتی' : 'Start date cannot be after end date',
-    noDataTitle: isUr ? 'کوئی ڈیٹا نہیں' : 'No Data',
-    noDataMsg: isUr ? 'منتخب تاریخوں میں اس بیوپاری کا کوئی ڈیٹا نہیں ملا' : 'No sales found for this supplier in the selected date range',
-    errorTitle: isUr ? 'خرابی' : 'Error',
-    previewErrorMsg: isUr ? 'پیش نظارہ بنانے میں ناکامی' : 'Failed to generate preview',
-    previewReqMsg: isUr ? 'براہ کرم پہلے پیش نظارہ بنائیں' : 'Please generate a preview first',
-    noItemsMsg: isUr ? 'پیش نظارہ میں آئٹمز کے بغیر بل محفوظ نہیں کیا جا سکتا' : 'Cannot save bill without items in preview',
-    grossAmountReqMsg: isUr ? 'مجموعی رقم صفر سے زیادہ ہونی چاہیے' : 'Gross amount must be greater than zero',
-    commErrorMsg: isUr ? 'کمیشن 0 اور 100 کے درمیان ہونا چاہیے' : 'Commission must be between 0 and 100',
-    saveSuccessTitle: isUr ? 'بل محفوظ' : 'Bill Saved',
-    saveSuccessMsg: (num) => isUr ? `بل نمبر ${num} کامیابی سے محفوظ` : `Bill ${num} created successfully`,
-    saveErrorMsg: isUr ? 'بل محفوظ کرنے میں خرابی' : 'Failed to save bill',
-    errSupplier: isUr ? 'بیوپاری ضروری ہے' : 'Supplier is required',
-  }), [isUr]);
+  const { t } = useTranslation();
 
   // Form state
   const [loading, setLoading] = useState(false);
@@ -135,20 +95,12 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
     loadSuppliers();
   }, [isUr]);
 
-  // Format date for API
-  const formatDate = (date) => {
-    if (!date) return null;
-    const d = new Date(date);
-    return d.toISOString().split('T')[0];
-  };
-
-  // Generate preview (Go button)
+  // Generate preview
   const handleGeneratePreview = useCallback(async () => {
-    const supplierResult = validateRequired(selectedSupplier, t.errSupplier);
-    if (!supplierResult.isValid) {
+    if (!selectedSupplier) {
       notifications.show({
-        title: t.valErrorTitle,
-        message: t.supplierReqMsg,
+        title: t('validation.title', 'Validation Error'),
+        message: t('validation.selectSupplier', 'Please select a vendor'),
         color: 'red',
       });
       return;
@@ -156,8 +108,8 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
     if (dateFrom > dateTo) {
       notifications.show({
-        title: t.valErrorTitle,
-        message: t.dateErrorMsg,
+        title: t('validation.title', 'Validation Error'),
+        message: t('supplierBill.dateError', 'Start date cannot be after end date'),
         color: 'red',
       });
       return;
@@ -166,58 +118,51 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
     setLoading(true);
     try {
       const response = await window.api.supplierBills.generatePreview(
-        parseInt(selectedSupplier),
-        formatDate(dateFrom),
-        formatDate(dateTo)
-      );
+      parseInt(selectedSupplier),
+      formatDateForAPI(dateFrom),
+      formatDateForAPI(dateTo)
+    );
 
-      if (response.success) {
-        const data = response.data;
-        setPreviewData(data);
-        setTotalWeight(data.totalWeight);
-        setGrossAmount(data.grossAmount);
-        setCommissionPct(data.defaultCommissionPct || 5.0);
+    if (response.success) {
+      const data = response.data;
+      setPreviewData(data);
+      setTotalWeight(data.totalWeight);
+      setGrossAmount(data.grossAmount);
+      setCommissionPct(data.defaultCommissionPct || 5.0);
 
-        // Notify parent with preview data
-        onPreviewGenerated?.({
-          ...data,
-          supplierId: parseInt(selectedSupplier),
-          dateFrom: formatDate(dateFrom),
-          dateTo: formatDate(dateTo),
-        });
-
-        if (data.items.length === 0) {
+      // onPreviewGenerated is now handled by the useEffect for live updates
+      if (data.items.length === 0) {
           notifications.show({
-            title: t.noDataTitle,
-            message: t.noDataMsg,
+            title: t('supplierBill.noDataTitle', 'No Data'),
+            message: t('supplierBill.noDataMsg', 'No sales found for this vendor in the selected date range'),
             color: 'yellow',
           });
         }
       } else {
         notifications.show({
-          title: t.errorTitle,
-          message: response.error || t.previewErrorMsg,
+          title: t('error.title', 'Error'),
+          message: response.error || t('supplierBill.previewError', 'Failed to generate preview'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Preview generation error:', error);
       notifications.show({
-        title: t.errorTitle,
-        message: t.previewErrorMsg,
+        title: t('error.title', 'Error'),
+        message: t('supplierBill.previewError', 'Failed to generate preview'),
         color: 'red',
       });
     } finally {
       setLoading(false);
     }
-  }, [selectedSupplier, dateFrom, dateTo, onPreviewGenerated, t]);
+  }, [selectedSupplier, dateFrom, dateTo, t]);
 
   // Save bill
   const handleSave = useCallback(async () => {
     if (!previewData || !selectedSupplier) {
       notifications.show({
-        title: t.errorTitle,
-        message: t.previewReqMsg,
+        title: t('error.title', 'Error'),
+        message: t('supplierBill.previewReqMsg', 'Please generate a preview first'),
         color: 'red',
       });
       return;
@@ -225,8 +170,8 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
     if (previewData.items && previewData.items.length === 0) {
       notifications.show({
-        title: t.errorTitle,
-        message: t.noItemsMsg,
+        title: t('error.title', 'Error'),
+        message: t('supplierBill.noItemsMsg', 'Cannot save bill without items in preview'),
         color: 'red',
       });
       return;
@@ -234,8 +179,8 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
     if (grossAmount <= 0) {
       notifications.show({
-        title: t.errorTitle,
-        message: t.grossAmountReqMsg,
+        title: t('error.title', 'Error'),
+        message: t('supplierBill.grossAmountReqMsg', 'Gross amount must be greater than zero'),
         color: 'red',
       });
       return;
@@ -243,8 +188,8 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
     if (numCommissionPct < 0 || numCommissionPct > 100) {
       notifications.show({
-        title: t.errorTitle,
-        message: t.commErrorMsg,
+        title: t('error.title', 'Error'),
+        message: t('supplierBill.commErrorMsg', 'Commission must be between 0 and 100'),
         color: 'red',
       });
       return;
@@ -255,8 +200,8 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
       const billData = {
         supplier_id: parseInt(selectedSupplier),
         vehicle_number: vehicleNumber || null,
-        date_from: formatDate(dateFrom),
-        date_to: formatDate(dateTo),
+        date_from: formatDateForAPI(dateFrom),
+        date_to: formatDateForAPI(dateTo),
         total_weight: totalWeight,
         gross_amount: grossAmount,
         commission_pct: numCommissionPct,
@@ -278,8 +223,8 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
       if (response.success) {
         notifications.show({
-          title: t.saveSuccessTitle,
-          message: t.saveSuccessMsg(response.data.billNumber),
+          title: t('supplierBill.saved', 'Bill Saved'),
+          message: isUr ? `بل نمبر ${response.data.billNumber} کامیابی سے محفوظ` : `Bill ${response.data.billNumber} created successfully`,
           color: 'green',
         });
         onBillSaved?.(response.data);
@@ -291,16 +236,16 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
         setCashPaid('');
       } else {
         notifications.show({
-          title: t.errorTitle,
-          message: response.error || t.saveErrorMsg,
+          title: t('error.title', 'Error'),
+          message: response.error || t('supplierBill.error', 'Failed to save bill'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Save bill error:', error);
       notifications.show({
-        title: t.errorTitle,
-        message: t.saveErrorMsg,
+        title: t('error.title', 'Error'),
+        message: t('supplierBill.error', 'Failed to save bill'),
         color: 'red',
       });
     } finally {
@@ -326,7 +271,50 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
     numCash,
     balanceAmount,
     onBillSaved,
+    isUr,
     t,
+  ]);
+
+  // Sync real-time charges and balances to preview
+  useEffect(() => {
+    if (previewData) {
+      onPreviewGenerated?.({
+        ...previewData,
+        supplierId: parseInt(selectedSupplier),
+        dateFrom: formatDateForAPI(dateFrom),
+        dateTo: formatDateForAPI(dateTo),
+        vehicleNumber,
+        commissionPct: numCommissionPct,
+        commissionAmount,
+        drugsCharges: numDrugs,
+        fareCharges: numFare,
+        laborCharges: numLabor,
+        iceCharges: numIce,
+        totalCharges,
+        concessionAmount: numConcession,
+        cashPaid: numCash,
+        totalPayable,
+        balanceAmount,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    previewData,
+    selectedSupplier,
+    dateFrom,
+    dateTo,
+    vehicleNumber,
+    numCommissionPct,
+    commissionAmount,
+    numDrugs,
+    numFare,
+    numLabor,
+    numIce,
+    totalCharges,
+    numConcession,
+    numCash,
+    totalPayable,
+    balanceAmount,
   ]);
 
   // Clear form
@@ -354,7 +342,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
 
       <Stack gap="md">
         <Title order={4} className="text-blue-700">
-          📄 {t.title}
+          📄 {t('supplierBill.title', 'Vendor Bill')}
         </Title>
 
         <Divider />
@@ -363,7 +351,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
         <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Grid.Col span={6}>
             <DatePickerInput
-              label={t.dateFrom}
+              label={t('supplierBill.fromDate', 'From Date')}
               placeholder=""
               value={dateFrom}
               onChange={setDateFrom}
@@ -373,7 +361,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={6}>
             <DatePickerInput
-              label={t.dateTo}
+              label={t('supplierBill.toDate', 'To Date')}
               placeholder=""
               value={dateTo}
               onChange={setDateTo}
@@ -386,8 +374,8 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
         {/* Supplier Selection */}
         <div style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Select
-            label={t.supplier}
-            placeholder={t.supplierPh}
+            label={t('supplierBill.supplier', 'Vendor')}
+            placeholder={isUr ? 'بیوپاری منتخب کریں' : 'Select vendor'}
             data={suppliers}
             value={selectedSupplier}
             onChange={setSelectedSupplier}
@@ -399,20 +387,20 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
         {/* Vehicle Number */}
         <div style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <TextInput
-            label={t.vehicleNo}
+            label={t('supplierBill.vehicle', 'Vehicle Number')}
             placeholder=""
             value={vehicleNumber}
             onChange={(e) => setVehicleNumber(e.target.value)}
           />
         </div>
 
-        <Divider label={t.chargesTitle} labelPosition="center" />
+        <Divider label={t('supplierBill.chargesTitle', 'Charges')} labelPosition="center" />
 
         {/* Charges Grid */}
         <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Grid.Col span={6}>
             <NumberInput
-              label={t.drugsCharges}
+              label={t('supplierBill.drugsChemicals', 'Drugs/Chemicals')}
               value={drugsCharges}
               onChange={(val) => setDrugsCharges(val === '' ? '' : val)}
               min={0}
@@ -422,7 +410,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={6}>
             <NumberInput
-              label={t.fareCharges}
+              label={t('supplierBill.fare', 'Fare')}
               value={fareCharges}
               onChange={(val) => setFareCharges(val === '' ? '' : val)}
               min={0}
@@ -435,7 +423,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
         <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Grid.Col span={4}>
             <NumberInput
-              label={t.laborCharges}
+              label={t('supplierBill.labor', 'Labor')}
               value={laborCharges}
               onChange={(val) => setLaborCharges(val === '' ? '' : val)}
               min={0}
@@ -445,7 +433,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <NumberInput
-              label={t.iceCharges}
+              label={t('supplierBill.ice', 'Ice')}
               value={iceCharges}
               onChange={(val) => setIceCharges(val === '' ? '' : val)}
               min={0}
@@ -455,7 +443,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <NumberInput
-              label={t.commissionPct}
+              label={t('supplierBill.commissionPct', 'Commission %')}
               value={commissionPct}
               onChange={(val) => setCommissionPct(val === '' ? '' : val)}
               min={0}
@@ -469,7 +457,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
         <Grid style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Grid.Col span={4}>
             <NumberInput
-              label={t.commissionAmount}
+              label={t('supplierBill.commissionAmt', 'Commission Amount')}
               value={Math.round(commissionAmount)}
               readOnly
               decimalScale={0}
@@ -479,7 +467,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <NumberInput
-              label={t.concession}
+              label={t('supplierBill.concession', 'Concession')}
               value={concessionAmount}
               onChange={(val) => setConcessionAmount(val === '' ? '' : val)}
               min={0}
@@ -489,7 +477,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <NumberInput
-              label={t.cashPaid}
+              label={t('supplierBill.cashPaid', 'Cash Paid')}
               value={cashPaid}
               onChange={(val) => setCashPaid(val === '' ? '' : val)}
               min={0}
@@ -499,7 +487,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
           </Grid.Col>
         </Grid>
 
-        <Divider label={t.summaryTitle} labelPosition="center" />
+        <Divider label={t('supplierBill.summaryTitle', 'Summary')} labelPosition="center" />
 
         {/* Summary Display */}
         <Paper p="md" bg="gray.0" radius="sm" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
@@ -507,7 +495,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
             <Grid.Col span={6}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">
-                  {t.totalWeight}:
+                  {t('supplierBill.totalWeight', 'Total Weight')}:
                 </Text>
                 <Text fw={500} dir="ltr">{totalWeight.toFixed(2)} kg</Text>
               </Group>
@@ -515,7 +503,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
             <Grid.Col span={6}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">
-                  {t.grossAmount}:
+                  {t('supplierBill.grossAmount', 'Gross Amount')}:
                 </Text>
                 <Text fw={500} dir="ltr">Rs. {Math.round(grossAmount).toLocaleString('en-US')}</Text>
               </Group>
@@ -523,7 +511,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
             <Grid.Col span={6}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">
-                  {t.totalCharges}:
+                  {t('supplierBill.totalCharges', 'Total Charges')}:
                 </Text>
                 <Text fw={500} c="red" dir="ltr">
                   - Rs. {Math.round(commissionAmount + totalCharges).toLocaleString('en-US')}
@@ -533,7 +521,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
             <Grid.Col span={6}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">
-                  {t.netPayable}:
+                  {t('supplierBill.netPayable', 'Net Payable')}:
                 </Text>
                 <Text fw={600} c="blue" dir="ltr">
                   Rs. {Math.round(totalPayable).toLocaleString('en-US')}
@@ -544,7 +532,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               <Divider my="xs" />
               <Group justify="space-between">
                 <Text size="lg" fw={600}>
-                  {t.balanceAmount}:
+                  {t('supplierBill.balanceAmount', 'Balance')}:
                 </Text>
                 <Text size="xl" fw={700} c={balanceAmount >= 0 ? 'green' : 'red'} dir="ltr">
                   Rs. {Math.round(balanceAmount).toLocaleString('en-US')}
@@ -557,13 +545,13 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
         {/* Action Buttons */}
         <Group justify="flex-end" mt="md" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Button variant="light" color="gray" onClick={handleClear}>
-            {t.clearBtn}
+            {t('app.clear', 'Clear')}
           </Button>
           <Button variant="filled" color="teal" onClick={handleGeneratePreview}>
-            {t.goBtn}
+            {t('supplierBill.goBtn', 'Go (Preview)')}
           </Button>
           <Button variant="filled" color="blue" onClick={handleSave} disabled={!previewData}>
-            {t.saveBtn}
+            {t('supplierBill.saveBtn', 'Save Bill')}
           </Button>
         </Group>
       </Stack>

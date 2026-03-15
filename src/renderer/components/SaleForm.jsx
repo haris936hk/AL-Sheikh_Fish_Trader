@@ -22,10 +22,11 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import '@mantine/dates/styles.css';
 import useStore from '../store';
-import { formatDisplayName } from '../utils/formatters';
+import { formatDisplayName, formatDateForAPI } from '../utils/formatters';
 
 const DEFAULT_LINE = {
   item_id: null,
@@ -57,66 +58,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
   const [itemsList, setItemsList] = useState([]);
 
   const isUr = language === 'ur';
-  const t = useMemo(
-    () => ({
-      title: editSale ? (isUr ? 'بکری ترمیم کریں' : 'Edit Sale') : isUr ? 'نئی بکری' : 'New Sale',
-      saleDate: isUr ? 'بکری تاریخ' : 'Sale Date',
-      supplier: isUr ? 'بیوپاری' : 'Supplier',
-      supplierPh: isUr ? 'بیوپاری منتخب کریں (اختیاری)' : 'Select supplier (optional)',
-      vehicleNo: isUr ? 'گاڑی نمبر' : 'Vehicle No',
-      details: isUr ? 'تفصیل' : 'Details',
-      detailsPh: isUr ? 'مزید تفصیلات...' : 'Additional notes...',
-      saleDetails: isUr ? 'بکری تفصیل' : 'Sale Details',
-      item: isUr ? 'مچھلی' : 'Item',
-      customer: isUr ? 'گاہک' : 'Customer',
-      stock: isUr ? 'سٹاک' : 'Stock',
-      rateMaund: isUr ? 'ریٹ فی من' : 'Rate/Maund',
-      rateKg: isUr ? 'ریٹ فی کلوگرام' : 'Rate/kg',
-      weightKg: isUr ? 'وزن کلوگرام' : 'Weight kg',
-      totalAmount: isUr ? 'ٹوٹل رقم' : 'Total Amount',
-      iceCharges: isUr ? 'برف' : 'Ice Charges',
-      fareCharges: isUr ? 'کرایہ' : 'Fare Charges',
-      cash: isUr ? 'نقدی' : 'Cash',
-      receipt: isUr ? 'وصولی' : 'Receipt',
-      summary: isUr ? 'خلاصہ' : 'Summary',
-      grossAmount: isUr ? 'مجموعی رقم' : 'Gross Amount',
-      charges: isUr ? 'اخراجات' : 'Charges',
-      netAmount: isUr ? 'خالص رقم' : 'Net Amount',
-      cashReceipt: isUr ? 'نقد + وصولی' : 'Cash + Receipt',
-      balance: isUr ? 'بقایا' : 'Balance',
-      printReceipt: isUr ? 'رسید پرنٹ کریں' : 'Print Receipt',
-      cancel: isUr ? 'منسوخ کریں' : 'Cancel',
-      clear: isUr ? 'صاف کریں' : 'Clear',
-      addLine: isUr ? 'لائن شامل کریں' : 'Add Line',
-      removeLine: isUr ? 'لائن ہٹائیں' : 'Remove Line',
-      saveSale: editSale
-        ? isUr
-          ? 'بکری اپ ڈیٹ کریں'
-          : 'Update Sale'
-        : isUr
-          ? 'بکری محفوظ کریں'
-          : 'Save Sale',
-      valErrorItem: isUr ? 'براہ کرم تمام آئٹمز منتخب کریں' : 'Please select all items',
-      valErrorCustomer: isUr ? 'ہر آئٹم کے لیے گاہک منتخب کریں' : 'Please select a customer for each item',
-      valErrorWeightRate: isUr ? 'وزن اور ریٹ صفر سے زیادہ ہونا چاہیے' : 'Weight and rate must be greater than zero',
-      insufficientStockTitle: isUr ? 'ناکافی سٹاک' : 'Insufficient Stock',
-      insufficientStockMsg: (name, need, avail) =>
-        isUr
-          ? `${name}: ${need} کلوگرام درکار ہے، ${avail} کلوگرام دستیاب ہے`
-          : `${name}: need ${need} kg, available ${avail} kg`,
-      saveSuccessTitle: isUr ? 'بکری محفوظ' : 'Sale Saved',
-      saveSuccessEditMsg: isUr ? 'بکری کامیابی سے اپ ڈیٹ ہو گئی' : 'Sale updated successfully',
-      saveSuccessNewMsg: (num) =>
-        isUr ? `بکری نمبر ${num} کامیابی سے محفوظ` : `Sale ${num} created successfully`,
-      saveErrorTitle: isUr ? 'خرابی' : 'Error',
-      saveErrorMsg: isUr ? 'بکری محفوظ کرنے میں خرابی' : 'Failed to save sale',
-      printReceiptTitle: isUr ? 'بکری رسید' : 'Sale Receipt',
-      receiptNo: isUr ? 'رسید نمبر' : 'Receipt #',
-      date: isUr ? 'تاریخ' : 'Date',
-      printErrorMsg: isUr ? 'پرنٹ پیش نظارہ کھولنے میں ناکام' : 'Failed to open print preview',
-    }),
-    [isUr, editSale]
-  );
+  const { t } = useTranslation();
 
   // Header fields
   const [saleNumber, setSaleNumber] = useState('00000');
@@ -170,14 +112,14 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       } catch (error) {
         console.error('Failed to load data:', error);
         notifications.show({
-          title: 'Error',
-          message: `Failed to load form data: ${error.message || 'Unknown error'}`,
+          title: t('error.title', 'Error'),
+          message: `${t('error.loadFailed', 'Failed to load form data')}: ${error.message || 'Unknown error'}`,
           color: 'red',
         });
       }
     };
     loadData();
-  }, [editSale, isUr]);
+  }, [editSale, isUr, t]);
 
   // Load existing sale for editing
   useEffect(() => {
@@ -313,11 +255,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
   const balanceAmount = totals.netAmount - totals.cashReceived - totals.receiptAmount;
 
   // Format date for API
-  const formatDate = (date) => {
-    if (!date) return null;
-    const d = new Date(date);
-    return d.toISOString().split('T')[0];
-  };
+  const formatDate = (date) => formatDateForAPI(date);
 
   // Save sale
   const handleSave = useCallback(async () => {
@@ -326,7 +264,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
     );
 
     if (validLineItems.length === 0) {
-      notifications.show({ title: t.saveErrorTitle, message: t.valErrorItem, color: 'red' });
+      notifications.show({ title: t('error.title', 'Error'), message: t('sale.validationItem', 'Please select all items'), color: 'red' });
       return;
     }
 
@@ -334,15 +272,15 @@ function SaleForm({ editSale, onSaved, onCancel }) {
     for (let i = 0; i < validLineItems.length; i++) {
       const row = validLineItems[i];
       if (!row.item_id) {
-        notifications.show({ title: t.saveErrorTitle, message: t.valErrorItem, color: 'red' });
+        notifications.show({ title: t('error.title', 'Error'), message: t('sale.validationItem', 'Please select all items'), color: 'red' });
         return;
       }
       if (!row.customer_id) {
-        notifications.show({ title: t.saveErrorTitle, message: t.valErrorCustomer, color: 'red' });
+        notifications.show({ title: t('error.title', 'Error'), message: t('sale.validationCustomer', 'Please select a customer for each item'), color: 'red' });
         return;
       }
       if (Number(row.weight) <= 0 || Number(row.rate_kg) <= 0) {
-        notifications.show({ title: t.saveErrorTitle, message: t.valErrorWeightRate, color: 'red' });
+        notifications.show({ title: t('error.title', 'Error'), message: t('sale.validationWeightRate', 'Weight and rate must be greater than zero'), color: 'red' });
         return;
       }
     }
@@ -380,12 +318,12 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           const stockInfo = stockMap[itemId];
           if (stockInfo && needWeight > stockInfo.stock) {
             notifications.show({
-              title: t.insufficientStockTitle,
-              message: t.insufficientStockMsg(
-                stockInfo.name,
-                needWeight.toFixed(2),
-                stockInfo.stock.toFixed(2)
-              ),
+              title: t('sale.insufficientStockTitle', 'Insufficient Stock'),
+              message: t('sale.insufficientStockMsg', {
+                name: stockInfo.name,
+                need: needWeight.toFixed(2),
+                avail: stockInfo.stock.toFixed(2),
+              }),
               color: 'red',
               autoClose: 8000,
             });
@@ -395,7 +333,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       }
     } catch (error) {
       console.error('Stock check error:', error);
-      notifications.show({ title: t.saveErrorTitle, message: t.saveErrorMsg, color: 'red' });
+      notifications.show({ title: t('error.title', 'Error'), message: t('sale.error', 'Failed to save sale'), color: 'red' });
       return;
     }
 
@@ -436,21 +374,21 @@ function SaleForm({ editSale, onSaved, onCancel }) {
 
       if (response.success) {
         notifications.show({
-          title: t.saveSuccessTitle,
-          message: editSale ? t.saveSuccessEditMsg : t.saveSuccessNewMsg(response.data.saleNumber),
+          title: t('sale.saved', 'Sale Saved'),
+          message: editSale ? t('sale.updated', 'Sale updated successfully') : (isUr ? `بکری نمبر ${response.data.saleNumber} کامیابی سے محفوظ` : `Sale ${response.data.saleNumber} created successfully`),
           color: 'green',
         });
         onSaved?.(response.data);
       } else {
         notifications.show({
-          title: t.saveErrorTitle,
-          message: response.error || t.saveErrorMsg,
+          title: t('error.title', 'Error'),
+          message: response.error || t('sale.error', 'Failed to save sale'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Save sale error:', error);
-      notifications.show({ title: t.saveErrorTitle, message: t.saveErrorMsg, color: 'red' });
+      notifications.show({ title: t('error.title', 'Error'), message: t('sale.error', 'Failed to save sale'), color: 'red' });
     } finally {
       setLoading(false);
     }
@@ -463,6 +401,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
     editSale,
     onSaved,
     t,
+    isUr,
   ]);
 
   // Print receipt for saved sale
@@ -488,7 +427,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       </tr>`;
     }).join('');
 
-    const html = `<!DOCTYPE html><html dir="${isUr ? 'rtl' : 'ltr'}"><head><title>${t.printReceiptTitle} - ${saleNumber}</title>
+    const html = `<!DOCTYPE html><html dir="${isUr ? 'rtl' : 'ltr'}"><head><title>${t('sale.receiptTitle', 'Sale Receipt')} - ${saleNumber}</title>
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet" />
         <style>
             @page { margin: 1cm; }
@@ -509,37 +448,37 @@ function SaleForm({ editSale, onSaved, onCancel }) {
             <p style="font-size:18px;direction:rtl">اے ایل شیخ فش ٹریڈر اینڈ ڈسٹری بیوٹر</p>
             <p>Shop No. W-644 Gunj Mandi Rawalpindi</p>
             <p>Ph: +92-3008501724 | 051-5534607</p>
-            <h3 style="margin:10px 0 0">${t.printReceiptTitle}</h3>
+            <h3 style="margin:10px 0 0">${t('sale.receiptTitle', 'Sale Receipt')}</h3>
         </div>
         <div class="info">
-            <div><strong>${t.receiptNo}:</strong> ${saleNumber}</div>
-            <div><strong>${t.date}:</strong> ${dateStr}</div>
+            <div><strong>${t('sale.receiptNo', 'Receipt #')}:</strong> ${saleNumber}</div>
+            <div><strong>${t('common.date', 'Date')}:</strong> ${dateStr}</div>
         </div>
         <table>
-            <thead><tr><th style="text-align:${isUr ? 'right' : 'left'}">${t.item}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.customer}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.weightKg}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.rateKg}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t.totalAmount}</th></tr></thead>
+            <thead><tr><th style="text-align:${isUr ? 'right' : 'left'}">${t('sale.item', 'Item')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('sale.customer', 'Customer')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('sale.weightKg', 'Weight kg')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('sale.rateKg', 'Rate/kg')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('sale.totalAmount', 'Total Amount')}</th></tr></thead>
             <tbody>
               ${rowsHtml}
             </tbody>
         </table>
         <table class="totals">
-            <tr><td>${t.grossAmount}:</td><td>Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}</td></tr>
-            <tr><td>${t.fareCharges}:</td><td>Rs. ${Math.round(totals.fareCharges).toLocaleString('en-US')}</td></tr>
-            <tr><td>${t.iceCharges}:</td><td>Rs. ${Math.round(totals.iceCharges).toLocaleString('en-US')}</td></tr>
-            <tr><td>${t.netAmount}:</td><td><strong>Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}</strong></td></tr>
-            <tr><td>${t.cash}:</td><td>Rs. ${Math.round(totals.cashReceived).toLocaleString('en-US')}</td></tr>
-            <tr class="grand-total"><td>${t.balance}:</td><td>Rs. ${Math.round(balanceAmount).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t('sale.grossAmount', 'Gross Amount')}:</td><td>Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t('sale.fareCharges', 'Fare Charges')}:</td><td>Rs. ${Math.round(totals.fareCharges).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t('sale.iceCharges', 'Ice Charges')}:</td><td>Rs. ${Math.round(totals.iceCharges).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t('sale.netAmount', 'Net Amount')}:</td><td><strong>Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}</strong></td></tr>
+            <tr><td>${t('sale.cash', 'Cash')}:</td><td>Rs. ${Math.round(totals.cashReceived).toLocaleString('en-US')}</td></tr>
+            <tr class="grand-total"><td>${t('sale.balance', 'Balance')}:</td><td>Rs. ${Math.round(balanceAmount).toLocaleString('en-US')}</td></tr>
         </table>
         </body></html>`;
 
     try {
       window.api.print.preview(html, {
-        title: `${t.printReceiptTitle} - ${saleNumber}`,
+        title: `${t('sale.receiptTitle', 'Sale Receipt')} - ${saleNumber}`,
         width: 1000,
         height: 800,
       });
     } catch (error) {
       console.error('Print error:', error);
-      notifications.show({ title: t.saveErrorTitle, message: t.printErrorMsg, color: 'red' });
+      notifications.show({ title: t('error.title', 'Error'), message: t('error.printFailed', 'Failed to open print preview'), color: 'red' });
     }
   }, [
     lineItems,
@@ -568,7 +507,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       <Stack gap="md">
         <Group justify="space-between" align="center">
           <Title order={4} className="text-blue-700">
-            💰 {t.title}
+            💰 {editSale ? t('sale.edit', 'Edit Sale') : t('sale.addNew', 'New Sale')}
           </Title>
           <Badge size="lg" variant="light" color="blue">
             {saleNumber}
@@ -581,7 +520,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         <Grid>
           <Grid.Col span={4}>
             <DatePickerInput
-              label={t.saleDate}
+              label={t('sale.saleDate', 'Sale Date')}
               placeholder=""
               value={saleDate}
               onChange={setSaleDate}
@@ -591,8 +530,8 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <Select
-              label={t.supplier}
-              placeholder={t.supplierPh}
+              label={t('sale.supplier', 'Vendor (optional)')}
+              placeholder={isUr ? 'بیوپاری منتخب کریں (اختیاری)' : 'Select vendor (optional)'}
               data={suppliers}
               value={selectedSupplier}
               onChange={setSelectedSupplier}
@@ -602,7 +541,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <TextInput
-              label={t.vehicleNo}
+              label={t('sale.vehicleNo', 'Vehicle No')}
               placeholder=""
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value)}
@@ -614,8 +553,8 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         <Grid>
           <Grid.Col span={12}>
             <Textarea
-              label={t.details}
-              placeholder={t.detailsPh}
+              label={t('sale.details', 'Details')}
+              placeholder={isUr ? 'مزید تفصیلات...' : 'Additional notes...'}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               minRows={1}
@@ -624,24 +563,24 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           </Grid.Col>
         </Grid>
 
-        <Divider label={t.saleDetails} labelPosition="center" />
+        <Divider label={t('sale.lineItems', 'Line Items')} labelPosition="center" />
 
         {/* Dynamic Line Items - Tabular Layout */}
         <Paper withBorder radius="md" style={{ overflowX: 'auto', overflowY: 'visible' }}>
           <Table verticalSpacing="xs" striped withTableBorder withColumnBorders style={{ minWidth: 950 }}>
             <Table.Thead bg="gray.1">
               <Table.Tr>
-                <Table.Th style={{ width: 40, textAlign: 'center' }}>{t.stock}</Table.Th>
-                <Table.Th style={{ width: 170 }}>{t.item}</Table.Th>
-                <Table.Th style={{ width: 85 }}>{t.rateMaund}</Table.Th>
-                <Table.Th style={{ width: 85 }}>{t.rateKg}</Table.Th>
-                <Table.Th style={{ width: 170 }}>{t.customer}</Table.Th>
-                <Table.Th style={{ width: 80 }}>{t.weightKg}</Table.Th>
-                <Table.Th style={{ width: 70 }}>{t.iceCharges}</Table.Th>
-                <Table.Th style={{ width: 70 }}>{t.fareCharges}</Table.Th>
-                <Table.Th style={{ width: 90 }}>{t.totalAmount}</Table.Th>
-                <Table.Th style={{ width: 80 }}>{t.cash}</Table.Th>
-                <Table.Th style={{ width: 80 }}>{t.receipt}</Table.Th>
+                <Table.Th style={{ width: 40, textAlign: 'center' }}>{t('sale.stock', 'Stock')}</Table.Th>
+                <Table.Th style={{ width: 170 }}>{t('sale.item', 'Item')}</Table.Th>
+                <Table.Th style={{ width: 85 }}>{t('sale.rateMaund', 'Rate/Maund')}</Table.Th>
+                <Table.Th style={{ width: 85 }}>{t('sale.rateKg', 'Rate/kg')}</Table.Th>
+                <Table.Th style={{ width: 170 }}>{t('sale.customer', 'Customer')}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t('sale.weightKg', 'Weight kg')}</Table.Th>
+                <Table.Th style={{ width: 70 }}>{t('sale.iceCharges', 'Ice Charges')}</Table.Th>
+                <Table.Th style={{ width: 70 }}>{t('sale.fareCharges', 'Fare Charges')}</Table.Th>
+                <Table.Th style={{ width: 90 }}>{t('sale.totalAmount', 'Total Amount')}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t('sale.cash', 'Cash')}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t('sale.receipt', 'Receipt')}</Table.Th>
                 {lineItems.length > 1 && <Table.Th style={{ width: 40, textAlign: 'center' }}>X</Table.Th>}
               </Table.Tr>
             </Table.Thead>
@@ -790,7 +729,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                     {/* Delete */}
                     {lineItems.length > 1 && (
                       <Table.Td style={{ textAlign: 'center', padding: '4px' }}>
-                        <Tooltip label={t.removeLine}>
+                        <Tooltip label={t('sale.removeLine', 'Remove Line')}>
                           <ActionIcon
                             color="red"
                             variant="subtle"
@@ -808,7 +747,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           </Table>
         </Paper>
 
-        <Divider label={t.summary} labelPosition="center" />
+        <Divider label={t('sale.summary', 'Summary')} labelPosition="center" />
 
         {/* Global Summary */}
         <Paper
@@ -824,17 +763,17 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           <Grid mb="xs" gutter="sm">
             {[
               {
-                label: t.grossAmount,
+                label: t('sale.grossAmount', 'Gross Amount'),
                 val: `Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}`,
                 color: 'dark',
               },
               {
-                label: t.charges,
+                label: t('sale.charges', 'Charges'),
                 val: `Rs. ${Math.round(totals.fareCharges + totals.iceCharges).toLocaleString('en-US')}`,
                 color: 'dark',
               },
               {
-                label: t.netAmount,
+                label: t('sale.netAmount', 'Net Amount'),
                 val: `Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}`,
                 color: 'blue',
               },
@@ -857,7 +796,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
             <Grid.Col span={6}>
               <Paper p="xs" radius="sm" withBorder style={{ background: '#fff' }}>
                 <Text size="xs" c="dimmed" mb={2}>
-                  {t.cashReceipt}
+                  {t('sale.cashReceipt', 'Cash + Receipt')}
                 </Text>
                 <Text fw={600} size="sm" dir="ltr" ta={isUr ? 'right' : 'left'}>
                   Rs. {Math.round(totals.cashReceived + totals.receiptAmount).toLocaleString('en-US')}
@@ -875,7 +814,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                 }}
               >
                 <Text size="xs" c="dimmed" mb={2}>
-                  {t.balance}
+                  {t('sale.balance', 'Balance')}
                 </Text>
                 <Text
                   fw={700}
@@ -895,14 +834,14 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         <Group justify="flex-end" mt="md">
           {editSale && (
             <Button variant="light" color="teal" onClick={handlePrint}>
-              🖨️ {t.printReceipt}
+              🖨️ {t('sale.printReceipt', 'Print Receipt')}
             </Button>
           )}
           <Button variant="light" color="gray" onClick={onCancel || handleClear}>
-            {onCancel ? t.cancel : t.clear}
+            {onCancel ? t('app.cancel', 'Cancel') : t('app.clear', 'Clear')}
           </Button>
           <Button variant="filled" color="blue" onClick={handleSave}>
-            {t.saveSale}
+            {editSale ? t('sale.updateSale', 'Update Sale') : t('sale.saveSale', 'Save Sale')}
           </Button>
         </Group>
       </Stack>

@@ -3,6 +3,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { ReportViewer } from '../ReportViewer';
@@ -18,27 +19,27 @@ export function DailySalesDetailsReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      date: isUr ? 'تاریخ' : 'Date',
-      go: isUr ? 'تلاش' : 'Go',
-      customer: isUr ? 'صارف' : 'Customer Name',
-      vendor: isUr ? 'وینڈر' : 'Vendor',
-      saleNumber: isUr ? 'بل نمبر' : 'Sale #',
-      item: isUr ? 'آئٹم' : 'Item',
-      weight: isUr ? 'وزن' : 'Weight',
-      rate: isUr ? 'ریٹ' : 'Rate',
-      amount: isUr ? 'رقم' : 'Amount',
-      total: isUr ? 'کل' : 'Total',
-      noRecords: isUr
-        ? 'منتخب کردہ تاریخ کے لئے کوئی بکری نہیں ملی'
-        : 'No sales found for the selected date',
-      reportTitle: isUr ? 'امروزہ بکری تفصیلات' : 'Daily Sales Details',
+      date: translate('common.date', 'Date'),
+      go: translate('common.go', 'Go'),
+      customer: translate('common.customerName', 'Customer Name'),
+      vendor: translate('common.vendor', 'Vendor'),
+      saleNumber: translate('common.saleNo', 'Sale #'),
+      item: translate('common.item', 'Item'),
+      weight: translate('common.weight', 'Weight'),
+      rate: translate('common.rate', 'Rate'),
+      amount: translate('common.amount', 'Amount'),
+      total: translate('common.total', 'Total'),
+      noRecords: translate('dailySalesDetails.noRecords', 'No sales found for the selected date'),
+      reportTitle: translate('dailySalesDetails.title', 'Daily Sales Details'),
     }),
-    [isUr]
+    [translate]
   );
 
   const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
     return date.toISOString().split('T')[0];
   };
 

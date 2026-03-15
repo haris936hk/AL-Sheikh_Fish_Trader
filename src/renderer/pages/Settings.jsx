@@ -511,7 +511,7 @@ function Settings() {
                       setYearEndLoading(true);
                       try {
                         const result = await window.api.yearEnd.getPreview(
-                          yearEndDate.toISOString().split('T')[0]
+                          (yearEndDate instanceof Date ? yearEndDate : new Date(yearEndDate)).toISOString().split('T')[0]
                         );
                         if (result.success) {
                           setYearEndPreview(result.data);
@@ -578,7 +578,7 @@ function Settings() {
                       setYearEndLoading(true);
                       try {
                         const result = await window.api.yearEnd.process(
-                          yearEndDate.toISOString().split('T')[0]
+                          (yearEndDate instanceof Date ? yearEndDate : new Date(yearEndDate)).toISOString().split('T')[0]
                         );
                         if (result.success) {
                           notifications.show({

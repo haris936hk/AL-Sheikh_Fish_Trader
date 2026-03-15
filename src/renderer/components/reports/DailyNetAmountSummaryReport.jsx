@@ -14,6 +14,7 @@ import { notifications } from '@mantine/notifications';
 import { IconSearch, IconCash, IconReceipt, IconCreditCard, IconWallet } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { ReportViewer } from '../ReportViewer';
@@ -34,31 +35,38 @@ export function DailyNetAmountSummaryReport() {
   // Translation helpers
   const isUr = language === 'ur';
 
+  const { t: translate } = useTranslation();
+
   const t = useMemo(
     () => ({
-      previousBalance: isUr ? 'سابقہ بقایا' : 'Previous Balance',
-      todaySales: isUr ? 'آج کی بکری' : "Today's Sales",
-      todayCharges: isUr ? 'آج کے اخراجات (کرایہ + برف)' : "Today's Charges (Fare + Ice)",
-      todayDiscount: isUr ? 'آج کی رعایت' : "Today's Discount",
-      totalAmount: isUr ? 'کل رقم' : 'Total Amount',
-      cashReceived: isUr ? 'نقد وصولی (بکری سے)' : 'Cash Received (Sale)',
-      paymentsReceived: isUr ? 'ادائیگیاں' : 'Payments Received',
-      totalCollection: isUr ? 'کل وصولی' : 'Total Collection',
-      closingBalance: isUr ? 'بقایا رقم' : 'Closing Balance',
-      details: isUr ? 'تفصیلات' : 'Details',
-      item: isUr ? 'مد' : 'Item',
-      amount: isUr ? 'رقم' : 'Amount',
-      collectionDetails: isUr ? 'وصولی کی تفصیلات' : 'Collection Details',
-      finalAccount: isUr ? 'حتمی حساب' : 'Balance Calculation',
-      dateComparison: isUr ? 'تاریخ کا موازنہ' : 'Date Comparison',
-      metric: isUr ? 'تفصیل' : 'Metric',
-      difference: isUr ? 'فرق' : 'Difference',
-      trend: isUr ? 'رجحان' : 'Trend',
+      previousBalance: translate('dailyNetSummary.previousBalance', 'Previous Balance'),
+      todaySales: translate('dailyNetSummary.todaySales', "Today's Sales"),
+      todayCharges: translate('dailyNetSummary.todayCharges', "Today's Charges (Fare + Ice)"),
+      todayDiscount: translate('dailyNetSummary.todayDiscount', "Today's Discount"),
+      totalAmount: translate('common.totalAmount', 'Total Amount'),
+      cashReceived: translate('dailyNetSummary.cashReceived', 'Cash Received (Sale)'),
+      paymentsReceived: translate('dailyNetSummary.paymentsReceived', 'Payments Received'),
+      totalCollection: translate('dailyNetSummary.totalCollection', 'Total Collection'),
+      closingBalance: translate('dailyNetSummary.closingBalance', 'Closing Balance'),
+      details: translate('common.details', 'Details'),
+      item: translate('common.itemCategory', 'Item'),
+      amount: translate('common.amount', 'Amount'),
+      collectionDetails: translate('dailyNetSummary.collectionDetails', 'Collection Details'),
+      finalAccount: translate('dailyNetSummary.finalAccount', 'Balance Calculation'),
+      dateComparison: translate('dailyNetSummary.dateComparison', 'Date Comparison'),
+      metric: translate('common.metric', 'Metric'),
+      difference: translate('common.difference', 'Difference'),
+      trend: translate('common.trend', 'Trend'),
+      date: translate('common.date', 'Date'),
+      compare: translate('common.compare', 'Compare'),
+      compareDate: translate('common.compareDate', 'Compare Date'),
+      go: translate('common.go', 'Go'),
     }),
-    [isUr]
+    [translate]
   );
 
   const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
     return date.toISOString().split('T')[0];
   };
 
@@ -303,7 +311,7 @@ export function DailyNetAmountSummaryReport() {
       <Grid align="flex-end">
         <Grid.Col span={4}>
           <DatePickerInput
-            label={isUr ? 'تاریخ' : 'Date'}
+            label={t.date}
             value={asOfDate}
             onChange={setAsOfDate}
             maxDate={new Date()}
@@ -311,7 +319,7 @@ export function DailyNetAmountSummaryReport() {
         </Grid.Col>
         <Grid.Col span={1}>
           <Checkbox
-            label={isUr ? 'موازنہ' : 'Compare'}
+            label={t.compare}
             checked={enableCompare}
             onChange={(e) => {
               setEnableCompare(e.target.checked);
@@ -323,7 +331,7 @@ export function DailyNetAmountSummaryReport() {
         {enableCompare && (
           <Grid.Col span={3}>
             <DatePickerInput
-              label={isUr ? 'تاریخ موازنہ' : 'Compare Date'}
+              label={t.compareDate}
               value={compareDate}
               onChange={setCompareDate}
               maxDate={new Date()}
@@ -332,7 +340,7 @@ export function DailyNetAmountSummaryReport() {
         )}
         <Grid.Col span={2}>
           <Button leftSection={<IconSearch size={16} />} onClick={handleGenerate} fullWidth>
-            {isUr ? 'تلاش' : 'Go'}
+            {t.go}
           </Button>
         </Grid.Col>
       </Grid>

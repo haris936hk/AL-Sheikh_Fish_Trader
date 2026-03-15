@@ -3,6 +3,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { ReportViewer } from '../ReportViewer';
@@ -18,24 +19,26 @@ export function CustomerRegisterReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      asOfDate: isUr ? 'تاریخ' : 'As of Date',
-      go: isUr ? 'تلاش' : 'Go',
-      customer: isUr ? 'صارف کا نام' : 'Customer Name',
-      code: isUr ? 'کوڈ' : 'Code',
-      openingBalance: isUr ? 'سابقہ بقایا' : 'Opening Balance',
-      netAmount: isUr ? 'کل رقم' : 'Net Amount',
-      collection: isUr ? 'وصولی' : 'Collection',
-      balance: isUr ? 'بقایا' : 'Balance',
-      total: isUr ? 'کل' : 'Total',
-      noRecords: isUr ? 'کوئی صارف نہیں ملا' : 'No customers found',
-      reportTitle: isUr ? 'رجسٹر کھاتہ رقم' : 'Customer Register',
+      asOfDate: translate('customerRegister.asOfDate', 'As of Date'),
+      go: translate('common.go', 'Go'),
+      customer: translate('common.customerName', 'Customer Name'),
+      code: translate('common.code', 'Code'),
+      openingBalance: translate('customerRegister.openingBalance', 'Opening Balance'),
+      netAmount: translate('common.netAmount', 'Net Amount'),
+      collection: translate('common.collection', 'Collection'),
+      balance: translate('common.balance', 'Balance'),
+      total: translate('common.total', 'Total'),
+      noRecords: translate('customerRegister.noRecords', 'No customers found'),
+      reportTitle: translate('customerRegister.title', 'Customer Register'),
     }),
-    [isUr]
+    [translate]
   );
 
   const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
     return date.toISOString().split('T')[0];
   };
 

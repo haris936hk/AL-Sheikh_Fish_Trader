@@ -22,11 +22,12 @@ import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import '@mantine/dates/styles.css';
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import useStore from '../store';
-import { formatDisplayName } from '../utils/formatters';
+import { formatDisplayName, formatDateForAPI } from '../utils/formatters';
 
 /**
  * PurchaseSearch Component
@@ -44,61 +45,50 @@ function PurchaseSearch({ onEdit }) {
   const PAGE_SIZE = 25;
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      title: isUr ? 'خریداری تلاش' : 'Search Purchases',
-      filterDate: isUr ? 'تاریخ سے فلٹر' : 'Filter by Date',
-      dateFrom: isUr ? 'شروع تاریخ' : 'From Date',
-      dateTo: isUr ? 'اختتام تاریخ' : 'To Date',
-      filterSupplier: isUr ? 'بیوپاری سے فلٹر' : 'Filter by Supplier',
-      supplier: isUr ? 'بیوپاری' : 'Supplier',
-      purchNo: isUr ? 'خریداری نمبر' : 'Purchase #',
-      search: isUr ? 'تلاش' : 'Search',
-      selected: isUr ? 'منتخب' : 'selected',
-      deleteSelectedTitle: isUr ? 'منتخب خریداریاں حذف کریں' : 'Delete Selected Purchases',
-      deleteSelectedMsg: (count) =>
-        isUr
-          ? `کیا آپ ${count} منتخب خریداری(یاں) حذف کرنا چاہتے ہیں؟`
-          : `Are you sure you want to delete ${count} selected purchase(s)?`,
-      deleteAll: isUr ? 'حذف کریں' : 'Delete All',
-      cancel: isUr ? 'منسوخ' : 'Cancel',
-      deleteSelectedBtn: isUr ? 'منتخب حذف کریں' : 'Delete Selected',
-      clearSelection: isUr ? 'انتخاب صاف کریں' : 'Clear Selection',
-      recordsFound: isUr ? 'ریکارڈ ملے' : 'Records Found',
-      noPurchasesFound: isUr
-        ? 'کوئی خریداری نہیں ملی — اوپر کے فلٹر استعمال کریں۔'
-        : 'No purchases found. Use the filters above to search.',
-      purchNumCol: isUr ? 'خریداری نمبر' : 'Purchase #',
-      dateCol: isUr ? 'تاریخ' : 'Date',
-      supplierCol: isUr ? 'بیوپاری' : 'Supplier',
-      vehicleCol: isUr ? 'گاڑی نمبر' : 'Vehicle No',
-      weightCol: isUr ? 'وزن' : 'Weight (kg)',
-      netAmtCol: isUr ? 'خالص رقم' : 'Net Amount',
-      balanceCol: isUr ? 'بقایا' : 'Balance',
-      statusCol: isUr ? 'حالت' : 'Status',
-      actionsCol: isUr ? 'عمل' : 'Actions',
-      valErrorTitle: isUr ? 'توثیق کی خرابی' : 'Validation Error',
-      valErrorDateMsg: isUr
-        ? 'شروع کی تاریخ اختتام کی تاریخ کے بعد نہیں ہو سکتی'
-        : 'Start date cannot be after end date',
-      noResultsTitle: isUr ? 'کوئی نتیجہ نہیں' : 'No Results',
-      noResultsMsg: isUr
-        ? 'معیار کے مطابق کوئی خریداری نہیں ملی'
-        : 'No purchases found matching the criteria',
-      searchErrorTitle: isUr ? 'خرابی' : 'Error',
-      searchErrorMsg: isUr ? 'خریداریاں تلاش کرنے میں خرابی' : 'Failed to search purchases',
-      deleteTitle: isUr ? 'خریداری حذف کریں' : 'Delete Purchase',
-      deleteMsg: (num) =>
-        isUr
-          ? `کیا آپ واقعی خریداری <strong>${num}</strong> حذف کرنا چاہتے ہیں؟ یہ عمل ناقابل واپسی ہے۔ سٹاک اور بیوپاری کا بیلنس بحال ہو جائے گا۔`
-          : `Are you sure you want to delete purchase <strong>${num}</strong>? This action cannot be undone. Stock and supplier balance will be restored.`,
-      deleteConfirm: isUr ? 'حذف کریں' : 'Delete',
-      deleteSuccessTitle: isUr ? 'کامیابی' : 'Success',
-      deleteSuccessMsg: isUr ? 'خریداری کامیابی سے حذف ہو گئی' : 'Purchase deleted successfully',
-      deleteErrorTitle: isUr ? 'خرابی' : 'Error',
-      deleteErrorMsg: isUr ? 'خریداری حذف کرنے میں خرابی' : 'Failed to delete purchase',
+      title: translate('purchaseSearch.title', 'Search Purchases'),
+      filterDate: translate('purchaseSearch.filterDate', 'Filter by Date'),
+      dateFrom: translate('common.dateFrom', 'From Date'),
+      dateTo: translate('common.dateTo', 'To Date'),
+      filterSupplier: translate('purchaseSearch.filterSupplier', 'Filter by Supplier'),
+      supplier: translate('common.supplier', 'Supplier'),
+      purchNo: translate('purchaseSearch.purchNo', 'Purchase #'),
+      search: translate('common.search', 'Search'),
+      selected: translate('common.selected', 'selected'),
+      deleteSelectedTitle: translate('purchaseSearch.deleteSelectedTitle', 'Delete Selected Purchases'),
+      deleteSelectedMsg: (count) => translate('purchaseSearch.deleteSelectedMsg', 'Are you sure you want to delete {{count}} selected purchase(s)?', { count }),
+      deleteAll: translate('common.deleteAll', 'Delete All'),
+      cancel: translate('common.cancel', 'Cancel'),
+      deleteSelectedBtn: translate('common.deleteSelectedBtn', 'Delete Selected'),
+      clearSelection: translate('common.clearSelection', 'Clear Selection'),
+      recordsFound: translate('common.recordsFound', 'Records Found'),
+      noPurchasesFound: translate('purchaseSearch.noPurchasesFound', 'No purchases found. Use the filters above to search.'),
+      purchNumCol: translate('purchaseSearch.purchNo', 'Purchase #'),
+      dateCol: translate('common.date', 'Date'),
+      supplierCol: translate('common.supplier', 'Supplier'),
+      vehicleCol: translate('common.vehicleNo', 'Vehicle No'),
+      weightCol: translate('common.weight', 'Weight (kg)'),
+      netAmtCol: translate('common.netAmount', 'Net Amount'),
+      balanceCol: translate('common.balance', 'Balance'),
+      statusCol: translate('common.status', 'Status'),
+      actionsCol: translate('common.actions', 'Actions'),
+      valErrorTitle: translate('error.validationError', 'Validation Error'),
+      valErrorDateMsg: translate('error.dateOrderMsg', 'Start date cannot be after end date'),
+      noResultsTitle: translate('search.noResultsTitle', 'No Results'),
+      noResultsMsg: translate('purchaseSearch.noResultsMsg', 'No purchases found matching the criteria'),
+      searchErrorTitle: translate('error.title', 'Error'),
+      searchErrorMsg: translate('purchaseSearch.searchErrorMsg', 'Failed to search purchases'),
+      deleteTitle: translate('purchaseSearch.deleteTitle', 'Delete Purchase'),
+      deleteMsg: (num) => translate('purchaseSearch.deleteMsg', 'Are you sure you want to delete purchase <strong>{{num}}</strong>? This action cannot be undone. Stock and supplier balance will be restored.', { num }),
+      deleteConfirm: translate('common.delete', 'Delete'),
+      deleteSuccessTitle: translate('common.success', 'Success'),
+      deleteSuccessMsg: translate('purchaseSearch.deleteSuccessMsg', 'Purchase deleted successfully'),
+      deleteErrorTitle: translate('error.title', 'Error'),
+      deleteErrorMsg: translate('purchaseSearch.deleteErrorMsg', 'Failed to delete purchase'),
     }),
-    [isUr]
+    [translate]
   );
 
   // Filters
@@ -145,13 +135,6 @@ function PurchaseSearch({ onEdit }) {
     loadSuppliers();
   }, [isUr]);
 
-  // Format date for API
-  const formatDate = (date) => {
-    if (!date) return null;
-    const d = new Date(date);
-    return d.toISOString().split('T')[0];
-  };
-
   // Search purchases
   const handleSearch = useCallback(async () => {
     if (filterByDate && dateFrom > dateTo) {
@@ -166,8 +149,8 @@ function PurchaseSearch({ onEdit }) {
     setLoading(true);
     try {
       const filters = {
-        dateFrom: formatDate(dateFrom),
-        dateTo: formatDate(dateTo),
+        dateFrom: formatDateForAPI(dateFrom),
+        dateTo: formatDateForAPI(dateTo),
         filterByDate,
         supplierId: filterBySupplier && selectedSupplier ? parseInt(selectedSupplier) : null,
         filterBySupplier,

@@ -13,6 +13,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { formatDisplayName } from '../../utils/formatters';
@@ -33,30 +34,29 @@ export function LedgerReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      accountType: isUr ? 'اکاؤنٹ کی قسم' : 'Account Type',
-      customerType: isUr ? 'گاہک' : 'Customer',
-      vendorType: isUr ? 'وینڈر / سپلائر' : 'Vendor',
-      account: isUr ? 'اکاؤنٹ' : 'Account',
-      fromDate: isUr ? 'تاریخ (سے)' : 'From Date',
-      toDate: isUr ? 'تاریخ (تک)' : 'To Date',
-      go: isUr ? 'تلاش' : 'Go',
-      reportTitle: isUr ? 'کھاتہ' : 'Ledger Report',
-      openingBalance: isUr ? 'سابقہ بقایا' : 'Opening Balance',
-      date: isUr ? 'تاریخ' : 'Date',
-      reference: isUr ? 'حوالہ' : 'Reference',
-      description: isUr ? 'تفصیل' : 'Description',
-      debit: isUr ? 'بنام' : 'Debit',
-      credit: isUr ? 'جمع' : 'Credit',
-      balance: isUr ? 'بقایا' : 'Balance',
-      totals: isUr ? 'کل' : 'Totals',
-      selectAccountMsg: isUr ? 'اکاؤنٹ منتخب کریں' : 'Please select an account',
-      noRecords: isUr
-        ? 'منتخب کردہ معیار کے لئے کوئی ریکارڈ نہیں ملا'
-        : 'No transactions found for the selected criteria',
+      accountType: translate('ledger.accountType', 'Account Type'),
+      customerType: translate('common.customer', 'Customer'),
+      vendorType: translate('common.vendor', 'Vendor'),
+      account: translate('common.account', 'Account'),
+      fromDate: translate('common.dateFrom', 'From Date'),
+      toDate: translate('common.dateTo', 'To Date'),
+      go: translate('common.go', 'Go'),
+      reportTitle: translate('ledger.title', 'Ledger Report'),
+      openingBalance: translate('ledger.openingBalance', 'Opening Balance'),
+      date: translate('common.date', 'Date'),
+      reference: translate('common.reference', 'Reference'),
+      description: translate('common.description', 'Description'),
+      debit: translate('ledger.debit', 'Debit'),
+      credit: translate('ledger.credit', 'Credit'),
+      balance: translate('common.balance', 'Balance'),
+      totals: translate('common.totals', 'Totals'),
+      selectAccountMsg: translate('error.selectAccount', 'Please select an account'),
+      noRecords: translate('common.noRecords', 'No transactions found for the selected criteria'),
     }),
-    [isUr]
+    [translate]
   );
 
   // Fetch accounts based on type
@@ -86,6 +86,7 @@ export function LedgerReport() {
   }, [accountType, isUr]);
 
   const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
     return date.toISOString().split('T')[0];
   };
 

@@ -13,7 +13,8 @@ import {
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../store';
 import { validateNIC, validateEmail, validatePhone } from '../utils/validators';
@@ -32,48 +33,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
   const isEditMode = !!customer;
   const language = useStore((s) => s.language);
   const isUr = language === 'ur';
-
-  const t = useMemo(() => ({
-    titleEdit: isUr ? 'گاہک میں ترمیم کریں' : 'Edit Customer',
-    titleAdd: isUr ? 'نیا گاہک شامل کریں' : 'Add New Customer',
-    unsavedTitle: isUr ? 'غیر محفوظ شدہ تبدیلیاں' : 'Unsaved Changes',
-    unsavedMsg: isUr ? 'آپ کے پاس غیر محفوظ شدہ تبدیلیاں ہیں۔ کیا آپ واقعی بند کرنا چاہتے ہیں؟ تمام تبدیلیاں ضائع ہو جائیں گی۔' : 'You have unsaved changes. Are you sure you want to close? All changes will be lost.',
-    discard: isUr ? 'تبدیلیاں ختم کریں' : 'Discard',
-    keepEditing: isUr ? 'ترمیم جاری رکھیں' : 'Keep Editing',
-    valErrorTitle: isUr ? 'توثیق کی خرابی' : 'Validation Error',
-    valErrorMsg: isUr ? 'براہ کرم محفوظ کرنے سے پہلے غلطیاں درست کریں' : 'Please fix the errors before saving',
-    saveSuccessTitle: isUr ? 'گاہک محفوظ' : 'Customer Saved',
-    saveSuccessMsg: (name, isEdit) => isUr ? `"${name}" کامیابی سے ${isEdit ? 'اپ ڈیٹ' : 'محفوظ'} ہو گیا` : `"${name}" ${isEdit ? 'updated' : 'created'} successfully`,
-    errorTitle: isUr ? 'خرابی' : 'Error',
-    saveErrorMsg: isUr ? 'گاہک محفوظ کرنے میں خرابی' : 'Failed to save customer',
-    unexpectedErrorMsg: isUr ? 'ایک غیر متوقع خرابی پیش آگئی' : 'An unexpected error occurred',
-    nameUrduLabel: isUr ? 'نام (اردو)' : 'Name (Urdu)',
-    nameUrduPh: isUr ? 'اردو میں نام لکھیں' : 'Enter name in Urdu',
-    nameEngLabel: isUr ? 'نام (انگریزی)' : 'Name (English)',
-    nameEngPh: isUr ? 'انگریزی میں گاہک کا نام لکھیں' : 'Enter customer name in English',
-    nicLabel: isUr ? 'شناختی کارڈ نمبر' : 'NIC #',
-    nicPh: 'XXXXX-XXXXXXX-X',
-    mobileLabel: isUr ? 'موبائل نمبر' : 'Mobile #',
-    mobilePh: isUr ? 'مثال: 03001234567' : 'e.g., 03001234567',
-    phoneLabel: isUr ? 'فون نمبر' : 'Phone #',
-    phonePh: isUr ? 'مثال: 0511234567' : 'e.g., 051-1234567',
-    emailLabel: isUr ? 'ای میل' : 'Email',
-    emailPh: 'customer@example.com',
-    countryLabel: isUr ? 'ملک' : 'Country',
-    countryPh: isUr ? 'ملک منتخب کریں' : 'Select country',
-    cityLabel: isUr ? 'شہر' : 'City',
-    cityPh: isUr ? 'شہر منتخب کریں' : 'Select city',
-    addressLabel: isUr ? 'پتہ' : 'Address',
-    addressPh: isUr ? 'مکمل پتہ درج کریں' : 'Enter complete address',
-    notesLabel: isUr ? 'نوٹس' : 'Notes',
-    notesPh: isUr ? 'اضافی نوٹس (اختیاری)' : 'Additional notes (optional)',
-    closeBtn: isUr ? 'بند کریں' : 'Close',
-    clearBtn: isUr ? 'صاف کریں' : 'Clear',
-    updateBtn: isUr ? 'اپ ڈیٹ کریں' : 'Update',
-    saveBtn: isUr ? 'محفوظ کریں' : 'Save',
-    errName: isUr ? 'نام ضروری ہے' : 'Name is required',
-    errContact: isUr ? 'کم از کم ایک رابطے کا طریقہ ضروری ہے' : 'At least one contact method is required',
-  }), [isUr]);
+  const { t } = useTranslation();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -212,7 +172,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
     // Required: At least one name (Urdu or English)
     if (!formData.name.trim() && !formData.name_english.trim()) {
-      newErrors.name = t.errName;
+      newErrors.name = t('customer.nameRequired', 'Name is required');
     }
 
     // NIC format validation (if provided)
@@ -241,7 +201,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
     // At least one contact method
     if (!formData.phone && !formData.mobile && !formData.email) {
-      newErrors.contact = t.errContact;
+      newErrors.contact = t('customer.contactRequired', 'At least one contact method is required');
     }
 
     setErrors(newErrors);
@@ -275,13 +235,13 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
   const handleClose = useCallback(() => {
     if (isDirty()) {
       modals.openConfirmModal({
-        title: t.unsavedTitle,
+        title: t('app.unsavedChanges', 'Unsaved Changes'),
         children: (
           <Text size="sm">
-            {t.unsavedMsg}
+            {t('app.discardChangesExt', 'You have unsaved changes. Are you sure you want to close? All changes will be lost.')}
           </Text>
         ),
-        labels: { confirm: t.discard, cancel: t.keepEditing },
+        labels: { confirm: t('app.discard', 'Discard'), cancel: t('app.keepEditing', 'Keep Editing') },
         confirmProps: { color: 'red' },
         onConfirm: () => {
           handleClear();
@@ -298,8 +258,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
   const handleSubmit = useCallback(async () => {
     if (!validate()) {
       notifications.show({
-        title: t.valErrorTitle,
-        message: t.valErrorMsg,
+        title: t('validation.title', 'Validation Error'),
+        message: t('validation.fixErrors', 'Please fix the errors before saving'),
         color: 'red',
       });
       return;
@@ -322,8 +282,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
       if (result.success) {
         notifications.show({
-          title: t.saveSuccessTitle,
-          message: t.saveSuccessMsg(formData.name || formData.name_english, isEditMode),
+          title: t('customer.saved', 'Customer Saved'),
+          message: isUr ? `"${formData.name || formData.name_english}" کامیابی سے ${isEditMode ? 'اپ ڈیٹ' : 'محفوظ'} ہو گیا` : `"${formData.name || formData.name_english}" ${isEditMode ? 'updated' : 'created'} successfully`,
           color: 'green',
         });
         handleClear();
@@ -331,22 +291,22 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
         onClose();
       } else {
         notifications.show({
-          title: t.errorTitle,
-          message: result.error || t.saveErrorMsg,
+          title: t('error.title', 'Error'),
+          message: result.error || t('customer.error', 'Failed to save customer'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Submit error:', error);
       notifications.show({
-        title: t.errorTitle,
-        message: error.message || t.unexpectedErrorMsg,
+        title: t('error.title', 'Error'),
+        message: error.message || t('error.unexpected', 'An unexpected error occurred'),
         color: 'red',
       });
     } finally {
       setLoading(false);
     }
-  }, [formData, isEditMode, customer, validate, handleClear, onSuccess, onClose, t]);
+  }, [formData, isEditMode, customer, validate, handleClear, onSuccess, onClose, isUr, t]);
 
   return (
     <Modal
@@ -356,7 +316,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
         <Group gap="sm">
           <Text size="xl">👤</Text>
           <Text size="lg" fw={600}>
-            {isEditMode ? t.titleEdit : t.titleAdd}
+            {isEditMode ? t('customer.edit', 'Edit Customer') : t('customer.add', 'Add New Customer')}
           </Text>
         </Group>
       }
@@ -377,8 +337,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
         <SimpleGrid cols={2} style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           {/* Name (Urdu) */}
           <TextInput
-            label={t.nameUrduLabel}
-            placeholder={t.nameUrduPh}
+            label={t('customer.nameUr', 'Name (Urdu)')}
+            placeholder={isUr ? 'اردو میں نام لکھیں' : 'Enter name in Urdu'}
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
             error={errors.name}
@@ -387,8 +347,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
           {/* Name (English) */}
           <TextInput
-            label={t.nameEngLabel}
-            placeholder={t.nameEngPh}
+            label={t('customer.nameEn', 'Name (English)')}
+            placeholder={isUr ? 'انگریزی میں گاہک کا نام لکھیں' : 'Enter customer name in English'}
             value={formData.name_english}
             onChange={(e) => handleChange('name_english', e.target.value)}
             maxLength={100}
@@ -398,8 +358,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
         <SimpleGrid cols={2} style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           {/* NIC */}
           <TextInput
-            label={t.nicLabel}
-            placeholder={t.nicPh}
+            label={t('customer.nic', 'NIC #')}
+            placeholder="XXXXX-XXXXXXX-X"
             value={formData.nic}
             onChange={(e) => handleNicChange(e.target.value)}
             error={errors.nic}
@@ -409,8 +369,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
           {/* Mobile */}
           <TextInput
-            label={t.mobileLabel}
-            placeholder={t.mobilePh}
+            label={t('customer.mobile', 'Mobile #')}
+            placeholder={t('customer.mobilePh', 'e.g., 03001234567')}
             value={formData.mobile}
             onChange={(e) => handlePhoneChange('mobile', e.target.value)}
             error={errors.mobile}
@@ -421,8 +381,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
         <SimpleGrid cols={2} style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           {/* Phone */}
           <TextInput
-            label={t.phoneLabel}
-            placeholder={t.phonePh}
+            label={t('customer.phone', 'Phone #')}
+            placeholder={t('customer.phonePh', 'e.g., 051-1234567')}
             value={formData.phone}
             onChange={(e) => handlePhoneChange('phone', e.target.value)}
             error={errors.phone}
@@ -431,8 +391,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
           {/* Email */}
           <TextInput
-            label={t.emailLabel}
-            placeholder={t.emailPh}
+            label={t('customer.email', 'Email')}
+            placeholder="customer@example.com"
             type="email"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
@@ -444,8 +404,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
         <SimpleGrid cols={2} style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           {/* Country */}
           <Select
-            label={t.countryLabel}
-            placeholder={t.countryPh}
+            label={t('customer.country', 'Country')}
+            placeholder={isUr ? 'ملک منتخب کریں' : 'Select country'}
             data={countries}
             value={formData.country_id}
             onChange={(value) => handleChange('country_id', value)}
@@ -455,8 +415,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
           {/* City */}
           <Select
-            label={t.cityLabel}
-            placeholder={t.cityPh}
+            label={t('customer.city', 'City')}
+            placeholder={isUr ? 'شہر منتخب کریں' : 'Select city'}
             data={cities}
             value={formData.city_id}
             onChange={(value) => handleChange('city_id', value)}
@@ -467,8 +427,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
         {/* Address */}
         <Textarea
-          label={t.addressLabel}
-          placeholder={t.addressPh}
+          label={t('customer.address', 'Address')}
+          placeholder={isUr ? 'مکمل پتہ درج کریں' : 'Enter complete address'}
           value={formData.address}
           onChange={(e) => handleChange('address', e.target.value)}
           rows={3}
@@ -478,8 +438,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
         {/* Notes */}
         <Textarea
-          label={t.notesLabel}
-          placeholder={t.notesPh}
+          label={t('customer.notes', 'Notes')}
+          placeholder={isUr ? 'اضافی نوٹس (اختیاری)' : 'Additional notes (optional)'}
           value={formData.notes}
           onChange={(e) => handleChange('notes', e.target.value)}
           rows={2}
@@ -490,13 +450,13 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
         {/* Action Buttons */}
         <Group justify="flex-end" mt="md" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Button variant="subtle" color="gray" onClick={handleClose}>
-            {t.closeBtn}
+            {t('app.close', 'Close')}
           </Button>
           <Button variant="light" onClick={handleClear}>
-            {t.clearBtn}
+            {t('app.clear', 'Clear')}
           </Button>
           <Button onClick={handleSubmit} loading={loading}>
-            {isEditMode ? t.updateBtn : t.saveBtn}
+            {isEditMode ? t('app.update', 'Update') : t('app.save', 'Save')}
           </Button>
         </Group>
       </Stack>

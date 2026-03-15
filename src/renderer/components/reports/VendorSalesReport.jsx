@@ -13,6 +13,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { formatDisplayName } from '../../utils/formatters';
@@ -34,31 +35,28 @@ export function VendorSalesReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      vendor: isUr ? 'بیوپاری' : 'Vendor',
-      all: isUr ? 'سب' : 'All',
-      fromDate: isUr ? 'تاریخ (سے)' : 'Sale Date From',
-      toDate: isUr ? 'تاریخ (تک)' : 'Sale Date To',
-      go: isUr ? 'تلاش' : 'Go',
-      reportTitle: isUr ? 'بیوپاری بکری' : 'Vendor Sales Report',
-      customer: isUr ? 'گاہک' : 'Customer',
-      item: isUr ? 'قسم' : 'Item',
-      vehicle: isUr ? 'گاڑی نمبر' : 'Vehicle #',
-      rate: isUr ? 'ریٹ' : 'Rate',
-      weight: isUr ? 'وزن' : 'Weight',
-      amount: isUr ? 'رقم' : 'Amount',
-      totalVehicles: isUr ? 'ٹوٹل گاڑیاں' : 'Total Vehicles',
-      vendorTotal: isUr ? 'ٹوٹل' : 'Vendor Total',
-      grandTotal: isUr ? 'مکمل ٹوٹل' : 'Grand Total',
-      selectVendorMsg: isUr
-        ? 'بیوپاری منتخب کریں یا "سب" پر نشان لگائیں'
-        : 'Please select a vendor or check "All"',
-      noRecords: isUr
-        ? 'منتخب کردہ معیار کے لئے کوئی ریکارڈ نہیں ملا'
-        : 'No records found for the selected criteria',
+      vendor: translate('common.vendor', 'Vendor'),
+      all: translate('common.all', 'All'),
+      fromDate: translate('vendorSales.dateFrom', 'Sale Date From'),
+      toDate: translate('vendorSales.dateTo', 'Sale Date To'),
+      go: translate('common.go', 'Go'),
+      reportTitle: translate('vendorSales.title', 'Vendor Sales Report'),
+      customer: translate('common.customer', 'Customer'),
+      item: translate('common.item', 'Item'),
+      vehicle: translate('common.vehicleNo', 'Vehicle #'),
+      rate: translate('common.rate', 'Rate'),
+      weight: translate('common.weight', 'Weight'),
+      amount: translate('common.amount', 'Amount'),
+      totalVehicles: translate('vendorSales.totalVehicles', 'Total Vehicles'),
+      vendorTotal: translate('vendorSales.vendorTotal', 'Vendor Total'),
+      grandTotal: translate('common.grandTotal', 'Grand Total'),
+      selectVendorMsg: translate('error.selectVendorOrAll', 'Please select a vendor or check "All"'),
+      noRecords: translate('common.noRecords', 'No records found for the selected criteria'),
     }),
-    [isUr]
+    [translate]
   );
 
   // Fetch suppliers for dropdown
@@ -82,6 +80,7 @@ export function VendorSalesReport() {
   }, [isUr]);
 
   const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
     return date.toISOString().split('T')[0];
   };
 

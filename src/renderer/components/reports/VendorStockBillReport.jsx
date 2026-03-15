@@ -12,6 +12,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { formatDisplayName } from '../../utils/formatters';
@@ -32,24 +33,23 @@ export function VendorStockBillReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      vendor: isUr ? 'بیوپاری' : 'Vendor',
-      dateLabel: isUr ? 'تاریخ' : 'Date',
-      go: isUr ? 'تلاش' : 'Go',
-      reportTitle: isUr ? 'بیوپاری سٹاک بل' : 'Vendor Stock Bill',
-      customer: isUr ? 'گاہک' : 'Customer',
-      item: isUr ? 'قسم' : 'Item',
-      rate: isUr ? 'ریٹ' : 'Rate',
-      weight: isUr ? 'وزن' : 'Weight',
-      amount: isUr ? 'رقم' : 'Amount',
-      total: isUr ? 'ٹوٹل' : 'Total',
-      selectVendorMsg: isUr ? 'بیوپاری منتخب کریں' : 'Please select a vendor',
-      noRecords: isUr
-        ? 'منتخب کردہ معیار کے لئے کوئی سٹاک آئٹم نہیں ملا'
-        : 'No stock items found for the selected criteria',
+      vendor: translate('common.vendor', 'Vendor'),
+      dateLabel: translate('common.date', 'Date'),
+      go: translate('common.go', 'Go'),
+      reportTitle: translate('vendorStockBill.title', 'Vendor Stock Bill'),
+      customer: translate('common.customer', 'Customer'),
+      item: translate('common.item', 'Item'),
+      rate: translate('common.rate', 'Rate'),
+      weight: translate('common.weight', 'Weight'),
+      amount: translate('common.amount', 'Amount'),
+      total: translate('common.total', 'Total'),
+      selectVendorMsg: translate('error.selectVendor', 'Please select a vendor'),
+      noRecords: translate('common.noRecords', 'No stock items found for the selected criteria'),
     }),
-    [isUr]
+    [translate]
   );
 
   // Fetch suppliers for dropdown
@@ -72,7 +72,10 @@ export function VendorStockBillReport() {
     fetchSuppliers();
   }, [isUr]);
 
-  const formatDate = (d) => d.toISOString().split('T')[0];
+  const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
+    return date.toISOString().split('T')[0];
+  };
 
   const formatAmount = (num) => Math.round(num || 0).toLocaleString('en-US');
 

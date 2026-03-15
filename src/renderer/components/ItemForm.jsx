@@ -14,7 +14,8 @@ import {
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../store';
 import { validateRequired, validatePositiveNumber, validateLength } from '../utils/validators';
@@ -33,40 +34,7 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
   const isEditMode = !!item;
   const language = useStore((s) => s.language);
   const isUr = language === 'ur';
-
-  const t = useMemo(() => ({
-    titleEdit: isUr ? 'مال میں ترمیم کریں' : 'Edit Item',
-    titleAdd: isUr ? 'نیا مال شامل کریں' : 'Add New Item',
-    unsavedTitle: isUr ? 'غیر محفوظ شدہ تبدیلیاں' : 'Unsaved Changes',
-    unsavedMsg: isUr ? 'آپ کے پاس غیر محفوظ شدہ تبدیلیاں ہیں۔ کیا آپ واقعی بند کرنا چاہتے ہیں؟ تمام تبدیلیاں ضائع ہو جائیں گی۔' : 'You have unsaved changes. Are you sure you want to close? All changes will be lost.',
-    discard: isUr ? 'تبدیلیاں ختم کریں' : 'Discard',
-    keepEditing: isUr ? 'ترمیم جاری رکھیں' : 'Keep Editing',
-    valErrorTitle: isUr ? 'توثیق کی خرابی' : 'Validation Error',
-    valErrorMsg: isUr ? 'براہ کرم محفوظ کرنے سے پہلے غلطیاں درست کریں' : 'Please fix the errors before saving',
-    saveSuccessTitle: isUr ? 'مال محفوظ' : 'Item Saved',
-    saveSuccessMsg: (name, isEdit) => isUr ? `"${name}" کامیابی سے ${isEdit ? 'اپ ڈیٹ' : 'محفوظ'} ہو گیا` : `Item "${name}" has been ${isEdit ? 'updated' : 'created'} successfully`,
-    errorTitle: isUr ? 'خرابی' : 'Error',
-    saveErrorMsg: isUr ? 'مال محفوظ کرنے میں خرابی' : 'Failed to save item',
-    unexpectedErrorMsg: isUr ? 'ایک غیر متوقع خرابی پیش آگئی' : 'An unexpected error occurred',
-    nameUrduLabel: isUr ? 'مال (اردو)' : 'Item Name (Urdu)',
-    nameUrduPh: isUr ? 'اردو میں نام لکھیں' : 'Enter name in Urdu',
-    nameEngLabel: isUr ? 'مال (انگریزی)' : 'Item Name (English)',
-    nameEngPh: isUr ? 'انگریزی میں مال کا نام لکھیں' : 'Enter item name in English',
-    unitPriceLabel: isUr ? 'یونٹ قیمت (Rs.)' : 'Unit Price (Rs.)',
-    unitPricePh: '0.00',
-    categoryLabel: isUr ? 'زمرہ' : 'Category',
-    categoryPh: isUr ? 'زمرہ منتخب کریں' : 'Select category',
-    categoryNone: isUr ? 'کوئی نہیں' : 'None',
-    notesLabel: isUr ? 'نوٹس' : 'Notes',
-    notesPh: isUr ? 'اضافی نوٹس (اختیاری)' : 'Additional notes (optional)',
-    closeBtn: isUr ? 'بند کریں' : 'Close',
-    clearBtn: isUr ? 'صاف کریں' : 'Clear',
-    updateBtn: isUr ? 'اپ ڈیٹ کریں' : 'Update',
-    saveBtn: isUr ? 'محفوظ کریں' : 'Save',
-    errNameReq: isUr ? 'نام ضروری ہے' : 'Name is required',
-    errNameLen: isUr ? 'نام کم از کم 2 حروف کا ہونا چاہیے' : 'Name must be at least 2 characters',
-    errUnitPrice: isUr ? 'یونٹ کی قیمت منفی نہیں ہو سکتی' : 'Unit price cannot be negative',
-  }), [isUr]);
+  const { t } = useTranslation();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -93,7 +61,7 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
 
         if (categoriesResult.success) {
           setCategories([
-            { value: '', label: t.categoryNone },
+            { value: '', label: t('common.none', 'None') },
             ...categoriesResult.data.map((c) => ({
               value: String(c.id),
               label: c.name_urdu ? `${c.name} (${c.name_urdu})` : c.name,
@@ -108,7 +76,7 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
     if (opened) {
       loadReferenceData();
     }
-  }, [opened, t.categoryNone]);
+  }, [opened, t]);
 
   // Populate form when editing
   useEffect(() => {
@@ -142,25 +110,25 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
     const newErrors = {};
 
     // Required: Name (Urdu)
-    const nameResult = validateRequired(formData.name, isUr ? 'نام' : 'Name');
+    const nameResult = validateRequired(formData.name, t('common.name', 'Name'));
     if (!nameResult.isValid) {
-      newErrors.name = t.errNameReq;
+      newErrors.name = t('item.nameUrduReq', 'Name (Urdu) is required');
     } else {
-      const lengthResult = validateLength(formData.name.trim(), { min: 2, max: 100, fieldName: 'Name' });
+      const lengthResult = validateLength(formData.name.trim(), { min: 2, max: 100, fieldName: t('common.name', 'Name') });
       if (!lengthResult.isValid) {
-        newErrors.name = t.errNameLen;
+        newErrors.name = t('item.nameLength', 'Name must be at least 2 characters');
       }
     }
 
     // Unit price must be non-negative
-    const priceResult = validatePositiveNumber(formData.unit_price, 'Unit Price', true);
+    const priceResult = validatePositiveNumber(formData.unit_price, t('item.unitPrice', 'Unit Price'), true);
     if (!priceResult.isValid) {
-      newErrors.unit_price = t.errUnitPrice;
+      newErrors.unit_price = t('item.priceNegative', 'Unit price cannot be negative');
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData, isUr, t]);
+  }, [formData, t]);
 
   // Clear form
   const handleClear = useCallback(() => {
@@ -184,13 +152,13 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
   const handleClose = useCallback(() => {
     if (isDirty()) {
       modals.openConfirmModal({
-        title: t.unsavedTitle,
+        title: t('item.unsavedTitle', 'Unsaved Changes'),
         children: (
           <Text size="sm">
-            {t.unsavedMsg}
+            {t('item.unsavedMsg', 'You have unsaved changes. Are you sure you want to close? All changes will be lost.')}
           </Text>
         ),
-        labels: { confirm: t.discard, cancel: t.keepEditing },
+        labels: { confirm: t('app.discard', 'Discard'), cancel: t('app.keepEditing', 'Keep Editing') },
         confirmProps: { color: 'red' },
         onConfirm: () => {
           handleClear();
@@ -207,8 +175,8 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
   const handleSubmit = useCallback(async () => {
     if (!validate()) {
       notifications.show({
-        title: t.valErrorTitle,
-        message: t.valErrorMsg,
+        title: t('validation.title', 'Validation Error'),
+        message: t('validation.fixErrors', 'Please fix the errors before saving'),
         color: 'red',
       });
       return;
@@ -231,8 +199,8 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
 
       if (result.success) {
         notifications.show({
-          title: t.saveSuccessTitle,
-          message: t.saveSuccessMsg(formData.name, isEditMode),
+          title: t('item.saved', 'Item Saved'),
+          message: isEditMode ? t('item.updated', 'Item updated successfully') : t('item.saved', 'Item saved successfully'),
           color: 'green',
         });
         handleClear();
@@ -240,16 +208,16 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
         onClose();
       } else {
         notifications.show({
-          title: t.errorTitle,
-          message: result.error || t.saveErrorMsg,
+          title: t('error.title', 'Error'),
+          message: result.error || t('item.error', 'Failed to save item'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Submit error:', error);
       notifications.show({
-        title: t.errorTitle,
-        message: error.message || t.unexpectedErrorMsg,
+        title: t('error.title', 'Error'),
+        message: error.message || t('error.unexpected', 'An unexpected error occurred'),
         color: 'red',
       });
     } finally {
@@ -265,7 +233,7 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
         <Group gap="sm">
           <Text size="xl">📦</Text>
           <Text size="lg" fw={600}>
-            {isEditMode ? t.titleEdit : t.titleAdd}
+            {isEditMode ? t('item.editTitle', 'Edit Item') : t('item.addTitle', 'Add New Item')}
           </Text>
         </Group>
       }
@@ -279,8 +247,8 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
         <SimpleGrid cols={2} style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           {/* Name (Urdu) - Required */}
           <TextInput
-            label={t.nameUrduLabel}
-            placeholder={t.nameUrduPh}
+            label={t('item.name', 'Item Name (Urdu)')}
+            placeholder={isUr ? 'اردو میں نام لکھیں' : 'Enter name in Urdu'}
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
             error={errors.name}
@@ -290,8 +258,8 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
 
           {/* Name (English) */}
           <TextInput
-            label={t.nameEngLabel}
-            placeholder={t.nameEngPh}
+            label={t('item.nameEnglish', 'Item Name (English)')}
+            placeholder={isUr ? 'انگریزی میں مال کا نام لکھیں' : 'Enter item name in English'}
             value={formData.name_english}
             onChange={(e) => handleChange('name_english', e.target.value)}
             maxLength={100}
@@ -301,8 +269,8 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
         <SimpleGrid cols={2} style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           {/* Unit Price */}
           <NumberInput
-            label={t.unitPriceLabel}
-            placeholder={t.unitPricePh}
+            label={t('item.unitPrice', 'Unit Price (Rs.)')}
+            placeholder="0.00"
             value={formData.unit_price}
             onChange={(value) => handleChange('unit_price', value === '' ? '' : value)}
             error={errors.unit_price}
@@ -315,8 +283,8 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
 
           {/* Category */}
           <Select
-            label={t.categoryLabel}
-            placeholder={t.categoryPh}
+            label={t('item.category', 'Category')}
+            placeholder={isUr ? 'زمرہ منتخب کریں' : 'Select category'}
             data={categories}
             value={formData.category_id}
             onChange={(value) => handleChange('category_id', value)}
@@ -327,8 +295,8 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
 
         {/* Notes */}
         <Textarea
-          label={t.notesLabel}
-          placeholder={t.notesPh}
+          label={t('common.notes', 'Notes')}
+          placeholder={isUr ? 'اضافی نوٹس (اختیاری)' : 'Additional notes (optional)'}
           value={formData.notes}
           onChange={(e) => handleChange('notes', e.target.value)}
           rows={3}
@@ -339,13 +307,13 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
         {/* Action Buttons */}
         <Group justify="flex-end" mt="md" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Button variant="subtle" color="gray" onClick={handleClose}>
-            {t.closeBtn}
+            {t('app.close', 'Close')}
           </Button>
           <Button variant="light" onClick={handleClear}>
-            {t.clearBtn}
+            {t('app.clear', 'Clear')}
           </Button>
           <Button onClick={handleSubmit} loading={loading}>
-            {isEditMode ? t.updateBtn : t.saveBtn}
+            {isEditMode ? t('app.update', 'Update') : t('app.save', 'Save')}
           </Button>
         </Group>
       </Stack>

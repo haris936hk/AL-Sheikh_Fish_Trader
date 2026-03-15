@@ -39,10 +39,10 @@ function SupplierBills({ onBack }) {
           <Group justify="space-between" align="center">
             <Stack gap={4}>
               <Title order={1} c="white" className="text-3xl font-bold">
-                📄 {t('bill.title')}
+                📄 {t('supplierBill.title')}
               </Title>
               <Text c="white" opacity={0.9} size="md">
-                {t('bill.addNew')}
+                {t('supplierBill.addNew')}
               </Text>
             </Stack>
             <Button variant="light" color="gray" onClick={onBack} leftSection={<span>🏠</span>}>

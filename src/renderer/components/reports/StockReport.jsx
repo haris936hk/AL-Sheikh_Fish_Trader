@@ -3,6 +3,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { ReportViewer } from '../ReportViewer';
@@ -18,23 +19,25 @@ export function StockReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      asOfDate: isUr ? 'تاریخ تک' : 'As of Date',
-      go: isUr ? 'تلاش' : 'Go',
-      reportTitle: isUr ? 'سٹاک رپورٹ' : 'Stock Report',
-      item: isUr ? 'آئٹم' : 'Item Name',
-      prevStock: isUr ? 'سابقہ سٹاک' : 'Previous Stock',
-      todayPurchase: isUr ? 'آج کی خریداری' : 'Today Purchase',
-      todaySale: isUr ? 'آج کی بکری' : 'Today Sale',
-      remStock: isUr ? 'بقیہ سٹاک' : 'Remaining Stock',
-      total: isUr ? 'کل' : 'Total',
-      noRecords: isUr ? 'کوئی آئٹم نہیں ملا' : 'No items found',
+      asOfDate: translate('stock.asOfDate', 'As of Date'),
+      go: translate('common.go', 'Go'),
+      reportTitle: translate('stock.title', 'Stock Report'),
+      item: translate('common.itemName', 'Item Name'),
+      prevStock: translate('stock.prevStock', 'Previous Stock'),
+      todayPurchase: translate('stock.todayPurchase', 'Today Purchase'),
+      todaySale: translate('stock.todaySale', 'Today Sale'),
+      remStock: translate('stock.remStock', 'Remaining Stock'),
+      total: translate('common.total', 'Total'),
+      noRecords: translate('stock.noRecords', 'No items found'),
     }),
-    [isUr]
+    [translate]
   );
 
   const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
     return date.toISOString().split('T')[0];
   };
 

@@ -564,6 +564,7 @@ const supplierBills = {
          i.name_english as item_name_english,
          si.weight,
          si.rate,
+         si.rate_per_maund,
          si.amount
        FROM sale_items si
        JOIN sales s ON si.sale_id = s.id
@@ -582,9 +583,9 @@ const supplierBills = {
     const totalWeight = items.reduce((sum, item) => sum + (item.weight || 0), 0);
     const grossAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0);
 
-    // Get supplier's default commission
+    // Get supplier details
     const supplier = db.query(
-      'SELECT default_commission_pct, advance_amount FROM suppliers WHERE id = ?',
+      'SELECT name, name_english, default_commission_pct, advance_amount FROM suppliers WHERE id = ?',
       [supplierId]
     );
     const defaultCommissionPct = supplier[0]?.default_commission_pct || 5.0;
@@ -596,6 +597,8 @@ const supplierBills = {
       grossAmount,
       defaultCommissionPct,
       supplierAdvance,
+      supplierName: supplier[0]?.name || '',
+      supplierNameEnglish: supplier[0]?.name_english || '',
     };
   },
 

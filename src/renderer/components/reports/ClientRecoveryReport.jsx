@@ -13,6 +13,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconSearch } from '@tabler/icons-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../../store';
 import { formatDisplayName } from '../../utils/formatters';
@@ -33,26 +34,25 @@ export function ClientRecoveryReport() {
   const [reportData, setReportData] = useState(null);
 
   const isUr = language === 'ur';
+  const { t: translate } = useTranslation();
   const t = useMemo(
     () => ({
-      fromDate: isUr ? 'تاریخ (سے)' : 'From Date',
-      toDate: isUr ? 'تاریخ (تک)' : 'To Date',
-      customer: isUr ? 'صارف' : 'Customer',
-      all: isUr ? 'سب' : 'All',
-      go: isUr ? 'تلاش' : 'Go',
-      customerName: isUr ? 'صارف کا نام' : 'Customer Name',
-      totalAmount: isUr ? 'کل رقم' : 'Total Amount',
-      charges: isUr ? 'اخراجات' : 'Charges',
-      collection: isUr ? 'وصولی' : 'Collection',
-      discount: isUr ? 'رعایت' : 'Discount',
-      balance: isUr ? 'بقایا' : 'Balance',
-      grandTotal: isUr ? 'کل' : 'Grand Total',
-      noRecords: isUr
-        ? 'منتخب کردہ معیار کے لئے کوئی ریکارڈ نہیں ملا'
-        : 'No records found for the selected criteria',
-      reportTitle: isUr ? 'کلائنٹ بکری تفصیلات' : 'Client Recovery Details',
+      fromDate: translate('common.dateFrom', 'From Date'),
+      toDate: translate('common.dateTo', 'To Date'),
+      customer: translate('common.customer', 'Customer'),
+      all: translate('common.all', 'All'),
+      go: translate('common.go', 'Go'),
+      customerName: translate('common.customerName', 'Customer Name'),
+      totalAmount: translate('common.totalAmount', 'Total Amount'),
+      charges: translate('common.charges', 'Charges'),
+      collection: translate('common.collection', 'Collection'),
+      discount: translate('common.discount', 'Discount'),
+      balance: translate('common.balance', 'Balance'),
+      grandTotal: translate('common.grandTotal', 'Grand Total'),
+      noRecords: translate('common.noRecords', 'No records found for the selected criteria'),
+      reportTitle: translate('clientRecovery.title', 'Client Recovery Details'),
     }),
-    [isUr]
+    [translate]
   );
 
   // Fetch customers for dropdown
@@ -76,6 +76,7 @@ export function ClientRecoveryReport() {
   }, [isUr]);
 
   const formatDate = (date) => {
+    if (!date || !(date instanceof Date)) return '';
     return date.toISOString().split('T')[0];
   };
 

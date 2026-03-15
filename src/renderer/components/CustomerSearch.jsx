@@ -17,7 +17,8 @@ import {
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import useStore from '../store';
@@ -33,51 +34,11 @@ import { formatDisplayName } from '../utils/formatters';
  */
 function CustomerSearch({ onEdit, onRefresh }) {
   const isUr = useStore((s) => s.language === 'ur');
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-
-  const t = useMemo(
-    () => ({
-      error: isUr ? 'خرابی' : 'Error',
-      failedLoadData: isUr ? 'صارفین لوڈ کرنے میں ناکام' : 'Failed to load customers',
-      noResultsTitle: isUr ? 'کوئی نتیجہ نہیں' : 'No Results',
-      noResultsMsg: isUr ? 'آپ کی تلاش کے مطابق کوئی صارف نہیں ملا' : 'No customers found matching your search',
-      searchFailed: isUr ? 'تلاش ناکام ہو گئی' : 'Search failed',
-      deleteTitle: isUr ? 'صارف حذف کریں' : 'Delete Customer',
-      deleteBtn: isUr ? 'حذف کریں' : 'Delete',
-      cancelBtn: isUr ? 'منسوخ' : 'Cancel',
-      deletedTitle: isUr ? 'حذف ہو گیا' : 'Deleted',
-      cannotDelete: isUr ? 'حذف نہیں کر سکتے' : 'Cannot Delete',
-      failedDelete: isUr ? 'صارف حذف کرنے میں ناکام' : 'Failed to delete customer',
-      searchPlaceholder: isUr ? 'نام سے تلاش کریں...' : 'Search by name...',
-      searchBtn: isUr ? 'تلاش کریں' : '🔍 Search',
-      clearBtn: isUr ? 'صاف کریں' : 'Clear',
-      itemsFound: isUr ? 'صارفین ملے' : 'customers found',
-      itemFound: isUr ? 'صارف ملا' : 'customer found',
-      noItemsText: isUr ? 'کوئی صارف نہیں ملا' : 'No customers found',
-      colName: isUr ? 'نام' : 'Name',
-      colCity: isUr ? 'شہر' : 'City',
-      colCountry: isUr ? 'ملک' : 'Country',
-      colContact: isUr ? 'رابطہ' : 'Contact',
-      colBalance: isUr ? 'بقایا' : 'Balance',
-      colActions: isUr ? 'عمل' : 'Actions',
-      deleteConfirm1: isUr ? 'کیا آپ واقعی صارف ' : 'Are you sure you want to delete customer ',
-      deleteConfirm2: isUr ? ' کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں کیا جا سکتا۔' : '? This action cannot be undone.',
-      deletedMsg1: isUr ? 'صارف "' : 'Customer "',
-      deletedMsg2: isUr ? '" حذف ہو گیا ہے' : '" has been deleted',
-      bulkDeleteTitle: isUr ? 'منتخب صارفین حذف کریں' : 'Delete Selected Customers',
-      bulkDeleteConfirm1: isUr ? 'کیا آپ واقعی ' : 'Are you sure you want to delete ',
-      bulkDeleteConfirm2: isUr ? ' منتخب صارفین حذف کرنا چاہتے ہیں؟' : ' selected customer(s)?',
-      bulkDeleteBtn: isUr ? 'سب کو حذف کریں' : 'Delete All',
-      bulkDeletedMsg: isUr ? ' صارفین حذف ہو گئے' : ' customer(s) deleted',
-      selectedText: isUr ? 'منتخب' : 'selected',
-      deleteSelected: isUr ? 'منتخب حذف کریں' : '🗑️ Delete Selected',
-      clearSelection: isUr ? 'چناؤ ختم کریں' : 'Clear Selection',
-    }),
-    [isUr]
-  );
 
   // Bulk selection (FR-GRID-006)
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -101,16 +62,16 @@ function CustomerSearch({ onEdit, onRefresh }) {
         setCustomers(result.data);
       } else {
         notifications.show({
-          title: t.error,
-          message: result.error || t.failedLoadData,
+          title: t('error.title', 'Error'),
+          message: result.error || t('customerSearch.failedLoadData', 'Failed to load customers'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Load customers error:', error);
       notifications.show({
-        title: t.error,
-        message: t.failedLoadData,
+        title: t('error.title', 'Error'),
+        message: t('customerSearch.failedLoadData', 'Failed to load customers'),
         color: 'red',
       });
     } finally {
@@ -136,8 +97,8 @@ function CustomerSearch({ onEdit, onRefresh }) {
         setCustomers(result.data);
         if (result.data.length === 0) {
           notifications.show({
-            title: t.noResultsTitle,
-            message: t.noResultsMsg,
+            title: t('search.noResultsTitle', 'No Results'),
+            message: t('customerSearch.noResultsMsg', 'No customers found matching your search'),
             color: 'blue',
           });
         }
@@ -145,8 +106,8 @@ function CustomerSearch({ onEdit, onRefresh }) {
     } catch (error) {
       console.error('Search error:', error);
       notifications.show({
-        title: t.error,
-        message: t.searchFailed,
+        title: t('error.title', 'Error'),
+        message: t('search.searchFailed', 'Search failed'),
         color: 'red',
       });
     } finally {
@@ -158,37 +119,37 @@ function CustomerSearch({ onEdit, onRefresh }) {
   const handleDelete = useCallback(
     (customer) => {
       modals.openConfirmModal({
-        title: t.deleteTitle,
+        title: t('customerSearch.deleteTitle', 'Delete Customer'),
         centered: true,
         children: (
           <Text size="sm">
-            {t.deleteConfirm1}<strong>{formatDisplayName(customer.name, customer.name_english, isUr)}</strong>{t.deleteConfirm2}
+            {t('customerSearch.deleteConfirm1', 'Are you sure you want to delete customer ')}<strong>{formatDisplayName(customer.name, customer.name_english, isUr)}</strong>{t('customerSearch.deleteConfirm2', '? This action cannot be undone.')}
           </Text>
         ),
-        labels: { confirm: t.deleteBtn, cancel: t.cancelBtn },
+        labels: { confirm: t('app.delete', 'Delete'), cancel: t('app.cancel', 'Cancel') },
         confirmProps: { color: 'red' },
         onConfirm: async () => {
           try {
             const result = await window.api.customers.delete(customer.id);
             if (result.success) {
               notifications.show({
-                title: t.deletedTitle,
-                message: `${t.deletedMsg1}${formatDisplayName(customer.name, customer.name_english, isUr)}${t.deletedMsg2}`,
+                title: t('app.deleted', 'Deleted'),
+                message: `${t('customerSearch.deletedMsg1', 'Customer "')}${formatDisplayName(customer.name, customer.name_english, isUr)}${t('customerSearch.deletedMsg2', '" has been deleted')}`,
                 color: 'green',
               });
               loadCustomers();
               onRefresh?.();
             } else {
               notifications.show({
-                title: t.cannotDelete,
+                title: t('app.cannotDelete', 'Cannot Delete'),
                 message: result.error,
                 color: 'red',
               });
             }
           } catch {
             notifications.show({
-              title: t.error,
-              message: t.failedDelete,
+              title: t('error.title', 'Error'),
+              message: t('customerSearch.failedDelete', 'Failed to delete customer'),
               color: 'red',
             });
           }
@@ -268,14 +229,14 @@ function CustomerSearch({ onEdit, onRefresh }) {
         <Group justify="space-between">
           <Group>
             <TextInput
-              placeholder={t.searchPlaceholder}
+              placeholder={t('customerSearch.searchPlaceholder', 'Search by name...')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={handleKeyPress}
               style={{ width: 300, direction: isUr ? 'rtl' : 'ltr' }}
             />
             <Button onClick={handleSearch} loading={loading}>
-              {t.searchBtn}
+              {t('customerSearch.searchBtn', '🔍 Search')}
             </Button>
             <Button
               variant="light"
@@ -284,11 +245,11 @@ function CustomerSearch({ onEdit, onRefresh }) {
                 loadCustomers();
               }}
             >
-              {t.clearBtn}
+              {t('app.clear', 'Clear')}
             </Button>
           </Group>
           <Text size="sm" c="dimmed">
-            {customers.length} {customers.length !== 1 ? t.itemsFound : t.itemFound}
+            {customers.length} {customers.length !== 1 ? t('customerSearch.itemsFound', 'customers found') : t('customerSearch.itemFound', 'customer found')}
           </Text>
         </Group>
 
@@ -300,7 +261,7 @@ function CustomerSearch({ onEdit, onRefresh }) {
             style={{ background: 'var(--mantine-color-green-0)', borderRadius: 8 }}
           >
             <Text size="sm" fw={500}>
-              {selectedIds.size} {t.selectedText}
+              {selectedIds.size} {t('app.selected', 'selected')}
             </Text>
             <Button
               size="xs"
@@ -308,13 +269,13 @@ function CustomerSearch({ onEdit, onRefresh }) {
               color="red"
               onClick={() => {
                 modals.openConfirmModal({
-                  title: t.bulkDeleteTitle,
+                  title: t('customerSearch.bulkDeleteTitle', 'Delete Selected Customers'),
                   children: (
                     <Text size="sm">
-                      {t.bulkDeleteConfirm1}{selectedIds.size}{t.bulkDeleteConfirm2}
+                      {t('customerSearch.bulkDeleteConfirm1', 'Are you sure you want to delete ')}{selectedIds.size}{t('customerSearch.bulkDeleteConfirm2', ' selected customer(s)?')}
                     </Text>
                   ),
-                  labels: { confirm: t.bulkDeleteBtn, cancel: t.cancelBtn },
+                  labels: { confirm: t('app.deleteAll', 'Delete All'), cancel: t('app.cancel', 'Cancel') },
                   confirmProps: { color: 'red' },
                   onConfirm: async () => {
                     for (const id of selectedIds) {
@@ -323,18 +284,18 @@ function CustomerSearch({ onEdit, onRefresh }) {
                     setSelectedIds(new Set());
                     loadCustomers();
                     notifications.show({
-                      title: t.deletedTitle,
-                      message: `${selectedIds.size}${t.bulkDeletedMsg}`,
+                      title: t('app.deleted', 'Deleted'),
+                      message: `${selectedIds.size}${t('customerSearch.bulkDeletedMsg', ' customer(s) deleted')}`,
                       color: 'green',
                     });
                   },
                 });
               }}
             >
-              {t.deleteSelected}
+              {t('app.deleteSelected', '🗑️ Delete Selected')}
             </Button>
             <Button size="xs" variant="subtle" onClick={() => setSelectedIds(new Set())}>
-              {t.clearSelection}
+              {t('app.clearSelection', 'Clear Selection')}
             </Button>
           </Group>
         )}
@@ -349,7 +310,7 @@ function CustomerSearch({ onEdit, onRefresh }) {
             <Center h={200}>
               <Stack align="center" gap="sm">
                 <Text size="xl">📭</Text>
-                <Text c="dimmed">{t.noItemsText}</Text>
+                <Text c="dimmed">{t('customerSearch.noItemsText', 'No customers found')}</Text>
               </Stack>
             </Center>
           ) : (
@@ -377,17 +338,17 @@ function CustomerSearch({ onEdit, onRefresh }) {
                     />
                   </Table.Th>
                   {[
-                    ['name', isUr ? 'نام' : 'Name', t.colName],
-                    ['city', isUr ? 'شہر' : 'City', t.colCity],
-                    ['country', isUr ? 'ملک' : 'Country', t.colCountry],
-                    ['contact', isUr ? 'رابطہ' : 'Contact', t.colContact],
-                    ['balance', isUr ? 'بقایا' : 'Balance', t.colBalance],
-                    ['actions', isUr ? 'عمل' : 'Actions', t.colActions],
-                  ].map(([key, urdu, english]) => {
+                    ['name', t('common.name', 'Name')],
+                    ['city', t('common.city', 'City')],
+                    ['country', t('common.country', 'Country')],
+                    ['contact', t('common.contact', 'Contact')],
+                    ['balance', t('customerSearch.colBalance', 'Balance')],
+                    ['actions', t('common.actions', 'Actions')],
+                  ].map(([key, label]) => {
                     const rp = getResizeProps(key);
                     return (
                       <Table.Th key={key} style={rp.style}>
-                        <div style={{ fontWeight: 700 }}>{isUr ? urdu : english}</div>
+                        <div style={{ fontWeight: 700 }}>{label}</div>
                         <div {...rp.resizeHandle} />
                       </Table.Th>
                     );
