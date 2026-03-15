@@ -55,8 +55,8 @@ function ItemSearch({ onEdit, onRefresh }) {
     } catch (error) {
       console.error('Load items error:', error);
       notifications.show({
-        title: t('error.title', 'Error'),
-        message: t('itemSearch.failedLoadData', 'Failed to load items'),
+        title: t('error.title'),
+        message: t('itemSearch.failedLoadData'),
         color: 'red',
       });
     } finally {
@@ -82,8 +82,8 @@ function ItemSearch({ onEdit, onRefresh }) {
         setItems(result.data);
         if (result.data.length === 0) {
           notifications.show({
-            title: t('search.noResultsTitle', 'No Results'),
-            message: t('itemSearch.noResultsMsg', 'No items found matching your search'),
+            title: t('search.noResultsTitle'),
+            message: t('itemSearch.noResultsMsg'),
             color: 'blue',
           });
         }
@@ -91,8 +91,8 @@ function ItemSearch({ onEdit, onRefresh }) {
     } catch (error) {
       console.error('Search error:', error);
       notifications.show({
-        title: t('error.title', 'Error'),
-        message: t('search.searchFailed', 'Search failed'),
+        title: t('error.title'),
+        message: t('search.searchFailed'),
         color: 'red',
       });
     } finally {
@@ -104,29 +104,29 @@ function ItemSearch({ onEdit, onRefresh }) {
   const handleDelete = useCallback(
     (item) => {
       modals.openConfirmModal({
-        title: t('itemSearch.deleteTitle', 'Delete Item'),
+        title: t('itemSearch.deleteTitle'),
         centered: true,
         children: (
           <Text size="sm">
-            {t('itemSearch.deleteConfirm1', 'Are you sure you want to delete item ')}<strong>{formatDisplayName(item.name, item.name_english, isUr)}</strong>{t('itemSearch.deleteConfirm2', '? This action cannot be undone.')}
+            {t('itemSearch.deleteConfirm1')}<strong>{formatDisplayName(item.name, item.name_english, isUr)}</strong>{t('itemSearch.deleteConfirm2')}
           </Text>
         ),
-        labels: { confirm: t('app.delete', 'Delete'), cancel: t('app.cancel', 'Cancel') },
+        labels: { confirm: t('app.delete'), cancel: t('app.cancel') },
         confirmProps: { color: 'red' },
         onConfirm: async () => {
           try {
             const result = await window.api.items.delete(item.id);
             if (result.success) {
               notifications.show({
-                title: t('app.deleted', 'Deleted'),
-                message: `${t('itemSearch.deletedMsg1', 'Item "')}${formatDisplayName(item.name, item.name_english, isUr)}${t('itemSearch.deletedMsg2', '" has been deleted')}`,
+                title: t('app.deleted'),
+                message: `${t('itemSearch.deletedMsg1')}${formatDisplayName(item.name, item.name_english, isUr)}${t('itemSearch.deletedMsg2')}`,
                 color: 'green',
               });
               loadItems();
               onRefresh?.();
             } else {
               notifications.show({
-                title: t('app.cannotDelete', 'Cannot Delete'),
+                title: t('app.cannotDelete'),
                 message: result.error,
                 color: 'red',
               });
@@ -134,8 +134,8 @@ function ItemSearch({ onEdit, onRefresh }) {
           } catch (error) {
             console.error('Delete item error:', error);
             notifications.show({
-              title: t('error.title', 'Error'),
-              message: t('itemSearch.failedDelete', 'Failed to delete item'),
+              title: t('error.title'),
+              message: t('itemSearch.failedDelete'),
               color: 'red',
             });
           }
@@ -171,25 +171,25 @@ function ItemSearch({ onEdit, onRefresh }) {
           {formatDisplayName(item.name, item.name_english, isUr)}
         </Text>
       </Table.Td>
-      <Table.Td>{item.category_name || item.category_name_urdu || 'None'}</Table.Td>
+      <Table.Td>{item.category_name || item.category_name_urdu || t('common.none')}</Table.Td>
       <Table.Td>
         <Badge variant="light" color="green">
-          Rs. {Math.round(Number(item.unit_price || 0)).toLocaleString('en-US')}
+          {t('common.rs')} {Math.round(Number(item.unit_price || 0)).toLocaleString('en-US')}
         </Badge>
       </Table.Td>
       <Table.Td>
         <Badge variant="light" color="blue">
-          {Number(item.current_stock || 0).toFixed(2)} kg
+          {Number(item.current_stock || 0).toFixed(2)} {t('common.kg')}
         </Badge>
       </Table.Td>
       <Table.Td>
         <Group gap="xs">
-          <Tooltip label="Edit">
+          <Tooltip label={t('app.edit')}>
             <ActionIcon variant="light" color="blue" onClick={() => onEdit?.(item)}>
               <span>✏️</span>
             </ActionIcon>
           </Tooltip>
-          <Tooltip label="Delete">
+          <Tooltip label={t('app.delete')}>
             <ActionIcon variant="light" color="red" onClick={() => handleDelete(item)}>
               <span>🗑️</span>
             </ActionIcon>
@@ -226,7 +226,7 @@ function ItemSearch({ onEdit, onRefresh }) {
             </Button>
           </Group>
           <Text size="sm" c="dimmed">
-            {items.length} {items.length !== 1 ? t('itemSearch.itemsFound', 'items found') : t('itemSearch.itemFound', 'item found')}
+            {items.length} {items.length !== 1 ? t('itemSearch.itemsFound') : t('itemSearch.itemFound')}
           </Text>
         </Group>
 

@@ -1,3 +1,5 @@
+import i18n from '../i18n';
+
 /**
  * Formatters Utility Module
  * Pakistani locale-specific formatting functions for currency, dates, weights, phone, NIC
@@ -8,31 +10,33 @@
  * Format currency amount with Pakistani Rupee symbol
  * @param {number|string} amount - Amount to format
  * @param {Object} options - Formatting options
- * @param {string} options.symbol - Currency symbol (default: 'Rs.')
+ * @param {string} options.symbol - Currency symbol (default: localized 'common.rs')
  * @param {number} options.decimals - Decimal places (default: 0)
  * @param {boolean} options.showSymbol - Show currency symbol (default: true)
- * @returns {string} Formatted currency string (e.g., "Rs. 1,234")
+ * @returns {string} Formatted currency string (e.g., "Rs. 1,234" or "1,234 روپے")
  */
-export function formatCurrency(amount, options = {}) {
-  const { symbol = 'Rs.', decimals = 0, showSymbol = true } = options;
+export function formatCurrency(amount, options = {}, t = i18n.t) {
+  const isUrdu = i18n.language === 'ur';
+  const { symbol = t('common.rs'), decimals = 0, showSymbol = true } = options;
 
   if (amount === null || amount === undefined || amount === '') {
-    return showSymbol ? `${symbol} 0` : '0';
+    return showSymbol ? (isUrdu ? `0 ${symbol}` : `${symbol} 0`) : '0';
   }
 
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
 
   if (isNaN(num)) {
-    return showSymbol ? `${symbol} 0` : '0';
+    return showSymbol ? (isUrdu ? `0 ${symbol}` : `${symbol} 0`) : '0';
   }
 
   // Format with thousand separators and decimal places
-  const formatted = num.toLocaleString('en-US', {
+  const formatted = num.toLocaleString(isUrdu ? 'ur-PK' : 'en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 
-  return showSymbol ? `${symbol} ${formatted}` : formatted;
+  if (!showSymbol) return formatted;
+  return isUrdu ? `${formatted} ${symbol}` : `${symbol} ${formatted}`;
 }
 
 /**
@@ -40,24 +44,27 @@ export function formatCurrency(amount, options = {}) {
  * @param {number|string} weight - Weight in kg
  * @param {Object} options - Formatting options
  * @param {number} options.decimals - Decimal places (default: 3)
- * @param {boolean} options.showUnit - Show kg unit (default: true)
- * @returns {string} Formatted weight string (e.g., "25.500 kg")
+ * @param {boolean} options.showUnit - Show unit (default: true)
+ * @returns {string} Formatted weight string (e.g., "25.500 kg" or "25.500 کلو")
  */
-export function formatWeight(weight, options = {}) {
+export function formatWeight(weight, options = {}, t = i18n.t) {
   const { decimals = 3, showUnit = true } = options;
+  const unit = t('common.kg');
 
   if (weight === null || weight === undefined || weight === '') {
-    return showUnit ? '0.000 kg' : '0.000';
+    const zero = (0).toFixed(decimals);
+    return showUnit ? `${zero} ${unit}` : zero;
   }
 
   const num = typeof weight === 'string' ? parseFloat(weight) : weight;
 
   if (isNaN(num)) {
-    return showUnit ? '0.000 kg' : '0.000';
+    const zero = (0).toFixed(decimals);
+    return showUnit ? `${zero} ${unit}` : zero;
   }
 
   const formatted = num.toFixed(decimals);
-  return showUnit ? `${formatted} kg` : formatted;
+  return showUnit ? `${formatted} ${unit}` : formatted;
 }
 
 /**
@@ -66,7 +73,7 @@ export function formatWeight(weight, options = {}) {
  * @param {string} format - Format type: 'DD-MM-YYYY', 'DD/Mon/YYYY', 'YYYY-MM-DD', 'display'
  * @returns {string} Formatted date string
  */
-export function formatDate(date, format = 'DD-MM-YYYY') {
+export function formatDate(date, format = 'DD-MM-YYYY', t = i18n.t) {
   if (!date) return '';
 
   const d = date instanceof Date ? date : new Date(date);
@@ -75,32 +82,30 @@ export function formatDate(date, format = 'DD-MM-YYYY') {
     return '';
   }
 
+  const isUrdu = i18n.language === 'ur';
   const day = String(d.getDate()).padStart(2, '0');
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const year = d.getFullYear();
 
-  const monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  const monthName = monthNames[d.getMonth()];
+  // Localized months from translation files
+  const getMonthName = (monthIdx) => {
+    const months = t('common.months', { returnObjects: true });
+    if (Array.isArray(months) && months[monthIdx]) {
+      return months[monthIdx];
+    }
+    // Fallback if translation is missing or not an array
+    const enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return enMonths[monthIdx];
+  };
+
+  const monthName = getMonthName(d.getMonth());
 
   switch (format) {
     case 'DD-MM-YYYY':
       return `${day}-${month}-${year}`;
     case 'DD/Mon/YYYY':
     case 'display':
-      return `${day}/${monthName}/${year}`;
+      return isUrdu ? `${day} ${monthName} ${year}` : `${day}/${monthName}/${year}`;
     case 'YYYY-MM-DD':
       return `${year}-${month}-${day}`;
     case 'DD/MM/YYYY':
@@ -173,7 +178,7 @@ export function formatNumber(num, decimals = 0) {
     return '0';
   }
 
-  return value.toLocaleString('en-US', {
+  return value.toLocaleString(i18n.language === 'ur' ? 'ur-PK' : 'en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
@@ -185,7 +190,7 @@ export function formatNumber(num, decimals = 0) {
  * @param {number} decimals - Decimal places (default: 2)
  * @returns {string} Formatted percentage (e.g., "5.50%")
  */
-export function formatPercentage(value, decimals = 2) {
+export function formatPercentage(value, decimals = 2, t = i18n.t) {
   if (value === null || value === undefined || value === '') {
     return '0.00%';
   }
@@ -196,7 +201,8 @@ export function formatPercentage(value, decimals = 2) {
     return '0.00%';
   }
 
-  return `${num.toFixed(decimals)}%`;
+  const symbol = t('common.pct') || '%';
+  return `${num.toFixed(decimals)}${symbol}`;
 }
 
 /**
@@ -207,11 +213,12 @@ export function formatPercentage(value, decimals = 2) {
 export function parseCurrency(currencyString) {
   if (!currencyString) return 0;
 
-  // Remove currency symbol and thousand separators
-  const cleaned = currencyString.replace(/[Rs.\s,]/g, '');
-  const value = parseInt(cleaned, 10);
+  // Remove currency symbols (en/ur), thousand separators, and whitespace
+  // Rs. روپے are common. We also remove anything that's not a digit, dot, or minus sign
+  const cleaned = currencyString.replace(/[^\d.-]/g, '');
+  const value = parseFloat(cleaned);
 
-  return isNaN(value) ? 0 : value;
+  return isNaN(value) ? 0 : Math.round(value);
 }
 
 /**
@@ -222,8 +229,8 @@ export function parseCurrency(currencyString) {
 export function parseWeight(weightString) {
   if (!weightString) return 0;
 
-  // Remove 'kg' and whitespace
-  const cleaned = weightString.replace(/kg/gi, '').trim();
+  // Remove non-numeric characters except dot and minus
+  const cleaned = weightString.replace(/[^\d.-]/g, '');
   const value = parseFloat(cleaned);
 
   return isNaN(value) ? 0 : value;

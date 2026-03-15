@@ -299,9 +299,9 @@ function SaleSearch({ onEdit }) {
                         <tbody>${itemRows}</tbody>
                     </table>
                     <table class="totals">
-                        <tr><td>${t.netAmtCol}:</td><td><strong>Rs. ${Math.round(sale.net_amount || 0).toLocaleString('en-US')}</strong></td></tr>
-                        <tr><td>${t.cashReceivedCol}:</td><td>Rs. ${Math.round(sale.cash_received || 0).toLocaleString('en-US')}</td></tr>
-                        <tr class="grand-total"><td>${t.balanceCol}:</td><td>Rs. ${Math.round(sale.balance_amount || 0).toLocaleString('en-US')}</td></tr>
+                        <tr><td>${t.netAmtCol}:</td><td><strong>${translate('common.rs')} ${Math.round(sale.net_amount || 0).toLocaleString('en-US')}</strong></td></tr>
+                        <tr><td>${t.cashReceivedCol}:</td><td>${translate('common.rs')} ${Math.round(sale.cash_received || 0).toLocaleString('en-US')}</td></tr>
+                        <tr class="grand-total"><td>${t.balanceCol}:</td><td>${translate('common.rs')} ${Math.round(sale.balance_amount || 0).toLocaleString('en-US')}</td></tr>
                     </table>
                 </div>`;
         })
@@ -341,7 +341,7 @@ function SaleSearch({ onEdit }) {
     } finally {
       setLoading(false);
     }
-  }, [sales, t, isUr]);
+  }, [sales, t, isUr, translate]);
 
   return (
     <Paper shadow="sm" p="lg" radius="md" withBorder pos="relative">
@@ -589,11 +589,11 @@ function SaleSearch({ onEdit }) {
                       {sale.vehicle_number || '-'}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      Rs. {Math.round(sale.net_amount || 0).toLocaleString('en-US')}
+                      {translate('common.rs')} {Math.round(sale.net_amount || 0).toLocaleString('en-US')}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                       <Text c={sale.balance_amount > 0 ? 'red' : 'green'}>
-                        Rs. {Math.round(sale.balance_amount || 0).toLocaleString('en-US')}
+                        {translate('common.rs')} {Math.round(sale.balance_amount || 0).toLocaleString('en-US')}
                       </Text>
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'right' : 'left' }}>
@@ -611,7 +611,12 @@ function SaleSearch({ onEdit }) {
                           color="blue"
                           variant="subtle"
                           onClick={() => onEdit?.(sale)}
-                          title="Edit"
+                          title={
+                            sale.status === 'posted'
+                              ? translate('saleSearch.postedNoEdit')
+                              : translate('app.edit')
+                          }
+                          disabled={sale.status === 'posted'}
                         >
                           ✏️
                         </ActionIcon>
@@ -619,7 +624,12 @@ function SaleSearch({ onEdit }) {
                           color="red"
                           variant="subtle"
                           onClick={() => handleDelete(sale)}
-                          title="Delete"
+                          title={
+                            sale.status === 'posted'
+                              ? translate('saleSearch.postedNoDelete')
+                              : translate('app.delete')
+                          }
+                          disabled={sale.status === 'posted'}
                         >
                           🗑️
                         </ActionIcon>

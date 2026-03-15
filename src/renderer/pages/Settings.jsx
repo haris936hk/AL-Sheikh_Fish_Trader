@@ -19,6 +19,7 @@ import {
   LoadingOverlay,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
+import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import {
   IconSettings,
@@ -32,7 +33,7 @@ import {
   IconCheck,
   IconCalendarTime,
 } from '@tabler/icons-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import useStore from '../store';
@@ -70,11 +71,7 @@ function Settings() {
     sms_template_sale: '',
   });
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setLoading(true);
     try {
       const result = await window.api.settings.getAll();
@@ -97,14 +94,18 @@ function Settings() {
       }
     } catch {
       notifications.show({
-        title: 'Error',
-        message: 'Failed to load settings',
+        title: t('error.title'),
+        message: t('settings.error'),
         color: 'red',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const loadBackups = async () => {
     try {
@@ -136,15 +137,15 @@ function Settings() {
         await window.api.settings.save(key, stringValue);
       }
       notifications.show({
-        title: 'Success',
-        message: 'Settings saved successfully',
+        title: t('app.update'),
+        message: t('settings.saved'),
         color: 'green',
         icon: <IconCheck size={16} />,
       });
     } catch {
       notifications.show({
-        title: 'Error',
-        message: 'Failed to save settings',
+        title: t('error.title'),
+        message: t('settings.error'),
         color: 'red',
       });
     } finally {
@@ -157,8 +158,8 @@ function Settings() {
       const result = await window.api.backup.create();
       if (result.success) {
         notifications.show({
-          title: 'Backup Created',
-          message: `Backup saved to: ${result.data.path}`,
+          title: t('settings.backupCreated'),
+          message: `${t('settings.backupCreated')}: ${result.data.path}`,
           color: 'green',
         });
         loadBackups();
@@ -167,7 +168,7 @@ function Settings() {
       }
     } catch (error) {
       notifications.show({
-        title: 'Backup Failed',
+        title: t('settings.backupFailed'),
         message: error.message,
         color: 'red',
       });
@@ -175,39 +176,55 @@ function Settings() {
   };
 
   const handleRestoreBackup = async (filePath) => {
-    if (
-      !window.confirm(
-        'Are you sure you want to restore this backup? Current data will be replaced.'
-      )
-    ) {
-      return;
-    }
-    try {
-      const result = await window.api.backup.restore(filePath);
-      if (result.success) {
-        notifications.show({
-          title: 'Restore Complete',
-          message: 'Database restored. Please restart the application.',
-          color: 'green',
-        });
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      notifications.show({
-        title: 'Restore Failed',
-        message: error.message,
-        color: 'red',
-      });
-    }
+    modals.openConfirmModal({
+      title: t('settings.backup'),
+      children: <Text size="sm">{t('settings.restoreConfirm')}</Text>,
+      labels: { confirm: t('common.confirm'), cancel: t('app.cancel') },
+      onConfirm: async () => {
+        try {
+          const result = await window.api.backup.restore(filePath);
+          if (result.success) {
+            notifications.show({
+              title: t('settings.restoreComplete'),
+              message: t('settings.restoreMsg'),
+              color: 'green',
+            });
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          notifications.show({
+            title: t('settings.error'),
+            message: error.message,
+            color: 'red',
+          });
+        }
+      },
+    });
   };
 
-  const formatBytes = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+  const formatBytes = (bytes, decimals = 2) => {
+    if (bytes === 0) return `0 ${t('settings.bytes')}`;
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = [
+      t('settings.bytes'),
+      t('settings.kb'),
+      t('settings.mb'),
+      t('settings.gb'),
+      t('settings.tb'),
+    ];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+  };
+
+  const formatDate = (dateStr) => {
+    const dt = new Date(dateStr);
+    return dt.toLocaleDateString(language === 'ur' ? 'ur-PK' : 'en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   };
 
   return (
@@ -232,16 +249,16 @@ function Settings() {
             {t('settings.company')}
           </Tabs.Tab>
           <Tabs.Tab value="business" leftSection={<IconSettings size={16} />}>
-            {t('settings.language')}
+            {t('settings.businessSettings')}
           </Tabs.Tab>
           <Tabs.Tab value="backup" leftSection={<IconDatabase size={16} />}>
-            {isUrdu ? 'بیک اپ' : 'Backup & Restore'}
+            {t('settings.backup')}
           </Tabs.Tab>
           <Tabs.Tab value="sms" leftSection={<IconMessage size={16} />}>
             {t('settings.sms')}
           </Tabs.Tab>
           <Tabs.Tab value="yearend" leftSection={<IconCalendarTime size={16} />}>
-            {isUrdu ? 'سال کا اختتام' : 'Year-End'}
+            {t('settings.yearEnd')}
           </Tabs.Tab>
         </Tabs.List>
 
@@ -308,13 +325,13 @@ function Settings() {
 
           <Tabs.Panel value="business">
             <Stack>
-              <Title order={4}>Business Settings / کاروباری ترتیبات</Title>
+              <Title order={4}>{t('settings.businessSettings')}</Title>
               <Divider />
 
               <Grid>
                 <Grid.Col span={4}>
                   <NumberInput
-                    label="Default Commission %"
+                    label={t('settings.defaultCommission')}
                     value={settings.default_commission_pct}
                     onChange={(value) =>
                       handleChange('default_commission_pct', value === '' ? '' : value)
@@ -327,7 +344,7 @@ function Settings() {
                 </Grid.Col>
                 <Grid.Col span={4}>
                   <NumberInput
-                    label="Default VAT %"
+                    label={t('settings.defaultVAT')}
                     value={settings.default_vat_pct}
                     onChange={(value) => handleChange('default_vat_pct', value === '' ? '' : value)}
                     min={0}
@@ -338,8 +355,8 @@ function Settings() {
                 </Grid.Col>
                 <Grid.Col span={4}>
                   <Switch
-                    label="Allow Negative Stock"
-                    description="Allow sales when stock is insufficient"
+                    label={t('settings.allowNegativeStock')}
+                    description={t('settings.allowNegativeStockDesc')}
                     checked={settings.allow_negative_stock}
                     onChange={(e) => handleChange('allow_negative_stock', e.currentTarget.checked)}
                     mt="md"
@@ -351,12 +368,11 @@ function Settings() {
 
           <Tabs.Panel value="backup">
             <Stack>
-              <Title order={4}>Backup & Restore / بیک اپ اور بحالی</Title>
+              <Title order={4}>{t('settings.backup')}</Title>
               <Divider />
 
               <Alert color="blue" variant="light">
-                Create regular backups to protect your data. Backups are saved in the application
-                data folder.
+                {t('settings.backupProtect')}
               </Alert>
 
               <Group>
@@ -365,27 +381,27 @@ function Settings() {
                   onClick={handleCreateBackup}
                   color="green"
                 >
-                  Create Backup Now
+                  {t('settings.createBackup')}
                 </Button>
                 <Button
                   leftSection={<IconRefresh size={16} />}
                   variant="outline"
                   onClick={loadBackups}
                 >
-                  Refresh List
+                  {t('settings.refreshList')}
                 </Button>
               </Group>
 
               <Title order={5} mt="md">
-                Available Backups
+                {t('settings.availableBackups')}
               </Title>
               <Table striped highlightOnHover>
                 <Table.Thead>
                   <Table.Tr>
-                    <Table.Th>Filename</Table.Th>
-                    <Table.Th>Size</Table.Th>
-                    <Table.Th>Created</Table.Th>
-                    <Table.Th>Actions</Table.Th>
+                    <Table.Th>{t('settings.filename')}</Table.Th>
+                    <Table.Th>{t('settings.size')}</Table.Th>
+                    <Table.Th>{t('settings.created')}</Table.Th>
+                    <Table.Th>{t('settings.actions')}</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -393,7 +409,7 @@ function Settings() {
                     <Table.Tr>
                       <Table.Td colSpan={4}>
                         <Text c="dimmed" ta="center">
-                          No backups found
+                          {t('settings.noBackups')}
                         </Text>
                       </Table.Td>
                     </Table.Tr>
@@ -408,7 +424,7 @@ function Settings() {
                             color="blue"
                             variant="light"
                             onClick={() => handleRestoreBackup(backup.path)}
-                            title="Restore this backup"
+                            title={t('common.confirm')}
                           >
                             <IconUpload size={16} />
                           </ActionIcon>
@@ -423,12 +439,12 @@ function Settings() {
 
           <Tabs.Panel value="sms">
             <Stack>
-              <Title order={4}>SMS Settings / ایس ایم ایس ترتیبات</Title>
+              <Title order={4}>{t('settings.sms')}</Title>
               <Divider />
 
               <Switch
-                label="Enable SMS Notifications"
-                description="Send SMS to customers after sales"
+                label={t('settings.smsEnabled')}
+                description={t('settings.smsEnabledDesc')}
                 checked={settings.sms_enabled}
                 onChange={(e) => handleChange('sms_enabled', e.currentTarget.checked)}
               />
@@ -437,7 +453,7 @@ function Settings() {
                 <Grid>
                   <Grid.Col span={6}>
                     <TextInput
-                      label="SMS Gateway URL"
+                      label={t('settings.smsGatewayUrl')}
                       value={settings.sms_gateway_url}
                       onChange={(e) => handleChange('sms_gateway_url', e.target.value)}
                       placeholder="https://api.smsgateway.com/send"
@@ -448,10 +464,10 @@ function Settings() {
                   </Grid.Col>
                   <Grid.Col span={6}>
                     <TextInput
-                      label="API Key"
+                      label={t('settings.smsApiKey')}
                       value={settings.sms_api_key}
                       onChange={(e) => handleChange('sms_api_key', e.target.value)}
-                      placeholder="Your API key"
+                      placeholder={t('settings.smsApiKeyPh')}
                       type="password"
                       className="ltr-field"
                       dir="ltr"
@@ -460,8 +476,8 @@ function Settings() {
                   </Grid.Col>
                   <Grid.Col span={12}>
                     <Textarea
-                      label="Sale SMS Template"
-                      description="Use {customer_name}, {amount}, {sale_number} as placeholders"
+                      label={t('settings.smsTemplate')}
+                      description={t('settings.smsTemplateDesc')}
                       value={settings.sms_template_sale}
                       onChange={(e) => handleChange('sms_template_sale', e.target.value)}
                       placeholder="Dear {customer_name}, your sale #{sale_number} of Rs. {amount} has been recorded."
@@ -475,22 +491,21 @@ function Settings() {
 
           <Tabs.Panel value="yearend">
             <Stack>
-              <Title order={4}>Year-End Processing / سال کے اختتام کی کارروائی</Title>
+              <Title order={4}>{t('settings.yearEnd')}</Title>
               <Divider />
 
               <Alert color="orange" variant="light">
                 <Text size="sm">
-                  Year-end processing will calculate closing balances as of the selected date and
-                  update opening balances for the new year. Historical data is preserved.
+                  {t('settings.yearEndDesc')}
                 </Text>
               </Alert>
 
               {yearEndHistory && (
                 <Alert color="blue" variant="light">
                   <Text size="sm">
-                    Last year-end processed:{' '}
-                    {new Date(yearEndHistory.last_date).toLocaleDateString('en-GB')}
-                    on {new Date(yearEndHistory.updated_at).toLocaleString()}
+                    {t('settings.lastRefresh')}:{' '}
+                    {formatDate(yearEndHistory.last_date)}
+                    {' '} {t('report.to')} {new Date(yearEndHistory.updated_at).toLocaleString()}
                   </Text>
                 </Alert>
               )}
@@ -498,8 +513,8 @@ function Settings() {
               <Grid align="flex-end">
                 <Grid.Col span={4}>
                   <DatePickerInput
-                    label="Year-End Date"
-                    description="Typically December 31st"
+                    label={t('settings.yearEndDate')}
+                    description={t('settings.yearEndDateDesc')}
                     value={yearEndDate}
                     onChange={setYearEndDate}
                     maxDate={new Date()}
@@ -520,7 +535,7 @@ function Settings() {
                         }
                       } catch (error) {
                         notifications.show({
-                          title: 'Error',
+                          title: t('error.title'),
                           message: error.message,
                           color: 'red',
                         });
@@ -530,34 +545,34 @@ function Settings() {
                     }}
                     loading={yearEndLoading}
                   >
-                    Generate Preview
+                    {t('settings.generatePreview')}
                   </Button>
                 </Grid.Col>
               </Grid>
 
               {yearEndPreview && (
                 <Stack mt="md">
-                  <Title order={5}>Preview Summary</Title>
+                  <Title order={5}>{t('settings.previewSummary')}</Title>
                   <Grid>
                     <Grid.Col span={6}>
                       <Paper p="md" withBorder>
-                        <Text fw={500}>Customer Balances</Text>
+                        <Text fw={500}>{t('settings.customerBalances')}</Text>
                         <Text size="sm" c="dimmed">
-                          {yearEndPreview.summary.customerCount} customers
+                          {yearEndPreview.summary.customerCount} {t('nav.customers')}
                         </Text>
                         <Text size="lg" fw={700} c="blue">
-                          Rs. {Math.round(yearEndPreview.summary.totalCustomerBalance).toLocaleString('en-US')}
+                          {t('common.rs')} {Math.round(yearEndPreview.summary.totalCustomerBalance).toLocaleString(isUrdu ? 'ur-PK' : 'en-US')}
                         </Text>
                       </Paper>
                     </Grid.Col>
                     <Grid.Col span={6}>
                       <Paper p="md" withBorder>
-                        <Text fw={500}>Vendor Advance Balances</Text>
+                        <Text fw={500}>{t('settings.vendorBalances')}</Text>
                         <Text size="sm" c="dimmed">
-                          {yearEndPreview.summary.supplierCount} vendors
+                          {yearEndPreview.summary.supplierCount} {t('nav.suppliers')}
                         </Text>
                         <Text size="lg" fw={700} c="green">
-                          Rs. {Math.round(yearEndPreview.summary.totalSupplierBalance).toLocaleString('en-US')}
+                          {t('common.rs')} {Math.round(yearEndPreview.summary.totalSupplierBalance).toLocaleString(isUrdu ? 'ur-PK' : 'en-US')}
                         </Text>
                       </Paper>
                     </Grid.Col>
@@ -566,49 +581,50 @@ function Settings() {
                   <Button
                     color="red"
                     onClick={async () => {
-                      if (
-                        !window.confirm(
-                          'Are you sure you want to process year-end closing? ' +
-                          'This will update opening balances for all customers and vendors. ' +
-                          'This action cannot be undone easily.'
-                        )
-                      ) {
-                        return;
-                      }
-                      setYearEndLoading(true);
-                      try {
-                        const result = await window.api.yearEnd.process(
-                          (yearEndDate instanceof Date ? yearEndDate : new Date(yearEndDate)).toISOString().split('T')[0]
-                        );
-                        if (result.success) {
-                          notifications.show({
-                            title: 'Year-End Processed',
-                            message: `Updated ${result.data.customersUpdated} customers and ${result.data.suppliersUpdated} vendors`,
-                            color: 'green',
-                            icon: <IconCheck size={16} />,
-                          });
-                          setYearEndPreview(null);
-                          // Refresh history
-                          const histResult = await window.api.yearEnd.getHistory();
-                          if (histResult.success) {
-                            setYearEndHistory(histResult.data);
+                      modals.openConfirmModal({
+                        title: t('settings.yearEnd'),
+                        children: <Text size="sm">{t('settings.yearEndConfirm')}</Text>,
+                        labels: { confirm: t('settings.processYearEnd'), cancel: t('app.cancel') },
+                        onConfirm: async () => {
+                          setYearEndLoading(true);
+                          try {
+                            const result = await window.api.yearEnd.process(
+                              (yearEndDate instanceof Date ? yearEndDate : new Date(yearEndDate)).toISOString().split('T')[0]
+                            );
+                            if (result.success) {
+                              notifications.show({
+                                title: t('settings.yearEndSuccess'),
+                                message: t('settings.yearEndSuccessMsg', { 
+                                  customers: result.data.customersUpdated, 
+                                  suppliers: result.data.suppliersUpdated 
+                                }),
+                                color: 'green',
+                                icon: <IconCheck size={16} />,
+                              });
+                              setYearEndPreview(null);
+                              // Refresh history
+                              const histResult = await window.api.yearEnd.getHistory();
+                              if (histResult.success) {
+                                setYearEndHistory(histResult.data);
+                              }
+                            } else {
+                              throw new Error(result.error);
+                            }
+                          } catch (error) {
+                            notifications.show({
+                              title: t('error.title'),
+                              message: error.message,
+                              color: 'red',
+                            });
+                          } finally {
+                            setYearEndLoading(false);
                           }
-                        } else {
-                          throw new Error(result.error);
-                        }
-                      } catch (error) {
-                        notifications.show({
-                          title: 'Error',
-                          message: error.message,
-                          color: 'red',
-                        });
-                      } finally {
-                        setYearEndLoading(false);
-                      }
+                        },
+                      });
                     }}
                     loading={yearEndLoading}
                   >
-                    Process Year-End Closing
+                    {t('settings.processYearEnd')}
                   </Button>
                 </Stack>
               )}

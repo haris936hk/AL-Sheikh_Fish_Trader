@@ -115,10 +115,10 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
   const dashboardSummary = useStore((s) => s.dashboardSummary);
   const dashboardLoading = useStore((s) => s.dashboardLoading);
   const loadDashboardData = useStore((s) => s.loadDashboardData);
-  const language = useStore((s) => s.language);
+  const settings = useStore((s) => s.settings || {});
   const { t } = useTranslation();
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const isUrdu = language === 'ur';
+  const isUrdu = useStore((s) => s.language) === 'ur';
 
   useEffect(() => {
     loadDashboardData();
@@ -137,7 +137,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
     (moduleName) => {
       notifications.show({
         title: t('common.noDataFound'),
-        message: `${moduleName} module is not yet implemented.`,
+        message: `${moduleName} ${t('error.loadFailed')}.`,
         color: 'blue',
         autoClose: 3000,
       });
@@ -197,7 +197,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
       tab: 'vendor-sales',
     },
     {
-      label: isUrdu ? 'مال خریداری' : 'Item Purchase',
+      label: t('report.itemPurchase'),
       icon: <IconReportAnalytics size={18} />,
       key: 'item-wise-purchase',
       navigate: 'reports',
@@ -211,42 +211,42 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
       tab: 'stock',
     },
     {
-      label: isUrdu ? 'گاہک رجسٹر' : 'Customer Register',
+      label: t('report.customerRegister'),
       icon: <IconClipboardList size={18} />,
       key: 'customer-register',
       navigate: 'reports',
       tab: 'customer-register',
     },
     {
-      label: isUrdu ? 'گاہک بکری' : 'Customer Recovery',
+      label: t('report.customerRecovery'),
       icon: <IconReceipt size={18} />,
       key: 'client-sales',
       navigate: 'reports',
       tab: 'client-recovery',
     },
     {
-      label: isUrdu ? 'روزانہ تفصیل' : 'Daily Details',
+      label: t('report.dailyDetails'),
       icon: <IconCalendar size={18} />,
       key: 'daily-sales-details',
       navigate: 'reports',
       tab: 'daily-details',
     },
     {
-      label: isUrdu ? 'روزانہ بکری' : 'Daily Sales',
+      label: t('report.dailySales'),
       icon: <IconCalendarStats size={18} />,
       key: 'daily-sales',
       navigate: 'reports',
       tab: 'daily-sales',
     },
     {
-      label: isUrdu ? 'مال بکری' : 'Item Sales',
+      label: t('report.itemSales'),
       icon: <IconFish size={18} />,
       key: 'item-sale',
       navigate: 'reports',
       tab: 'item-sale',
     },
     {
-      label: isUrdu ? 'رعایت' : 'Concessions',
+      label: t('report.concessions'),
       icon: <IconDiscount2 size={18} />,
       key: 'concession',
       navigate: 'reports',
@@ -280,11 +280,11 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
                   <IconFish size={16} />
                 </ThemeIcon>
                 <Title order={3} c="white" style={{ letterSpacing: '-0.3px' }}>
-                  AL-SHEIKH FISH TRADER
+                  {(isUrdu && settings.company_name_urdu) || (settings.company_name || t('app.title'))}
                 </Title>
               </Group>
               <Text c="dimmed" size="xs" ms={42}>
-                Shop No. W-644 Gunj Mandi Rawalpindi | +92-3008501724
+                {(isUrdu && settings.company_address_urdu) || settings.company_address || ''} | {settings.company_phone || ''}
               </Text>
             </Stack>
 
@@ -310,7 +310,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
               />
               <StatCard
                 value={dashboardSummary?.todaySales?.count || 0}
-                label={isUrdu ? 'آج کی بکری' : "Today's Sales"}
+                label={t('dashboard.todaySales')}
                 icon={IconCurrencyDollar}
                 color="orange"
               />
@@ -341,7 +341,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
                   <IconClock size={16} />
                 </ActionIcon>
               </Tooltip>
-              <Tooltip label={isUrdu ? 'Switch to English' : 'اردو میں بدلیں'}>
+              <Tooltip label={t(isUrdu ? 'app.switchToEnglish' : 'app.switchToUrdu')}>
                 <Button
                   variant="subtle"
                   color="gray"
@@ -350,7 +350,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
                   onClick={onToggleLanguage}
                   style={{ color: 'rgba(255,255,255,0.7)' }}
                 >
-                  {isUrdu ? 'English' : 'اردو'}
+                  {t(isUrdu ? 'app.english' : 'app.urdu')}
                 </Button>
               </Tooltip>
             </Group>

@@ -1,10 +1,11 @@
 import { Paper, Stack, Group, Text, Divider, Button, Center, Table } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import PropTypes from 'prop-types';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import useStore from '../store';
-import { formatDisplayName } from '../utils/formatters';
+import { formatDisplayName, formatCurrency, formatWeight, formatDate } from '../utils/formatters';
 
 /**
  * SupplierBillPreview Component
@@ -17,152 +18,160 @@ function SupplierBillPreview({ previewData }) {
   const printRef = useRef();
   const { t } = useTranslation();
   const isUr = useStore((s) => s.language === 'ur');
+  const settings = useStore((s) => s.settings || {});
 
-  // Format date for display (DD-MM-YYYY)
-  const formatDisplayDate = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1)
-      .toString()
-      .padStart(2, '0')}-${date.getFullYear()}`;
-  };
+  // Use standard formatters
+  const formatAmount = (amount) => formatCurrency(amount, { showSymbol: false }, t);
+  const formatDecimal = (value) => formatWeight(value, { decimals: 2, showUnit: false }, t);
+  const formatDisplayDateLocal = (date) => formatDate(date, 'DD-MM-YYYY', t);
 
-  // Format currency without decimals for strict amounts
-  const formatAmount = (amount) => {
-    return Math.round(amount || 0).toLocaleString('en-US');
-  };
+  // Print handler - Auto export PDF to Documents & Open without Dialog
+  const [isPrinting, setIsPrinting] = useState(false);
 
-  // Format weights/decimals properly
-  const formatDecimal = (value) => {
-    return (value || 0).toFixed(2);
-  };
-
-  // Print handler
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const printContent = printRef.current;
     if (!printContent) return;
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html lang="${isUr ? 'ur' : 'en'}" dir="${isUr ? 'rtl' : 'ltr'}">
-      <head>
-        <title>${t('supplierBill.printTitle', 'Vendor Bill')}</title>
-        <style>
-          body { 
-            font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
-            padding: 20px 40px;
-            max-width: 800px;
-            margin: 0 auto;
-            direction: ${isUr ? 'rtl' : 'ltr'};
-          }
-          table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin: 10px 0;
-            direction: ${isUr ? 'rtl' : 'ltr'};
-          }
-          th, td { 
-            border: 1px solid #ccc; 
-            padding: 6px; 
-            text-align: center;
-          }
-          th { 
-            font-weight: bold;
-            font-size: 15px;
-            background-color: #f5f5f5; 
-          }
-          
-          .header-english {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            direction: ltr;
-            text-align: left;
-            margin-bottom: 20px;
-          }
-          .header-english h2 {
-            margin: 0;
-            font-size: 20px;
-            font-style: italic;
-            font-weight: bold;
-          }
-          .header-english p {
-            margin: 2px 0;
-            font-size: 12px;
-            font-style: italic;
-          }
-          
-          .bill-title {
-            text-align: center;
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 10px;
-          }
-          
-          .meta-info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            font-size: 18px;
-          }
-          
-          .split-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-          }
-          
-          .expenses-block, .totals-block {
-            width: 45%;
-          }
-          
-          .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 10px;
-            font-size: 16px;
-          }
-          
-          .summary-label {
-            font-weight: bold;
-            text-align: right;
-          }
-          
-          .summary-val {
-            text-align: right;
-            direction: ltr;
-          }
-          
-          .border-top {
-            border-top: 1px solid #ccc;
-            margin-top: 5px;
-            padding-top: 10px;
-          }
-          
-          .urdu {
-            font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', Arial, sans-serif;
-          }
-          
-          @media print {
-            body { padding: 0; margin-top: 10px; }
-            * {
-              -webkit-print-color-adjust: exact !important;
-              color-adjust: exact !important;
+    setIsPrinting(true);
+
+    try {
+      const htmlPayload = `
+        <!DOCTYPE html>
+        <html lang="${isUr ? 'ur' : 'en'}" dir="${isUr ? 'rtl' : 'ltr'}">
+        <head>
+          <title>${t('supplierBill.printTitle')}</title>
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
+              padding: 20px 40px;
+              max-width: 800px;
+              margin: 0 auto;
+              direction: rtl;
             }
-          }
-        </style>
-      </head>
-      <body>
-        ${printContent.innerHTML}
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    window.setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin: 10px 0;
+            }
+            th, td { 
+              border: 1px solid #ccc; 
+              padding: 6px; 
+              text-align: center;
+              color: #000;
+            }
+            th { 
+              font-weight: bold;
+              font-size: 15px;
+            }
+            
+            .header-english {
+              font-family: 'Segoe UI', Tahoma, sans-serif;
+              direction: ltr;
+              text-align: left;
+              margin-bottom: 20px;
+            }
+            .header-english h2 {
+              margin: 0;
+              font-size: 20px;
+              font-style: italic;
+              font-weight: bold;
+            }
+            .header-english p {
+              margin: 2px 0;
+              font-size: 12px;
+              font-style: italic;
+            }
+            
+            .bill-title {
+              text-align: center;
+              font-size: 32px;
+              font-weight: bold;
+              margin-bottom: 10px;
+            }
+            
+            .meta-info-row {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 15px;
+              font-size: 18px;
+            }
+            
+            .split-container {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 20px;
+            }
+            
+            .expenses-block, .totals-block {
+              width: 45%;
+            }
+            
+            .summary-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 6px 10px;
+              font-size: 16px;
+            }
+            
+            .summary-label {
+              font-weight: bold;
+              text-align: right;
+            }
+            
+            .summary-val {
+              text-align: right;
+              direction: ltr;
+            }
+            
+            .border-top {
+              border-top: 1px solid #ccc;
+              margin-top: 5px;
+              padding-top: 10px;
+            }
+            
+            @media print {
+              body { padding: 0; margin-top: 10px; }
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          ${printContent.innerHTML}
+        </body>
+        </html>
+      `;
+
+      // Build a clean descriptive filename
+      const cleanName = (supplierNameEnglish || supplierName || t('common.supplier')).replace(/[^a-zA-Z0-9-]/g, '_');
+      const filename = `SupplierBill_${cleanName}_${formatDisplayDateLocal(dateTo)}.pdf`;
+
+      // Send the payload off to the backend API explicitly avoiding browser print dialog
+      const savedPath = await window.api.print.exportPDFSilent(htmlPayload, { filename });
+      
+      if (savedPath) {
+        notifications.show({
+          title: t('app.saved'),
+          message: t('supplierBill.pdfSaved'),
+          color: 'teal',
+        });
+      } else {
+        throw new Error('Failed to save PDF silently');
+      }
+
+    } catch (error) {
+      console.error('Failed to export silent PDF:', error);
+      notifications.show({
+        title: t('error.title'),
+        message: t('supplierBill.pdfError'),
+        color: 'red',
+      });
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   if (!previewData) {
@@ -172,7 +181,7 @@ function SupplierBillPreview({ previewData }) {
           <Stack align="center" gap="md">
             <Text size="4rem">📋</Text>
             <Text c="dimmed" size="lg">
-              {t('supplierBill.emptyPreview', 'Select supplier and date range, then click "Go" to generate preview')}
+              {t('supplierBill.emptyPreview')}
             </Text>
           </Stack>
         </Center>
@@ -232,8 +241,14 @@ function SupplierBillPreview({ previewData }) {
       <Stack gap="md">
         {/* Print Button */}
         <Group justify="flex-start">
-          <Button variant="filled" color="blue" leftSection={<span>🖨️</span>} onClick={handlePrint}>
-            {t('app.print', 'Print Bill')}
+          <Button 
+            variant="filled" 
+            color="blue" 
+            leftSection={<span>🖨️</span>} 
+            loading={isPrinting}
+            onClick={handlePrint}
+          >
+            {t('report.print')}
           </Button>
         </Group>
 
@@ -241,12 +256,16 @@ function SupplierBillPreview({ previewData }) {
         <Stack gap="sm">
           <Group justify="space-between" align="flex-start" style={{ direction: 'ltr' }}>
             <div style={{ textAlign: 'left' }}>
-              <Text size="xl" fw={700}>AL - SHEIKH FISH TRADER</Text>
-              <Text size="sm" c="dimmed">Shop No. W-644 Gunj Mandi Rawalpindi</Text>
+              <Text size="xl" fw={700}>
+                {isUr ? (settings.company_name_urdu || settings.company_name) : (settings.company_name || 'AL-SHEIKH FISH TRADER')}
+              </Text>
+              <Text size="sm" c="dimmed">
+                {isUr ? (settings.company_address_urdu || settings.company_address) : (settings.company_address || 'Shop No. W-644 Gunj Mandi Rawalpindi')}
+              </Text>
             </div>
             <div style={{ textAlign: 'right', direction: isUr ? 'rtl' : 'ltr' }}>
-              <Text size="xl" fw={700} className="urdu">{t('supplierBill.title', 'Vendor Bill')}</Text>
-              <Text fw={500}>{t('common.name', 'Name')}: <span style={{ direction: 'ltr', display: 'inline-block' }}>{displayName}</span></Text>
+              <Text size="xl" fw={700} className="urdu">{t('supplierBill.title')}</Text>
+              <Text fw={500}>{t('common.name')}: <span style={{ direction: 'ltr', display: 'inline-block' }}>{displayName}</span></Text>
             </div>
           </Group>
           
@@ -254,14 +273,14 @@ function SupplierBillPreview({ previewData }) {
 
           <Group justify="space-between">
             <Group gap="xs">
-               <Text>{t('supplierBill.fromDate', 'From Date')}:</Text>
-               <Text fw={500} style={{ direction: 'ltr' }}>{formatDisplayDate(dateFrom)}</Text>
+               <Text>{t('supplierBill.fromDate')}:</Text>
+               <Text fw={500} style={{ direction: 'ltr' }}>{formatDisplayDateLocal(dateFrom)}</Text>
                <Text px="sm">–</Text>
-               <Text>{t('supplierBill.toDate', 'To Date')}:</Text>
-               <Text fw={500} style={{ direction: 'ltr' }}>{formatDisplayDate(dateTo)}</Text>
+               <Text>{t('supplierBill.toDate')}:</Text>
+               <Text fw={500} style={{ direction: 'ltr' }}>{formatDisplayDateLocal(dateTo)}</Text>
             </Group>
             <Group gap="xs">
-               <Text>{t('supplierBill.vehicle', 'Vehicle')}:</Text>
+               <Text>{t('supplierBill.vehicle')}:</Text>
                <Text fw={500} style={{ direction: 'ltr' }}>{displayVehicle || '-'}</Text>
             </Group>
           </Group>
@@ -269,11 +288,11 @@ function SupplierBillPreview({ previewData }) {
           <Table striped highlightOnHover withTableBorder>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>{t('common.number', '#')}</Table.Th>
-                <Table.Th>{t('sale.item', 'Item')}</Table.Th>
-                <Table.Th>{t('purchase.rate', 'Rate')}</Table.Th>
-                <Table.Th>{t('purchase.weight', 'Weight')}</Table.Th>
-                <Table.Th>{t('common.amount', 'Amount')}</Table.Th>
+                <Table.Th>{t('common.number')}</Table.Th>
+                <Table.Th>{t('sale.item')}</Table.Th>
+                <Table.Th>{t('purchase.rate')}</Table.Th>
+                <Table.Th>{t('purchase.weight')}</Table.Th>
+                <Table.Th>{t('common.amount')}</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -289,7 +308,7 @@ function SupplierBillPreview({ previewData }) {
                 ))
               ) : (
                 <Table.Tr>
-                  <Table.Td colSpan={5} align="center">{t('common.noDataFound', 'No items found')}</Table.Td>
+                  <Table.Td colSpan={5} align="center">{t('common.noDataFound')}</Table.Td>
                 </Table.Tr>
               )}
             </Table.Tbody>
@@ -297,25 +316,25 @@ function SupplierBillPreview({ previewData }) {
 
           <Group grow align="flex-start" mt="md">
             <Paper withBorder p="sm" bg={isUr ? 'gray.1' : 'gray.0'}>
-              <Text fw={600} mb="xs" size="lg">{t('purchase.summary', 'Totals')}</Text>
-              <Group justify="space-between"><Text size="sm">{t('supplierBill.totalWeight', 'Total Weight')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatDecimal(totalWeight)}</Text></Group>
-              <Group justify="space-between"><Text size="sm">{t('supplierBill.grossAmount', 'Gross Amount')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(grossAmount)}</Text></Group>
-              <Group justify="space-between"><Text size="sm">{t('purchase.previous', 'Previous Balance')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeSupplierAdvance)}</Text></Group>
-              <Group justify="space-between"><Text size="sm" c="blue">{t('supplierBill.netPayable', 'Payable Amount')}</Text><Text fw={700} c="blue" style={{ direction: 'ltr' }}>{formatAmount(payableIncludingPrevious)}</Text></Group>
-              <Group justify="space-between"><Text size="sm">{t('supplierBill.concession', 'Discount')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(concessionAmount)}</Text></Group>
+              <Text fw={600} mb="xs" size="lg">{t('purchase.summary')}</Text>
+              <Group justify="space-between"><Text size="sm">{t('supplierBill.totalWeight')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatDecimal(totalWeight)}</Text></Group>
+              <Group justify="space-between"><Text size="sm">{t('supplierBill.grossAmount')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(grossAmount)}</Text></Group>
+              <Group justify="space-between"><Text size="sm">{t('purchase.previous')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeSupplierAdvance)}</Text></Group>
+              <Group justify="space-between"><Text size="sm" c="blue">{t('supplierBill.netPayable')}</Text><Text fw={700} c="blue" style={{ direction: 'ltr' }}>{formatAmount(payableIncludingPrevious)}</Text></Group>
+              <Group justify="space-between"><Text size="sm">{t('supplierBill.concession')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(concessionAmount)}</Text></Group>
               <Divider my="xs" />
-              <Group justify="space-between"><Text size="sm" c="green">{t('supplierBill.cashPaid', 'Final Cash Paid')}</Text><Text fw={700} c="green" style={{ direction: 'ltr' }}>{formatAmount(cashPaid)}</Text></Group>
+              <Group justify="space-between"><Text size="sm" c="green">{t('supplierBill.cashPaid')}</Text><Text fw={700} c="green" style={{ direction: 'ltr' }}>{formatAmount(cashPaid)}</Text></Group>
             </Paper>
             
             <Paper withBorder p="sm" bg={isUr ? 'gray.1' : 'gray.0'}>
-              <Text fw={600} mb="xs" size="lg">{t('sale.charges', 'Expenses')}</Text>
-              <Group justify="space-between"><Text size="sm">{t('supplierBill.commission', 'Commission')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeCommission)}</Text></Group>
-              <Group justify="space-between"><Text size="sm">{t('supplierBill.labor', 'Labor')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeLabor)}</Text></Group>
-              <Group justify="space-between"><Text size="sm">{t('supplierBill.fare', 'Fare')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeFare)}</Text></Group>
-              <Group justify="space-between"><Text size="sm">{t('supplierBill.ice', 'Ice')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeIce)}</Text></Group>
-              <Group justify="space-between"><Text size="sm">{t('supplierBill.drugsChemicals', 'Drugs')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeDrugs)}</Text></Group>
+              <Text fw={600} mb="xs" size="lg">{t('sale.charges')}</Text>
+              <Group justify="space-between"><Text size="sm">{t('supplierBill.commission')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeCommission)}</Text></Group>
+              <Group justify="space-between"><Text size="sm">{t('supplierBill.labor')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeLabor)}</Text></Group>
+              <Group justify="space-between"><Text size="sm">{t('supplierBill.fare')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeFare)}</Text></Group>
+              <Group justify="space-between"><Text size="sm">{t('supplierBill.ice')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeIce)}</Text></Group>
+              <Group justify="space-between"><Text size="sm">{t('supplierBill.drugsChemicals')}</Text><Text fw={500} style={{ direction: 'ltr' }}>{formatAmount(safeDrugs)}</Text></Group>
               <Divider my="xs" />
-              <Group justify="space-between"><Text size="sm" fw={600}>{t('supplierBill.totalCharges', 'Total Expenses')}</Text><Text fw={700} style={{ direction: 'ltr' }}>{formatAmount(safeTotalCharges)}</Text></Group>
+              <Group justify="space-between"><Text size="sm" fw={600}>{t('supplierBill.totalCharges')}</Text><Text fw={700} style={{ direction: 'ltr' }}>{formatAmount(safeTotalCharges)}</Text></Group>
             </Paper>
           </Group>
         </Stack>
@@ -325,34 +344,30 @@ function SupplierBillPreview({ previewData }) {
           <div ref={printRef} className="printable-bill" style={{ color: '#000' }}>
 
           <div className="header-english">
-            <h2>AL - SHEIKH FISH TRADER AND DISTRIBUTER</h2>
-            <p>Shop No. W-644 Gunj Mandi Rawalpindi</p>
-            <p>+92-3008501724, 051-5534607</p>
+            <h2>${isUr ? (settings.company_name_urdu || settings.company_name) : (settings.company_name || 'AL - SHEIKH FISH TRADER AND DISTRIBUTER')}</h2>
+            <p>${isUr ? (settings.company_address_urdu || settings.company_address) : (settings.company_address || 'Shop No. W-644 Gunj Mandi Rawalpindi')}</p>
+            <p>${settings.company_phone || '+92-3008501724, 051-5534607'}</p>
           </div>
           
           {/* Bill Title & Supplier Info */}
           <div dir={isUr ? 'rtl' : 'ltr'}>
-            <div className={`bill-title ${isUr ? 'urdu' : ''}`}>{t('supplierBill.title', 'Vendor Bill')}</div>
+            <div className={`bill-title ${isUr ? 'urdu' : ''}`}>{t('supplierBill.title')}</div>
             
             <div className="meta-info-row">
               <div style={{ flex: 1, textAlign: isUr ? 'right' : 'left' }}>
-                 <strong>{t('common.name', 'Name')}:</strong> <span style={{ direction: 'ltr', display: 'inline-block' }}>{displayName}</span>
+                 <strong>{t('common.name')}:</strong> <span style={{ direction: 'ltr', display: 'inline-block' }}>{displayName}</span>
               </div>
               <div style={{ flex: 1, textAlign: 'center' }}>
-                 {displayVehicle ? <span><strong>{t('supplierBill.vehicle', 'Vehicle')}</strong> <span style={{ direction: 'ltr', display: 'inline-block' }}>{displayVehicle}</span></span> : ''}
+                 {displayVehicle ? <span><strong>{t('supplierBill.vehicle')}</strong> <span style={{ direction: 'ltr', display: 'inline-block' }}>{displayVehicle}</span></span> : ''}
               </div>
               <div style={{ flex: 1 }} />
             </div>
-            
-            <div className="meta-info-row" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-               <div style={{ marginRight: isUr ? '0' : '70px', marginLeft: isUr ? '70px' : '0' }}>
-                  <strong>{t('common.date', 'Date')}</strong> <span style={{ direction: 'ltr', display: 'inline-block', minWidth: '85px' }}>{formatDisplayDate(dateTo)}</span>
-               </div>
-               <div style={{ marginRight: '0' }}>
-                  <strong>{t('supplierBill.fromDate', 'From')}</strong> <span style={{ direction: 'ltr', display: 'inline-block', minWidth: '85px' }}>{formatDisplayDate(dateFrom)}</span>
-               </div>
-               <div style={{ marginRight: isUr ? 'auto' : '0', marginLeft: isUr ? '0' : 'auto' }}>
-                  <strong>{t('supplierBill.toDate', 'To')}</strong>
+
+            <div className="meta-info-row">
+              <div style={{ flex: 1, textAlign: isUr ? 'right' : 'left' }}>
+                  <strong>{t('supplierBill.fromDate')}:</strong> <span style={{ direction: 'ltr', display: 'inline-block' }}>{formatDisplayDateLocal(dateFrom)}</span>
+                  <span style={{ margin: '0 10px' }}>–</span>
+                  <strong>{t('supplierBill.toDate')}:</strong> <span style={{ direction: 'ltr', display: 'inline-block' }}>{formatDisplayDateLocal(dateTo)}</span>
                </div>
             </div>
           </div>
@@ -363,11 +378,11 @@ function SupplierBillPreview({ previewData }) {
           <table dir={isUr ? 'rtl' : 'ltr'}>
             <thead>
               <tr>
-                <th>{t('common.number', '#')}</th>
-                <th>{t('sale.item', 'Item')}</th>
-                <th>{t('purchase.rate', 'Rate')}</th>
-                <th>{t('purchase.weight', 'Weight (kg)')}</th>
-                <th>{t('common.amount', 'Amount')}</th>
+                <th>{t('common.number')}</th>
+                <th>{t('sale.item')}</th>
+                <th>{t('purchase.rate')}</th>
+                <th>{t('purchase.weight')}</th>
+                <th>{t('common.amount')}</th>
               </tr>
             </thead>
             <tbody>
@@ -383,7 +398,7 @@ function SupplierBillPreview({ previewData }) {
                 ))
               ) : (
                 <tr>
-                   <td colSpan="5" style={{ padding: '20px' }}>{t('common.noDataFound', 'No data found')}</td>
+                   <td colSpan="5" style={{ padding: '20px' }}>{t('common.noDataFound')}</td>
                 </tr>
               )}
             </tbody>
@@ -394,27 +409,27 @@ function SupplierBillPreview({ previewData }) {
             {/* Right Side - Expenses Table */}
             <div className="expenses-block">
                <div className="summary-row">
-                  <span className="summary-label">{t('supplierBill.drugsChemicals', 'Drugs')}</span>
+                  <span className="summary-label">{t('supplierBill.drugsChemicals')}</span>
                   <span className="summary-val">{formatDecimal(safeDrugs)}</span>
                </div>
                <div className="summary-row">
-                  <span className="summary-label">{t('supplierBill.fare', 'Fare')}</span>
+                  <span className="summary-label">{t('supplierBill.fare')}</span>
                   <span className="summary-val">{formatDecimal(safeFare)}</span>
                </div>
                <div className="summary-row">
-                  <span className="summary-label">{t('supplierBill.labor', 'Labor')}</span>
+                  <span className="summary-label">{t('supplierBill.labor')}</span>
                   <span className="summary-val">{formatDecimal(safeLabor)}</span>
                </div>
                <div className="summary-row">
-                  <span className="summary-label">{t('supplierBill.commission', 'Commission')}</span>
+                  <span className="summary-label">{t('supplierBill.commission')}</span>
                   <span className="summary-val">{formatDecimal(safeCommission)}</span>
                </div>
                <div className="summary-row">
-                  <span className="summary-label">{t('supplierBill.ice', 'Ice')}</span>
+                  <span className="summary-label">{t('supplierBill.ice')}</span>
                   <span className="summary-val">{formatDecimal(safeIce)}</span>
                </div>
                <div className="summary-row border-top">
-                  <span className="summary-label">{t('supplierBill.totalCharges', 'Total Expenses')}</span>
+                  <span className="summary-label">{t('supplierBill.totalCharges')}</span>
                   <span className="summary-val">{formatDecimal(safeTotalCharges)}</span>
                </div>
             </div>
@@ -422,33 +437,33 @@ function SupplierBillPreview({ previewData }) {
             {/* Left Side - Totals Table */}
             <div className="totals-block">
                <div className="summary-row">
-                  <span className="summary-label">{t('supplierBill.totalWeight', 'Total Weight (kg)')}</span>
+                  <span className="summary-label">{t('supplierBill.totalWeight')}</span>
                   <span className="summary-val">{formatDecimal(totalWeight)}</span>
                </div>
                <div className="summary-row">
-                  <span className="summary-label">{t('supplierBill.grossAmount', 'Gross Amount')}</span>
+                  <span className="summary-label">{t('supplierBill.grossAmount')}</span>
                   <span className="summary-val">{formatDecimal(grossAmount)}</span>
                </div>
                <div className="summary-row">
-                  <span className="summary-label">{t('purchase.previous', 'Previous')}</span>
+                  <span className="summary-label">{t('purchase.previous')}</span>
                   <span className="summary-val">{formatDecimal(safeSupplierAdvance)}</span>
                </div>
                <div className="summary-row">
-                  <span className="summary-label">{t('supplierBill.netPayable', 'Payable Amount')}</span>
+                  <span className="summary-label">{t('supplierBill.netPayable')}</span>
                   <span className="summary-val">{formatDecimal(payableIncludingPrevious)}</span>
                </div>
                <div className="summary-row">
-                  <span className="summary-label">{t('supplierBill.concession', 'Discount')}</span>
+                  <span className="summary-label">{t('supplierBill.concession')}</span>
                   <span className="summary-val">{formatDecimal(concessionAmount || 0)}</span>
                </div>
                <div className="summary-row border-top">
-                  <span className="summary-label">{t('supplierBill.cashPaid', 'Cash Paid')}</span>
+                  <span className="summary-label">{t('supplierBill.cashPaid')}</span>
                   <span className="summary-val">{formatDecimal(cashPaid || 0)}</span>
                </div>
             </div>
-            </div>
           </div>
         </div>
+      </div>
       </Stack>
     </Paper>
   );

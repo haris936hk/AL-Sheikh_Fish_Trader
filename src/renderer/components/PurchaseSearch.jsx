@@ -487,11 +487,11 @@ function PurchaseSearch({ onEdit }) {
                       {(purchase.total_weight || 0).toFixed(2)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      Rs. {Math.round(purchase.net_amount || 0).toLocaleString('en-US')}
+                      {translate('common.rs')} {Math.round(purchase.net_amount || 0).toLocaleString('en-US')}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                       <Text c={purchase.balance_amount > 0 ? 'red' : 'green'}>
-                        Rs. {Math.round(purchase.balance_amount || 0).toLocaleString('en-US')}
+                        {translate('common.rs')} {Math.round(purchase.balance_amount || 0).toLocaleString('en-US')}
                       </Text>
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'right' : 'left' }}>
@@ -511,8 +511,8 @@ function PurchaseSearch({ onEdit }) {
                           onClick={() => onEdit?.(purchase)}
                           title={
                             purchase.status === 'posted'
-                              ? 'Posted purchases cannot be edited'
-                              : 'Edit'
+                              ? translate('purchaseSearch.postedNoEdit')
+                              : translate('app.edit')
                           }
                           disabled={purchase.status === 'posted'}
                         >
@@ -524,8 +524,8 @@ function PurchaseSearch({ onEdit }) {
                           onClick={() => handleDelete(purchase)}
                           title={
                             purchase.status === 'posted'
-                              ? 'Posted purchases cannot be deleted'
-                              : 'Delete'
+                              ? translate('purchaseSearch.postedNoDelete')
+                              : translate('app.delete')
                           }
                           disabled={purchase.status === 'posted'}
                         >

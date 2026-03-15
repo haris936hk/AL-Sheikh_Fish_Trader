@@ -176,7 +176,7 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
     // Required: Name (Urdu)
     const nameResult = validateRequired(formData.name, t('common.name', 'Name'));
     if (!nameResult.isValid) {
-      newErrors.name = t('supplier.nameRequired', 'Name is required');
+      newErrors.name = t('supplier.nameRequired');
     }
 
     // NIC format validation (if provided)
@@ -205,7 +205,7 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
 
     // At least one contact method
     if (!formData.phone && !formData.mobile && !formData.email) {
-      newErrors.contact = t('supplier.contactRequired', 'At least one contact method is required');
+      newErrors.contact = t('supplier.contactRequired');
     }
 
     // Commission percentage validation
@@ -294,10 +294,10 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
 
       if (result.success) {
         notifications.show({
-          title: t('supplier.saved', 'Supplier Saved'),
+          title: t('supplier.saved'),
           message: isEditMode
-            ? t('supplier.updatedSuccess', 'Supplier "{{name}}" has been updated successfully', { name: formData.name })
-            : t('supplier.createdSuccess', 'Supplier "{{name}}" has been created successfully', { name: formData.name }),
+            ? t('supplier.updatedSuccess', { name: formData.name })
+            : t('supplier.createdSuccess', { name: formData.name }),
           color: 'green',
         });
         handleClear();
@@ -330,7 +330,7 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
         <Group gap="sm">
           <Text size="xl">👤</Text>
           <Text size="lg" fw={600}>
-            {isEditMode ? t('supplier.edit', 'Edit Supplier') : t('supplier.add', 'Add New Supplier')}
+            {t(isEditMode ? 'supplier.edit' : 'supplier.addNew')}
           </Text>
         </Group>
       }
@@ -352,7 +352,7 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
           {/* Name (Urdu) - Required */}
           <TextInput
             label={t('supplier.nameUr', 'Name (Urdu)')}
-            placeholder={t('supplier.nameUrPlaceholder', 'Enter name in Urdu')}
+            placeholder={t('supplier.nameUrPlaceholder')}
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
             error={errors.name}
@@ -363,7 +363,7 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
           {/* Name (English) */}
           <TextInput
             label={t('supplier.nameEn', 'Name (English)')}
-            placeholder={t('supplier.nameEnPlaceholder', 'Enter supplier name in English')}
+            placeholder={t('supplier.nameEnPlaceholder')}
             value={formData.name_english}
             onChange={(e) => handleChange('name_english', e.target.value)}
             maxLength={100}
@@ -420,7 +420,7 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
           {/* Country */}
           <Select
             label={t('supplier.country', 'Country')}
-            placeholder={t('supplier.countryPlaceholder', 'Select country')}
+            placeholder={t('supplier.countryPlaceholder')}
             data={countries}
             value={formData.country_id}
             onChange={(value) => handleChange('country_id', value)}
@@ -431,7 +431,7 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
           {/* City */}
           <Select
             label={t('supplier.city', 'City')}
-            placeholder={t('supplier.cityPlaceholder', 'Select city')}
+            placeholder={t('supplier.cityPlaceholder')}
             data={cities}
             value={formData.city_id}
             onChange={(value) => handleChange('city_id', value)}
@@ -443,7 +443,7 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
         {/* Address */}
         <Textarea
           label={t('supplier.address', 'Address')}
-          placeholder={t('supplier.addressPlaceholder', 'Enter complete address')}
+          placeholder={t('supplier.addressPlaceholder')}
           value={formData.address}
           onChange={(e) => handleChange('address', e.target.value)}
           rows={3}
@@ -454,7 +454,7 @@ function SupplierForm({ opened, onClose, supplier = null, onSuccess }) {
         {/* Notes */}
         <Textarea
           label={t('supplier.notes', 'Notes')}
-          placeholder={t('supplier.notesPlaceholder', 'Additional notes (optional)')}
+          placeholder={t('supplier.notesPlaceholder')}
           value={formData.notes}
           onChange={(e) => handleChange('notes', e.target.value)}
           rows={2}

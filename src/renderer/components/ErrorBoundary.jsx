@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
 import { Component } from 'react';
 
+import i18n from '../i18n';
+
 /**
  * Error Boundary Component
  * Catches JavaScript errors anywhere in the child component tree,
@@ -34,6 +36,8 @@ class ErrorBoundary extends Component {
   };
 
   render() {
+    const isUrdu = i18n.language === 'ur';
+
     if (this.state.hasError) {
       return (
         <div
@@ -44,7 +48,8 @@ class ErrorBoundary extends Component {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '2rem',
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            fontFamily: isUrdu ? "'Noto Sans Arabic', sans-serif" : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            direction: isUrdu ? 'rtl' : 'ltr',
           }}
         >
           <div
@@ -55,13 +60,14 @@ class ErrorBoundary extends Component {
               padding: '2.5rem',
               maxWidth: '520px',
               width: '100%',
+              textAlign: isUrdu ? 'right' : 'left',
             }}
           >
             <h2 style={{ color: '#dc2626', marginTop: 0, fontSize: '1.4rem' }}>
-              ⚠️ Something went wrong
+              ⚠️ {i18n.t('error.somethingWentWrong')}
             </h2>
             <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>
-              An unexpected error occurred. Please try again or restart the application.
+              {i18n.t('error.unexpectedMsg')}
             </p>
 
             {this.state.error && (
@@ -74,7 +80,9 @@ class ErrorBoundary extends Component {
                   marginBottom: '0.75rem',
                 }}
               >
-                <p style={{ fontWeight: 600, fontSize: '0.85rem', margin: '0 0 0.4rem' }}>Error:</p>
+                <p style={{ fontWeight: 600, fontSize: '0.85rem', margin: '0 0 0.4rem' }}>
+                  {i18n.t('error.title')}:
+                </p>
                 <pre
                   style={{
                     fontSize: '0.78rem',
@@ -84,6 +92,8 @@ class ErrorBoundary extends Component {
                     whiteSpace: 'pre-wrap',
                     wordBreak: 'break-word',
                     color: '#b91c1c',
+                    direction: 'ltr',
+                    textAlign: 'left',
                   }}
                 >
                   {this.state.error.toString()}
@@ -102,7 +112,7 @@ class ErrorBoundary extends Component {
                 }}
               >
                 <p style={{ fontWeight: 600, fontSize: '0.85rem', margin: '0 0 0.4rem' }}>
-                  Component Stack:
+                  {i18n.t('error.stack')}
                 </p>
                 <pre
                   style={{
@@ -112,6 +122,8 @@ class ErrorBoundary extends Component {
                     margin: 0,
                     whiteSpace: 'pre-wrap',
                     color: '#374151',
+                    direction: 'ltr',
+                    textAlign: 'left',
                   }}
                 >
                   {this.state.errorInfo.componentStack}
@@ -133,7 +145,7 @@ class ErrorBoundary extends Component {
                 fontWeight: 600,
               }}
             >
-              Try Again
+              {i18n.t('app.retry')}
             </button>
           </div>
         </div>

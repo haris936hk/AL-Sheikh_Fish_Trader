@@ -66,16 +66,16 @@ function SupplierSearch({ onEdit, onRefresh }) {
         setSuppliers(result.data);
       } else {
         notifications.show({
-          title: t('error.title', 'Error'),
-          message: result.error || t('supplierSearch.failedLoadData', 'Failed to load vendors'),
+          title: t('error.title'),
+          message: result.error || t('supplierSearch.failedLoadData'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Load suppliers error:', error);
       notifications.show({
-        title: t('error.title', 'Error'),
-        message: t('supplierSearch.failedLoadData', 'Failed to load vendors'),
+        title: t('error.title'),
+        message: t('supplierSearch.failedLoadData'),
         color: 'red',
       });
     } finally {
@@ -102,8 +102,8 @@ function SupplierSearch({ onEdit, onRefresh }) {
         setPage(1);
         if (result.data.length === 0) {
           notifications.show({
-            title: t('search.noResultsTitle', 'No Results'),
-            message: t('supplierSearch.noResultsMsg', 'No vendors found matching your search'),
+            title: t('search.noResultsTitle'),
+            message: t('supplierSearch.noResultsMsg'),
             color: 'blue',
           });
         }
@@ -111,8 +111,8 @@ function SupplierSearch({ onEdit, onRefresh }) {
     } catch (error) {
       console.error('Search error:', error);
       notifications.show({
-        title: t('error.title', 'Error'),
-        message: t('search.searchFailed', 'Search failed'),
+        title: t('error.title'),
+        message: t('search.searchFailed'),
         color: 'red',
       });
     } finally {
@@ -124,37 +124,37 @@ function SupplierSearch({ onEdit, onRefresh }) {
   const handleDelete = useCallback(
     (supplier) => {
       modals.openConfirmModal({
-        title: t('supplierSearch.deleteTitle', 'Delete Vendor'),
+        title: t('supplierSearch.deleteTitle'),
         centered: true,
         children: (
           <Text size="sm">
-            {t('supplierSearch.deleteConfirm1', 'Are you sure you want to delete vendor ')}<strong>{formatDisplayName(supplier.name, supplier.name_english, isUr)}</strong>{t('supplierSearch.deleteConfirm2', '? This action cannot be undone.')}
+            {t('supplierSearch.deleteConfirm1')}<strong>{formatDisplayName(supplier.name, supplier.name_english, isUr)}</strong>{t('supplierSearch.deleteConfirm2')}
           </Text>
         ),
-        labels: { confirm: t('app.delete', 'Delete'), cancel: t('app.cancel', 'Cancel') },
+        labels: { confirm: t('app.delete'), cancel: t('app.cancel') },
         confirmProps: { color: 'red' },
         onConfirm: async () => {
           try {
             const result = await window.api.suppliers.delete(supplier.id);
             if (result.success) {
               notifications.show({
-                title: t('app.deleted', 'Deleted'),
-                message: `${t('supplierSearch.deletedMsg1', 'Vendor "')}${formatDisplayName(supplier.name, supplier.name_english, isUr)}${t('supplierSearch.deletedMsg2', '" has been deleted')}`,
+                title: t('app.deleted'),
+                message: `${t('supplierSearch.deletedMsg1')}${formatDisplayName(supplier.name, supplier.name_english, isUr)}${t('supplierSearch.deletedMsg2')}`,
                 color: 'green',
               });
               loadSuppliers();
               onRefresh?.();
             } else {
               notifications.show({
-                title: t('app.cannotDelete', 'Cannot Delete'),
+                title: t('app.cannotDelete'),
                 message: result.error,
                 color: 'red',
               });
             }
           } catch {
             notifications.show({
-              title: t('error.title', 'Error'),
-              message: t('supplierSearch.failedDelete', 'Failed to delete vendor'),
+              title: t('error.title'),
+              message: t('supplierSearch.failedDelete'),
               color: 'red',
             });
           }
@@ -216,12 +216,12 @@ function SupplierSearch({ onEdit, onRefresh }) {
       </Table.Td>
       <Table.Td>
         <Group gap="xs">
-          <Tooltip label="Edit">
+          <Tooltip label={t('app.edit')}>
             <ActionIcon variant="light" color="blue" onClick={() => onEdit?.(supplier)}>
               <span>✏️</span>
             </ActionIcon>
           </Tooltip>
-          <Tooltip label="Delete">
+          <Tooltip label={t('app.delete')}>
             <ActionIcon variant="light" color="red" onClick={() => handleDelete(supplier)}>
               <span>🗑️</span>
             </ActionIcon>
@@ -258,7 +258,7 @@ function SupplierSearch({ onEdit, onRefresh }) {
             </Button>
           </Group>
           <Text size="sm" c="dimmed">
-            {suppliers.length} {suppliers.length !== 1 ? t('supplierSearch.itemsFound', 'vendors found') : t('supplierSearch.itemFound', 'vendor found')}
+            {suppliers.length} {suppliers.length !== 1 ? t('supplierSearch.itemsFound') : t('supplierSearch.itemFound')}
           </Text>
         </Group>
 
@@ -278,13 +278,13 @@ function SupplierSearch({ onEdit, onRefresh }) {
               color="red"
               onClick={() => {
                 modals.openConfirmModal({
-                  title: t('supplierSearch.bulkDeleteTitle', 'Delete Selected Vendors'),
+                  title: t('supplierSearch.bulkDeleteTitle'),
                   children: (
                     <Text size="sm">
-                      {t('supplierSearch.bulkDeleteConfirm1', 'Are you sure you want to delete ')}{selectedIds.size}{t('supplierSearch.bulkDeleteConfirm2', ' selected vendor(s)?')}
+                      {t('supplierSearch.bulkDeleteConfirm1')}{selectedIds.size}{t('supplierSearch.bulkDeleteConfirm2')}
                     </Text>
                   ),
-                  labels: { confirm: t('app.deleteAll', 'Delete All'), cancel: t('app.cancel', 'Cancel') },
+                  labels: { confirm: t('app.deleteAll'), cancel: t('app.cancel') },
                   confirmProps: { color: 'red' },
                   onConfirm: async () => {
                     for (const id of selectedIds) {
@@ -293,8 +293,8 @@ function SupplierSearch({ onEdit, onRefresh }) {
                     setSelectedIds(new Set());
                     loadSuppliers();
                     notifications.show({
-                      title: t('app.deleted', 'Deleted'),
-                      message: `${selectedIds.size}${t('supplierSearch.bulkDeletedMsg', ' vendor(s) deleted')}`,
+                      title: t('app.deleted'),
+                      message: `${selectedIds.size}${t('supplierSearch.bulkDeletedMsg')}`,
                       color: 'green',
                     });
                   },

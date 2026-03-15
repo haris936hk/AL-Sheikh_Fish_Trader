@@ -2,6 +2,8 @@ import { notifications } from '@mantine/notifications';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
+import i18n from '../i18n';
+
 /**
  * Main application store using Zustand
  */
@@ -11,6 +13,7 @@ const useStore = create(
       // App state
       theme: 'light',
       language: 'en',
+      settings: {},
       loading: false,
       error: null,
 
@@ -31,19 +34,20 @@ const useStore = create(
       loadSettings: async () => {
         try {
           if (!window.api)
-            throw new Error('Electron API not available. Please run the app via Electron.');
+            throw new Error(i18n.t('error.unexpectedMsg'));
           set({ loading: true });
           const result = await window.api.settings.getAll();
 
           if (result.success) {
-            const settings = {};
+            const settingsObj = {};
             result.data.forEach((row) => {
-              settings[row.key] = row.value;
+              settingsObj[row.key] = row.value;
             });
 
             set({
-              theme: settings.app_theme || 'light',
-              language: settings.app_language || 'en',
+              settings: settingsObj,
+              theme: settingsObj.app_theme || 'light',
+              language: settingsObj.app_language || 'en',
               loading: false,
             });
           }
@@ -55,7 +59,7 @@ const useStore = create(
       // Save settings to database
       saveSetting: async (key, value) => {
         try {
-          if (!window.api) throw new Error('Electron API not available.');
+          if (!window.api) throw new Error(i18n.t('error.unexpectedMsg'));
           const result = await window.api.settings.save(key, value);
 
           if (!result.success) {
@@ -70,7 +74,7 @@ const useStore = create(
       loadDashboardData: async () => {
         try {
           if (!window.api)
-            throw new Error('Electron API not available. Please run the app via Electron.');
+            throw new Error(i18n.t('error.unexpectedMsg'));
           set({ dashboardLoading: true });
 
           // Fetch all dashboard data in parallel
@@ -94,8 +98,8 @@ const useStore = create(
           });
           // Show error notification
           notifications.show({
-            title: 'Dashboard Error',
-            message: `Failed to load dashboard data: ${error.message}`,
+            title: i18n.t('error.title'),
+            message: `${i18n.t('error.loadFailed')}: ${error.message}`,
             color: 'red',
           });
         }

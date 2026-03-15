@@ -19,6 +19,7 @@ import {
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
+import { IconTrash } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -49,6 +50,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [itemsList, setItemsList] = useState([]);
+  const settings = useStore((s) => s.settings);
 
   const isUr = language === 'ur';
   const { t } = useTranslation();
@@ -102,8 +104,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       } catch (error) {
         console.error('Failed to load data:', error);
         notifications.show({
-          title: t('error.title', 'Error'),
-          message: `${t('error.loadFailed', 'Failed to load data')}: ${error.message || 'Unknown error'}`,
+          title: t('error.title'),
+          message: `${t('error.loadFailed')}: ${error.message || t('error.unexpected')}`,
           color: 'red',
         });
       }
@@ -244,15 +246,15 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     );
 
     if (validLineItems.length === 0) {
-      notifications.show({ title: t('validation.title', 'Validation Error'), message: t('purchase.validationItem', 'Please add at least one item'), color: 'red' });
+      notifications.show({ title: t('validation.title'), message: t('validation.addItem'), color: 'red' });
       return;
     }
 
-    const supplierResult = validateRequired(selectedSupplier, t('purchase.supplier', 'Supplier'));
+    const supplierResult = validateRequired(selectedSupplier, t('purchase.supplier'));
     if (!supplierResult.isValid) {
       notifications.show({
-        title: t('validation.title', 'Validation Error'),
-        message: t('validation.selectSupplier', 'Please select a vendor'),
+        title: t('validation.title'),
+        message: t('validation.selectSupplier'),
         color: 'red',
       });
       return;
@@ -265,8 +267,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
 
     if (hasInvalidRow) {
       notifications.show({
-        title: t('validation.title', 'Validation Error'),
-        message: t('purchase.validationWeightRate', 'Weight and rate must be greater than zero'),
+        title: t('validation.title'),
+        message: t('validation.greaterThanZero', { field: `${t('purchase.weight')} / ${t('purchase.rate')}` }),
         color: 'red',
       });
       return;
@@ -274,8 +276,8 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
 
     if (totals.grossAmount <= 0) {
       notifications.show({
-        title: t('validation.title', 'Validation Error'),
-        message: t('purchase.validationAmount', 'Gross amount must be greater than zero'),
+        title: t('validation.title'),
+        message: t('validation.greaterThanZero', { field: t('purchase.grossAmount') }),
         color: 'red',
       });
       return;
@@ -308,25 +310,25 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
 
       if (response.success) {
         notifications.show({
-          title: t('purchase.saved', 'Purchase Saved'),
+          title: t('app.saved'),
           message: editPurchase
-            ? t('purchase.updated', 'Purchase updated successfully')
-            : (isUr ? `خریداری نمبر ${response.data.purchaseNumber} کامیابی سے محفوظ` : `Purchase ${response.data.purchaseNumber} created successfully`),
+            ? t('purchase.updated')
+            : t('purchase.savedNum', { num: response.data.purchaseNumber }),
           color: 'green',
         });
         onSaved?.(response.data);
       } else {
         notifications.show({
-          title: t('error.title', 'Error'),
-          message: response.error || t('purchase.error', 'Failed to save purchase'),
+          title: t('error.title'),
+          message: response.error || t('error.saveFailed'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Save purchase error:', error);
       notifications.show({
-        title: t('error.title', 'Error'),
-        message: t('purchase.error', 'Failed to save purchase'),
+        title: t('error.title'),
+        message: t('error.saveFailed'),
         color: 'red',
       });
     } finally {
@@ -343,7 +345,6 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     editPurchase,
     onSaved,
     t,
-    isUr,
     totals.grossAmount,
   ]);
 
@@ -351,6 +352,9 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
   const handlePrint = useCallback(() => {
     const supplierName = suppliers.find((s) => s.value === selectedSupplier)?.label || '';
     const dateStr = purchaseDate ? new Date(purchaseDate).toLocaleDateString('en-PK') : '';
+    const companyName = isUr ? (settings.company_name_urdu || settings.company_name) : (settings.company_name || 'AL-SHEIKH FISH TRADER AND DISTRIBUTER');
+    const companyAddress = isUr ? (settings.company_address_urdu || settings.company_address) : (settings.company_address || 'Shop No. W-644 Gunj Mandi Rawalpindi');
+    const companyPhone = settings.company_phone || '+92-3008501724 | 051-5534607';
 
     const validLines = lineItems.filter(row => row.item_id || row.rate_kg || row.weight);
     const rowsHtml = validLines.map((row) => {
@@ -368,7 +372,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       `;
     }).join('');
 
-    const html = `<!DOCTYPE html><html dir="${isUr ? 'rtl' : 'ltr'}"><head><title>${t('purchase.receiptTitle', 'Purchase Receipt')} - ${purchaseNumber}</title>
+    const html = `<!DOCTYPE html><html dir="${isUr ? 'rtl' : 'ltr'}"><head><title>${t('purchase.receiptTitle')} - ${purchaseNumber}</title>
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet" />
         <style>
             @page { margin: 1cm; }
@@ -385,43 +389,42 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
             @media print { body { padding: 0; } }
         </style></head><body>
         <div class="header">
-            <h2>AL-SHEIKH FISH TRADER AND DISTRIBUTER</h2>
-            <p style="font-size:18px;direction:rtl">اے ایل شیخ فش ٹریڈر اینڈ ڈسٹری بیوٹر</p>
-            <p>Shop No. W-644 Gunj Mandi Rawalpindi</p>
-            <p>Ph: +92-3008501724 | 051-5534607</p>
-            <h3 style="margin:10px 0 0">${t('purchase.receiptTitle', 'Purchase Receipt')}</h3>
+            <h2>${companyName}</h2>
+            <p>${companyAddress}</p>
+            <p>Ph: ${companyPhone}</p>
+            <h3 style="margin:10px 0 0">${t('purchase.receiptTitle')}</h3>
         </div>
         <div class="info">
-            <div><strong>${t('purchase.receiptNo', 'Receipt #')}:</strong> ${purchaseNumber}</div>
-            <div><strong>${t('common.date', 'Date')}:</strong> ${dateStr}</div>
-            <div><strong>${t('purchase.supplier', 'Vendor')}:</strong> ${supplierName}</div>
+            <div><strong>${t('purchase.receiptNo')}:</strong> ${purchaseNumber}</div>
+            <div><strong>${t('common.date')}:</strong> ${dateStr}</div>
+            <div><strong>${t('purchase.supplier')}:</strong> ${supplierName}</div>
         </div>
         <table>
-            <thead><tr><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.item', 'Item')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.weight', 'Weight (kg)')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.rate', 'Rate')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.amount', 'Amount')}</th></tr></thead>
+            <thead><tr><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.item')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.weight')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.rate')}</th><th style="text-align:${isUr ? 'right' : 'left'}">${t('purchase.amount')}</th></tr></thead>
             <tbody>
               ${rowsHtml}
             </tbody>
         </table>
         <table class="totals">
-            <tr><td>${t('purchase.grossAmount', 'Gross Amount')}:</td><td>Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}</td></tr>
-            <tr><td>${t('purchase.concession', 'Concession')}:</td><td>Rs. ${Math.round(concessionAmount || 0).toLocaleString('en-US')}</td></tr>
-            <tr><td>${t('purchase.netAmount', 'Net Amount')}:</td><td><strong>Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}</strong></td></tr>
-            <tr><td>${t('purchase.cashPaid', 'Cash Paid')}:</td><td>Rs. ${Math.round(cashPaid || 0).toLocaleString('en-US')}</td></tr>
-            <tr class="grand-total"><td>${t('purchase.balanceDue', 'Balance Due')}:</td><td>Rs. ${Math.round(totals.balanceAmount).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t('purchase.grossAmount')}:</td><td>Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t('purchase.concession')}:</td><td>Rs. ${Math.round(concessionAmount || 0).toLocaleString('en-US')}</td></tr>
+            <tr><td>${t('purchase.netAmount')}:</td><td><strong>Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}</strong></td></tr>
+            <tr><td>${t('purchase.cashPaid')}:</td><td>Rs. ${Math.round(cashPaid || 0).toLocaleString('en-US')}</td></tr>
+            <tr class="grand-total"><td>${t('purchase.balanceDue')}:</td><td>Rs. ${Math.round(totals.balanceAmount).toLocaleString('en-US')}</td></tr>
         </table>
         </body></html>`;
 
     try {
       window.api.print.preview(html, {
-        title: `${t('purchase.receiptTitle', 'Purchase Receipt')} - ${purchaseNumber}`,
+        title: `${t('purchase.receiptTitle')} - ${purchaseNumber}`,
         width: 1000,
         height: 800,
       });
     } catch (error) {
       console.error('Print error:', error);
       notifications.show({
-        title: t('error.title', 'Error'),
-        message: t('error.printFailed', 'Failed to open print preview'),
+        title: t('error.title'),
+        message: t('error.printFailed'),
         color: 'red',
       });
     }
@@ -434,9 +437,14 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     lineItems,
     concessionAmount,
     cashPaid,
-    totals,
     t,
     isUr,
+    settings.company_name,
+    settings.company_name_urdu,
+    settings.company_address,
+    settings.company_address_urdu,
+    settings.company_phone,
+    totals,
   ]);
 
   // Clear form
@@ -457,7 +465,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
       <Stack gap="md">
         <Group justify="space-between" align="center">
           <Title order={4} className="text-green-700">
-            📦 {editPurchase ? t('purchase.edit', 'Edit Purchase') : t('purchase.addNew', 'New Purchase')}
+            📦 {t(editPurchase ? 'purchase.edit' : 'purchase.addNew')}
           </Title>
           <Badge size="lg" variant="light" color="green">
             {purchaseNumber}
@@ -470,7 +478,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         <Grid>
           <Grid.Col span={4}>
             <DatePickerInput
-              label={t('purchase.purchaseDate', 'Purchase Date')}
+              label={t('purchase.purchaseDate')}
               placeholder=""
               value={purchaseDate}
               onChange={setPurchaseDate}
@@ -480,7 +488,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <Select
-              label={t('purchase.supplier', 'Vendor')}
+              label={t('purchase.supplier')}
               placeholder=""
               data={suppliers}
               value={selectedSupplier}
@@ -491,7 +499,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <TextInput
-              label={t('purchase.vehicleNo', 'Vehicle No')}
+              label={t('purchase.vehicleNo')}
               placeholder=""
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value)}
@@ -503,7 +511,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         <Grid>
           <Grid.Col span={12}>
             <Textarea
-              label={t('purchase.details', 'Details')}
+              label={t('purchase.details')}
               placeholder=""
               value={details}
               onChange={(e) => setDetails(e.target.value)}
@@ -513,19 +521,19 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
           </Grid.Col>
         </Grid>
 
-        <Divider label={t('purchase.lineItems', 'Line Items')} labelPosition="center" />
+        <Divider label={t('purchase.lineItems')} labelPosition="center" />
 
         {/* Dynamic Line Items - Tabular Layout */}
         <Paper withBorder radius="md" style={{ overflowX: 'auto' }}>
           <Table verticalSpacing="xs" striped withTableBorder withColumnBorders style={{ minWidth: 800 }}>
             <Table.Thead bg="gray.1">
               <Table.Tr>
-                <Table.Th style={{ width: 220 }}>{t('purchase.item', 'Item')}</Table.Th>
-                <Table.Th style={{ width: 100 }}>{t('purchase.rateMaund', 'Rate/Maund')}</Table.Th>
-                <Table.Th style={{ width: 100 }}>{t('purchase.rate', 'Rate')}</Table.Th>
-                <Table.Th style={{ width: 100 }}>{t('purchase.weight', 'Weight kg')}</Table.Th>
-                <Table.Th style={{ width: 120 }}>{t('purchase.amount', 'Amount')}</Table.Th>
-                {lineItems.length > 1 && <Table.Th style={{ width: 50, textAlign: 'center' }}>{t('app.delete', 'Delete')}</Table.Th>}
+                <Table.Th style={{ width: 220 }}>{t('purchase.item')}</Table.Th>
+                <Table.Th style={{ width: 100 }}>{t('purchase.rateMaund')}</Table.Th>
+                <Table.Th style={{ width: 100 }}>{t('purchase.rate')}</Table.Th>
+                <Table.Th style={{ width: 100 }}>{t('purchase.weight')}</Table.Th>
+                <Table.Th style={{ width: 120 }}>{t('purchase.amount')}</Table.Th>
+                {lineItems.length > 1 && <Table.Th style={{ width: 50, textAlign: 'center' }}>{t('app.delete')}</Table.Th>}
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -597,13 +605,13 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
                     {/* Delete */}
                     {lineItems.length > 1 && (
                       <Table.Td style={{ textAlign: 'center', padding: '4px' }}>
-                        <Tooltip label="Remove Line">
+                        <Tooltip label={t('purchase.removeLine')}>
                           <ActionIcon
                             color="red"
                             variant="subtle"
                             onClick={() => handleRemoveLine(index)}
                           >
-                            ❌
+                            <IconTrash size={16} />
                           </ActionIcon>
                         </Tooltip>
                       </Table.Td>
@@ -727,7 +735,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
             {onCancel ? t('app.cancel', 'Cancel') : t('app.clear', 'Clear')}
           </Button>
           <Button variant="filled" color="green" onClick={handleSave}>
-            {editPurchase ? t('purchase.updatePurchase', 'Update Purchase') : t('purchase.savePurchase', 'Save Purchase')}
+            {t(editPurchase ? 'purchase.updatePurchase' : 'purchase.savePurchase')}
           </Button>
         </Group>
       </Stack>

@@ -94,6 +94,7 @@ module.exports = {
   PRINT_REPORT: 'print:report',
   PRINT_PREVIEW: 'print:preview',
   EXPORT_PDF: 'export:pdf',
+  EXPORT_PDF_SILENT: 'export:pdf-silent',
   EXPORT_EXCEL: 'export:excel',
   EXPORT_CSV: 'export:csv',
 

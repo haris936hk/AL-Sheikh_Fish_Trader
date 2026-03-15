@@ -1,3 +1,5 @@
+import i18n from '../i18n';
+
 /**
  * Validators Utility Module
  * Validation functions for data integrity
@@ -17,12 +19,13 @@
  * @param {string} fieldName - Field name for error message
  * @returns {ValidationResult}
  */
-export function validateRequired(value, fieldName = 'This field') {
+export function validateRequired(value, fieldName, t = i18n.t) {
+  const name = fieldName || t('common.field');
   if (value === null || value === undefined || value === '') {
-    return { isValid: false, error: `${fieldName} is required` };
+    return { isValid: false, error: t('validation.required', { field: name }) };
   }
   if (typeof value === 'string' && value.trim() === '') {
-    return { isValid: false, error: `${fieldName} is required` };
+    return { isValid: false, error: t('validation.required', { field: name }) };
   }
   return { isValid: true };
 }
@@ -33,10 +36,10 @@ export function validateRequired(value, fieldName = 'This field') {
  * @param {boolean} required - Whether the field is required (default: false)
  * @returns {ValidationResult}
  */
-export function validatePhone(phone, required = false) {
+export function validatePhone(phone, required = false, t = i18n.t) {
   if (!phone || phone.trim() === '') {
     if (required) {
-      return { isValid: false, error: 'Phone number is required' };
+      return { isValid: false, error: t('validation.required', { field: t('common.contact') }) };
     }
     return { isValid: true };
   }
@@ -66,7 +69,7 @@ export function validatePhone(phone, required = false) {
 
   return {
     isValid: false,
-    error: 'Invalid phone format. Use Pakistani format (e.g., 03001234567)',
+    error: t('validation.invalidPhone'),
   };
 }
 
@@ -76,10 +79,10 @@ export function validatePhone(phone, required = false) {
  * @param {boolean} required - Whether the field is required (default: false)
  * @returns {ValidationResult}
  */
-export function validateNIC(nic, required = false) {
+export function validateNIC(nic, required = false, t = i18n.t) {
   if (!nic || nic.trim() === '') {
     if (required) {
-      return { isValid: false, error: 'NIC number is required' };
+      return { isValid: false, error: t('validation.required', { field: t('common.nic') || 'NIC' }) };
     }
     return { isValid: true };
   }
@@ -89,7 +92,7 @@ export function validateNIC(nic, required = false) {
   if (!nicPattern.test(nic)) {
     return {
       isValid: false,
-      error: 'Invalid NIC format. Use 13 digits or XXXXX-XXXXXXX-X format',
+      error: t('validation.invalidNIC'),
     };
   }
 
@@ -102,10 +105,10 @@ export function validateNIC(nic, required = false) {
  * @param {boolean} required - Whether the field is required (default: false)
  * @returns {ValidationResult}
  */
-export function validateEmail(email, required = false) {
+export function validateEmail(email, required = false, t = i18n.t) {
   if (!email || email.trim() === '') {
     if (required) {
-      return { isValid: false, error: 'Email is required' };
+      return { isValid: false, error: t('validation.required', { field: t('common.email') || 'Email' }) };
     }
     return { isValid: true };
   }
@@ -116,7 +119,7 @@ export function validateEmail(email, required = false) {
   if (!emailPattern.test(email)) {
     return {
       isValid: false,
-      error: 'Invalid email format',
+      error: t('validation.invalidEmail'),
     };
   }
 
@@ -129,7 +132,7 @@ export function validateEmail(email, required = false) {
  * @param {Date|string} toDate - End date
  * @returns {ValidationResult}
  */
-export function validateDateRange(fromDate, toDate) {
+export function validateDateRange(fromDate, toDate, t = i18n.t) {
   if (!fromDate || !toDate) {
     return { isValid: true }; // Optional dates
   }
@@ -138,11 +141,11 @@ export function validateDateRange(fromDate, toDate) {
   const to = toDate instanceof Date ? toDate : new Date(toDate);
 
   if (isNaN(from.getTime()) || isNaN(to.getTime())) {
-    return { isValid: false, error: 'Invalid date format' };
+    return { isValid: false, error: t('validation.invalidDate') };
   }
 
   if (from > to) {
-    return { isValid: false, error: 'From date cannot be later than To date' };
+    return { isValid: false, error: t('validation.dateRange') };
   }
 
   return { isValid: true };
@@ -154,17 +157,18 @@ export function validateDateRange(fromDate, toDate) {
  * @param {string} fieldName - Field name for error message
  * @returns {ValidationResult}
  */
-export function validateNotFutureDate(date, fieldName = 'Date') {
+export function validateNotFutureDate(date, fieldName, t = i18n.t) {
   if (!date) {
     return { isValid: true };
   }
 
+  const name = fieldName || t('common.date');
   const d = date instanceof Date ? date : new Date(date);
   const today = new Date();
   today.setHours(23, 59, 59, 999); // End of today
 
   if (d > today) {
-    return { isValid: false, error: `${fieldName} cannot be in the future` };
+    return { isValid: false, error: t('validation.dateFuture', { field: name }) };
   }
 
   return { isValid: true };
@@ -177,23 +181,24 @@ export function validateNotFutureDate(date, fieldName = 'Date') {
  * @param {boolean} allowZero - Whether zero is allowed (default: true)
  * @returns {ValidationResult}
  */
-export function validatePositiveNumber(value, fieldName = 'Value', allowZero = true) {
+export function validatePositiveNumber(value, fieldName, allowZero = true, t = i18n.t) {
   if (value === null || value === undefined || value === '') {
     return { isValid: true }; // Empty is valid (use validateRequired for required check)
   }
 
+  const name = fieldName || t('common.amount');
   const num = typeof value === 'string' ? parseFloat(value) : value;
 
   if (isNaN(num)) {
-    return { isValid: false, error: `${fieldName} must be a valid number` };
+    return { isValid: false, error: t('validation.notNumber', { field: name }) };
   }
 
   if (allowZero && num < 0) {
-    return { isValid: false, error: `${fieldName} cannot be negative` };
+    return { isValid: false, error: t('validation.negative', { field: name }) };
   }
 
   if (!allowZero && num <= 0) {
-    return { isValid: false, error: `${fieldName} must be greater than zero` };
+    return { isValid: false, error: t('validation.greaterThanZero', { field: name }) };
   }
 
   return { isValid: true };
@@ -205,13 +210,14 @@ export function validatePositiveNumber(value, fieldName = 'Value', allowZero = t
  * @param {string} fieldName - Field name for error message
  * @returns {ValidationResult}
  */
-export function validateDate(date, fieldName = 'Date') {
+export function validateDate(date, fieldName, t = i18n.t) {
   if (!date) {
     return { isValid: true };
   }
+  const name = fieldName || t('common.date');
   const d = date instanceof Date ? date : new Date(date);
   if (isNaN(d.getTime())) {
-    return { isValid: false, error: `${fieldName} is an invalid date` };
+    return { isValid: false, error: t('validation.invalidDate', { field: name }) };
   }
   return { isValid: true };
 }
@@ -222,13 +228,14 @@ export function validateDate(date, fieldName = 'Date') {
  * @param {string} fieldName - Field name for error message
  * @returns {ValidationResult}
  */
-export function validateInteger(value, fieldName = 'Value') {
+export function validateInteger(value, fieldName, t = i18n.t) {
   if (value === null || value === undefined || value === '') {
     return { isValid: true };
   }
+  const name = fieldName || t('common.number');
   const num = Number(value);
   if (!Number.isInteger(num)) {
-    return { isValid: false, error: `${fieldName} must be a whole number` };
+    return { isValid: false, error: t('validation.notInteger', { field: name }) };
   }
   return { isValid: true };
 }
@@ -239,9 +246,10 @@ export function validateInteger(value, fieldName = 'Value') {
  * @param {string} fieldName - Field name for error message
  * @returns {ValidationResult}
  */
-export function validateNonEmptyArray(arr, fieldName = 'List') {
+export function validateNonEmptyArray(arr, fieldName, t = i18n.t) {
+  const name = fieldName || t('common.items');
   if (!Array.isArray(arr) || arr.length === 0) {
-    return { isValid: false, error: `${fieldName} cannot be empty` };
+    return { isValid: false, error: t('validation.addItem', { field: name }) };
   }
   return { isValid: true };
 }
@@ -255,19 +263,20 @@ export function validateNonEmptyArray(arr, fieldName = 'List') {
  * @param {string} [options.fieldName] - Field name for error message
  * @returns {ValidationResult}
  */
-export function validateLength(value, options = {}) {
-  const { min, max, fieldName = 'Field' } = options;
+export function validateLength(value, options = {}, t = i18n.t) {
+  const { min, max, fieldName } = options;
+  const name = fieldName || t('common.field');
 
   if (!value) {
     return { isValid: true }; // Empty is valid (use validateRequired for required check)
   }
 
   if (min && value.length < min) {
-    return { isValid: false, error: `${fieldName} must be at least ${min} characters` };
+    return { isValid: false, error: t('validation.atLeastChars', { field: name, min }) };
   }
 
   if (max && value.length > max) {
-    return { isValid: false, error: `${fieldName} must be at most ${max} characters` };
+    return { isValid: false, error: t('validation.atMostChars', { field: name, max }) };
   }
 
   return { isValid: true };
@@ -279,19 +288,20 @@ export function validateLength(value, options = {}) {
  * @param {string} fieldName - Field name for error message
  * @returns {ValidationResult}
  */
-export function validatePercentage(value, fieldName = 'Percentage') {
+export function validatePercentage(value, fieldName, t = i18n.t) {
   if (value === null || value === undefined || value === '') {
     return { isValid: true };
   }
 
+  const name = fieldName || t('common.pct') || 'Percentage';
   const num = typeof value === 'string' ? parseFloat(value) : value;
 
   if (isNaN(num)) {
-    return { isValid: false, error: `${fieldName} must be a valid number` };
+    return { isValid: false, error: t('validation.notNumber', { field: name }) };
   }
 
   if (num < 0 || num > 100) {
-    return { isValid: false, error: `${fieldName} must be between 0 and 100` };
+    return { isValid: false, error: t('validation.betweenZeroHundred', { field: name }) };
   }
 
   return { isValid: true };

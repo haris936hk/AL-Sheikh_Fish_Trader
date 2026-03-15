@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const { BrowserWindow, dialog, app } = require('electron');
+const { BrowserWindow, dialog, app, shell } = require('electron');
 const ExcelJS = require('exceljs');
 
 const jsreportService = require('./jsreportService.js');
@@ -97,6 +97,47 @@ async function exportToPDF(mainWindow, htmlContent, options = {}) {
   } catch (error) {
     console.error('PDF export error:', error);
     throw error;
+  }
+}
+
+/**
+ * Automatically export content to PDF file and open it without Save Dialog
+ * @param {string} htmlContent - HTML content to export
+ * @param {Object} options - PDF options including filename prefix
+ * @returns {Promise<string>} Path to saved PDF file
+ */
+async function exportToPDFSilent(htmlContent, options = {}) {
+  const { filename = `Report_${Date.now()}.pdf`, landscape = false } = options;
+
+  try {
+    // Render PDF using Electron's printToPDF with page numbers natively
+    const pdfBuffer = await jsreportService.renderReport(htmlContent, {
+      landscape,
+      displayHeaderFooter: true,
+    });
+
+    // Auto-save path to user's documents
+    const documentsPath = app.getPath('documents');
+    const folderPath = path.join(documentsPath, 'FISHPLUS-Distributor');
+    
+    // Ensure FISHPLUS folder exists
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
+    }
+    
+    const filePath = path.join(folderPath, filename);
+
+    // Save strictly to file
+    fs.writeFileSync(filePath, pdfBuffer);
+
+    // Tell the Operating System to open this file with default PDF viewer immediately
+    await shell.openPath(filePath);
+
+    return filePath;
+  } catch (error) {
+    console.error('Silent PDF export error:', error);
+    // Suppress error to avoid breaking main process, but log natively
+    return null;
   }
 }
 
@@ -433,6 +474,7 @@ async function printPreview(mainWindow, htmlContent, options = {}) {
 module.exports = {
   printReport,
   printPreview,
+  exportToPDFSilent,
   exportToPDF,
   exportToExcel,
   generateCSV,

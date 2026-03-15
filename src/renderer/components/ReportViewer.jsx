@@ -8,8 +8,10 @@ import {
 } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useStore from '../store';
+import { formatDate } from '../utils/formatters';
 
 /**
  * ReportViewer - Shared report viewer component with print and export functionality
@@ -26,8 +28,10 @@ export function ReportViewer({
   exportColumns = null, // Optional: Column definitions for CSV export
   printContentHTML = null, // Optional: Custom print body HTML (overrides DOM capture)
 }) {
+  const { t } = useTranslation();
   const printRef = useRef();
   const language = useStore((s) => s.language);
+  const settings = useStore((s) => s.settings || {});
 
   // Determine the display title based on the active language
   const displayTitle = language === 'ur' && titleUrdu ? titleUrdu : title;
@@ -35,12 +39,8 @@ export function ReportViewer({
   const generatePrintHTML = () => {
     const content = printRef.current;
 
-    // Format date for display
-    const formatPrintDate = (d) => {
-      if (!d) return '';
-      const dt = new Date(d);
-      return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    };
+    // Use localized formatter
+    const formatPrintDate = (d) => formatDate(d, 'display', t);
 
     // Build date section HTML (Language-aware)
     let dateHTML = '';
@@ -48,25 +48,25 @@ export function ReportViewer({
       if (language === 'ur') {
         dateHTML = `
           <div class="date-box">
-            <span class="date-label">تاریخ :</span>
+            <span class="date-label">${t('report.date')} :</span>
             <span>${formatPrintDate(dateRange.from)}</span>
-            <span class="date-separator">سے</span>
+            <span class="date-separator">${t('report.from')}</span>
             <span>${formatPrintDate(dateRange.to)}</span>
-            <span class="date-separator">تک</span>
+            <span class="date-separator">${t('report.to')}</span>
           </div>`;
       } else {
         dateHTML = `
           <div class="date-box">
-            <span class="date-label">Date:</span>
+            <span class="date-label">${t('report.date')}:</span>
             <span>${formatPrintDate(dateRange.from)}</span>
-            <span class="date-separator">to</span>
+            <span class="date-separator">${t('report.to')}</span>
             <span>${formatPrintDate(dateRange.to)}</span>
           </div>`;
       }
     } else if (singleDate) {
       dateHTML = `
         <div class="date-box">
-          <span class="date-label">${language === 'ur' ? 'تاریخ :' : 'Date:'}</span>
+          <span class="date-label">${t('report.date')} :</span>
           <span>${formatPrintDate(singleDate)}</span>
         </div>`;
     }
@@ -280,9 +280,9 @@ export function ReportViewer({
         <body>
           <!-- Company Header -->
           <div class="report-header">
-            <p class="company-name">AL - SHEIKH FISH TRADER AND DISTRIBUTER</p>
-            <p class="company-address">Shop No. W-644 Gunj Mandi Rawalpindi</p>
-            <p class="company-phone">+92-3008501724, 051-5534607</p>
+            <p class="company-name">${(language === 'ur' && settings.company_name_urdu) || settings.company_name || 'FISHPLUS'}</p>
+            <p class="company-address">${(language === 'ur' && settings.company_address_urdu) || settings.company_address || ''}</p>
+            <p class="company-phone">${settings.company_phone || ''}</p>
           </div>
 
           <!-- Report Title -->
@@ -308,13 +308,13 @@ export function ReportViewer({
     try {
       const htmlContent = generatePrintHTML();
       const response = await window.api.print.preview(htmlContent, {
-        title: `${displayTitle} - Print Preview`,
+        title: `${displayTitle} - ${t('report.print')}`,
         landscape: false,
       });
 
       if (!response?.success && response?.error) {
         notifications.show({
-          title: 'Print Failed',
+          title: t('report.printFailed'),
           message: response.error,
           color: 'red',
         });
@@ -322,8 +322,8 @@ export function ReportViewer({
     } catch (error) {
       console.error('Print preview error:', error);
       notifications.show({
-        title: 'Print Failed',
-        message: 'Failed to open print preview',
+        title: t('report.printFailed'),
+        message: t('report.printFailed'),
         color: 'red',
       });
     }
@@ -339,14 +339,14 @@ export function ReportViewer({
 
       if (response.success) {
         notifications.show({
-          title: 'Export Successful',
-          message: `PDF saved to: ${response.data.filePath}`,
+          title: t('report.exportSuccess'),
+          message: `${t('report.exportSuccess')}: ${response.data.filePath}`,
           color: 'green',
         });
       } else {
         if (response.error !== 'Export cancelled') {
           notifications.show({
-            title: 'Export Failed',
+            title: t('report.exportFailed'),
             message: response.error,
             color: 'red',
           });
@@ -355,8 +355,8 @@ export function ReportViewer({
     } catch (error) {
       console.error('PDF export error:', error);
       notifications.show({
-        title: 'Export Failed',
-        message: 'Failed to export PDF',
+        title: t('report.exportFailed'),
+        message: t('report.exportFailed'),
         color: 'red',
       });
     }
@@ -397,8 +397,8 @@ export function ReportViewer({
 
       if (!dataToExport || dataToExport.length === 0) {
         notifications.show({
-          title: 'No Data',
-          message: 'No data available to export',
+          title: t('report.noData'),
+          message: t('report.noData'),
           color: 'yellow',
         });
         return;
@@ -414,14 +414,14 @@ export function ReportViewer({
 
       if (response.success) {
         notifications.show({
-          title: 'Export Successful',
-          message: `Excel file saved to: ${response.data.filePath}`,
+          title: t('report.exportSuccess'),
+          message: `${t('report.exportSuccess')}: ${response.data.filePath}`,
           color: 'green',
         });
       } else {
         if (response.error !== 'Export cancelled') {
           notifications.show({
-            title: 'Export Failed',
+            title: t('report.exportFailed'),
             message: response.error,
             color: 'red',
           });
@@ -430,8 +430,8 @@ export function ReportViewer({
     } catch (error) {
       console.error('Excel export error:', error);
       notifications.show({
-        title: 'Export Failed',
-        message: 'Failed to export Excel file',
+        title: t('report.exportFailed'),
+        message: t('report.exportFailed'),
         color: 'red',
       });
     }
@@ -439,11 +439,7 @@ export function ReportViewer({
 
   const formatDateDisplay = (date) => {
     if (!date) return '';
-    return new Date(date).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+    return formatDate(date, 'display', t);
   };
 
   return (
@@ -459,35 +455,35 @@ export function ReportViewer({
             </Group>
             {dateRange && (
               <Text size="sm" c="dimmed" ta="center">
-                {language === 'ur' ? 'from:' : 'From:'} {formatDateDisplay(dateRange.from)}{' '}
-                {language === 'ur' ? 'to:' : 'To:'} {formatDateDisplay(dateRange.to)}
+                {t('report.from')} {formatDateDisplay(dateRange.from)}{' '}
+                {t('report.to')} {formatDateDisplay(dateRange.to)}
               </Text>
             )}
             {singleDate && (
               <Text size="sm" c="dimmed" ta="center">
-                {language === 'ur' ? 'تاریخ :' : 'Date:'} {formatDateDisplay(singleDate)}
+                {t('report.date')}: {formatDateDisplay(singleDate)}
               </Text>
             )}
           </Stack>
           <Group gap="xs">
             <Button leftSection={<IconPrinter size={16} />} onClick={handlePrint} variant="light">
-              Print
+              {t('report.print')}
             </Button>
             <Menu shadow="md" width={200}>
               <Menu.Target>
                 <Button variant="light" rightSection={<IconChevronDown size={14} />}>
-                  Export
+                  {t('report.export')}
                 </Button>
               </Menu.Target>
               <Menu.Dropdown>
                 <Menu.Item leftSection={<IconFileTypePdf size={16} />} onClick={handleExportPDF}>
-                  Export to PDF
+                  {t('report.exportPdf')}
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<IconFileSpreadsheet size={16} />}
                   onClick={handleExportExcel}
                 >
-                  Export to Excel (.xlsx)
+                  {t('report.exportExcel')}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>

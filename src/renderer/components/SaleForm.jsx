@@ -20,6 +20,7 @@ import {
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +57,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
   const [customers, setCustomers] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [itemsList, setItemsList] = useState([]);
+  const settings = useStore((s) => s.settings);
 
   const isUr = language === 'ur';
   const { t } = useTranslation();
@@ -75,7 +77,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
     const loadData = async () => {
       try {
         if (!window.api)
-          throw new Error('Electron API not available. Please run the app via Electron.');
+          throw new Error(t('error.unexpectedMsg'));
         const [customersRes, suppliersRes, itemsRes, nextNumRes] = await Promise.all([
           window.api.customers.getAll(),
           window.api.suppliers.getAll(),
@@ -112,8 +114,8 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       } catch (error) {
         console.error('Failed to load data:', error);
         notifications.show({
-          title: t('error.title', 'Error'),
-          message: `${t('error.loadFailed', 'Failed to load form data')}: ${error.message || 'Unknown error'}`,
+          title: t('error.title'),
+          message: `${t('error.loadFailed')}: ${error.message || t('error.unexpected')}`,
           color: 'red',
         });
       }
@@ -264,7 +266,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
     );
 
     if (validLineItems.length === 0) {
-      notifications.show({ title: t('error.title', 'Error'), message: t('sale.validationItem', 'Please select all items'), color: 'red' });
+      notifications.show({ title: t('error.title'), message: t('validation.addItem'), color: 'red' });
       return;
     }
 
@@ -272,15 +274,15 @@ function SaleForm({ editSale, onSaved, onCancel }) {
     for (let i = 0; i < validLineItems.length; i++) {
       const row = validLineItems[i];
       if (!row.item_id) {
-        notifications.show({ title: t('error.title', 'Error'), message: t('sale.validationItem', 'Please select all items'), color: 'red' });
+        notifications.show({ title: t('error.title'), message: t('validation.required', { field: t('sale.item') }), color: 'red' });
         return;
       }
       if (!row.customer_id) {
-        notifications.show({ title: t('error.title', 'Error'), message: t('sale.validationCustomer', 'Please select a customer for each item'), color: 'red' });
+        notifications.show({ title: t('error.title'), message: t('validation.required', { field: t('sale.customer') }), color: 'red' });
         return;
       }
       if (Number(row.weight) <= 0 || Number(row.rate_kg) <= 0) {
-        notifications.show({ title: t('error.title', 'Error'), message: t('sale.validationWeightRate', 'Weight and rate must be greater than zero'), color: 'red' });
+        notifications.show({ title: t('error.title'), message: t('validation.greaterThanZero', { field: `${t('sale.weightKg')} / ${t('sale.rateKg')}` }), color: 'red' });
         return;
       }
     }
@@ -318,7 +320,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           const stockInfo = stockMap[itemId];
           if (stockInfo && needWeight > stockInfo.stock) {
             notifications.show({
-              title: t('sale.insufficientStockTitle', 'Insufficient Stock'),
+              title: t('validation.insufficientStock'),
               message: t('sale.insufficientStockMsg', {
                 name: stockInfo.name,
                 need: needWeight.toFixed(2),
@@ -333,7 +335,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       }
     } catch (error) {
       console.error('Stock check error:', error);
-      notifications.show({ title: t('error.title', 'Error'), message: t('sale.error', 'Failed to save sale'), color: 'red' });
+      notifications.show({ title: t('error.title'), message: t('error.saveFailed'), color: 'red' });
       return;
     }
 
@@ -374,39 +376,41 @@ function SaleForm({ editSale, onSaved, onCancel }) {
 
       if (response.success) {
         notifications.show({
-          title: t('sale.saved', 'Sale Saved'),
-          message: editSale ? t('sale.updated', 'Sale updated successfully') : (isUr ? `بکری نمبر ${response.data.saleNumber} کامیابی سے محفوظ` : `Sale ${response.data.saleNumber} created successfully`),
+          title: t('app.saved'),
+          message: editSale ? t('sale.updated') : t('sale.savedNum', { num: response.data.saleNumber }),
           color: 'green',
         });
         onSaved?.(response.data);
       } else {
         notifications.show({
-          title: t('error.title', 'Error'),
-          message: response.error || t('sale.error', 'Failed to save sale'),
+          title: t('error.title'),
+          message: response.error || t('error.saveFailed'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Save sale error:', error);
-      notifications.show({ title: t('error.title', 'Error'), message: t('sale.error', 'Failed to save sale'), color: 'red' });
+      notifications.show({ title: t('error.title'), message: t('error.saveFailed'), color: 'red' });
     } finally {
       setLoading(false);
     }
   }, [
-    lineItems,
-    selectedSupplier,
-    vehicleNumber,
-    saleDate,
     details,
     editSale,
+    lineItems,
     onSaved,
+    saleDate,
+    selectedSupplier,
     t,
-    isUr,
+    vehicleNumber,
   ]);
 
   // Print receipt for saved sale
   const handlePrint = useCallback(() => {
     const dateStr = saleDate ? new Date(saleDate).toLocaleDateString('en-PK') : '';
+    const companyName = isUr ? (settings.company_name_urdu || settings.company_name) : (settings.company_name || 'AL-SHEIKH FISH TRADER AND DISTRIBUTER');
+    const companyAddress = isUr ? (settings.company_address_urdu || settings.company_address) : (settings.company_address || 'Shop No. W-644 Gunj Mandi Rawalpindi');
+    const companyPhone = settings.company_phone || '+92-3008501724 | 051-5534607';
 
     const validLines = lineItems.filter(row => row.item_id || row.rate_kg || row.weight || row.customer_id);
     const rowsHtml = validLines.map((row) => {
@@ -427,7 +431,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       </tr>`;
     }).join('');
 
-    const html = `<!DOCTYPE html><html dir="${isUr ? 'rtl' : 'ltr'}"><head><title>${t('sale.receiptTitle', 'Sale Receipt')} - ${saleNumber}</title>
+    const html = `<!DOCTYPE html><html dir="${isUr ? 'rtl' : 'ltr'}"><head><title>${t('sale.receiptTitle')} - ${saleNumber}</title>
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet" />
         <style>
             @page { margin: 1cm; }
@@ -444,11 +448,10 @@ function SaleForm({ editSale, onSaved, onCancel }) {
             @media print { body { padding: 0; } }
         </style></head><body>
         <div class="header">
-            <h2>AL-SHEIKH FISH TRADER AND DISTRIBUTER</h2>
-            <p style="font-size:18px;direction:rtl">اے ایل شیخ فش ٹریڈر اینڈ ڈسٹری بیوٹر</p>
-            <p>Shop No. W-644 Gunj Mandi Rawalpindi</p>
-            <p>Ph: +92-3008501724 | 051-5534607</p>
-            <h3 style="margin:10px 0 0">${t('sale.receiptTitle', 'Sale Receipt')}</h3>
+            <h2>${companyName}</h2>
+            <p>${companyAddress}</p>
+            <p>Ph: ${companyPhone}</p>
+            <h3 style="margin:10px 0 0">${t('sale.receiptTitle')}</h3>
         </div>
         <div class="info">
             <div><strong>${t('sale.receiptNo', 'Receipt #')}:</strong> ${saleNumber}</div>
@@ -478,18 +481,23 @@ function SaleForm({ editSale, onSaved, onCancel }) {
       });
     } catch (error) {
       console.error('Print error:', error);
-      notifications.show({ title: t('error.title', 'Error'), message: t('error.printFailed', 'Failed to open print preview'), color: 'red' });
+      notifications.show({ title: t('error.title'), message: t('error.printFailed'), color: 'red' });
     }
   }, [
-    lineItems,
+    balanceAmount,
     customers,
+    isUr,
+    itemsList,
+    lineItems,
     saleDate,
     saleNumber,
-    itemsList,
-    totals,
-    balanceAmount,
+    settings.company_address,
+    settings.company_address_urdu,
+    settings.company_name,
+    settings.company_name_urdu,
+    settings.company_phone,
     t,
-    isUr,
+    totals,
   ]);
 
   // Clear form
@@ -506,9 +514,9 @@ function SaleForm({ editSale, onSaved, onCancel }) {
 
       <Stack gap="md">
         <Group justify="space-between" align="center">
-          <Title order={4} className="text-blue-700">
-            💰 {editSale ? t('sale.edit', 'Edit Sale') : t('sale.addNew', 'New Sale')}
-          </Title>
+          <Title order={2} mb="xl">
+          {t(editSale ? 'sale.edit' : 'sale.addNew')}
+        </Title>
           <Badge size="lg" variant="light" color="blue">
             {saleNumber}
           </Badge>
@@ -530,13 +538,14 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           </Grid.Col>
           <Grid.Col span={4}>
             <Select
-              label={t('sale.supplier', 'Vendor (optional)')}
-              placeholder={isUr ? 'بیوپاری منتخب کریں (اختیاری)' : 'Select vendor (optional)'}
-              data={suppliers}
-              value={selectedSupplier}
-              onChange={setSelectedSupplier}
-              searchable
-              clearable
+              label={t('sale.supplier')}
+                placeholder={t('sale.selectSupplierPh')}
+                data={suppliers}
+                value={selectedSupplier}
+                onChange={setSelectedSupplier}
+                searchable
+                clearable
+                nothingFoundMessage={t('supplier.noResults')}
             />
           </Grid.Col>
           <Grid.Col span={4}>
@@ -554,11 +563,11 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           <Grid.Col span={12}>
             <Textarea
               label={t('sale.details', 'Details')}
-              placeholder={isUr ? 'مزید تفصیلات...' : 'Additional notes...'}
+              placeholder={t('sale.detailsPh')}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
-              minRows={1}
-              maxRows={2}
+              autosize
+              minRows={2}
             />
           </Grid.Col>
         </Grid>
@@ -570,17 +579,17 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           <Table verticalSpacing="xs" striped withTableBorder withColumnBorders style={{ minWidth: 950 }}>
             <Table.Thead bg="gray.1">
               <Table.Tr>
-                <Table.Th style={{ width: 40, textAlign: 'center' }}>{t('sale.stock', 'Stock')}</Table.Th>
-                <Table.Th style={{ width: 170 }}>{t('sale.item', 'Item')}</Table.Th>
-                <Table.Th style={{ width: 85 }}>{t('sale.rateMaund', 'Rate/Maund')}</Table.Th>
-                <Table.Th style={{ width: 85 }}>{t('sale.rateKg', 'Rate/kg')}</Table.Th>
-                <Table.Th style={{ width: 170 }}>{t('sale.customer', 'Customer')}</Table.Th>
-                <Table.Th style={{ width: 80 }}>{t('sale.weightKg', 'Weight kg')}</Table.Th>
-                <Table.Th style={{ width: 70 }}>{t('sale.iceCharges', 'Ice Charges')}</Table.Th>
-                <Table.Th style={{ width: 70 }}>{t('sale.fareCharges', 'Fare Charges')}</Table.Th>
-                <Table.Th style={{ width: 90 }}>{t('sale.totalAmount', 'Total Amount')}</Table.Th>
-                <Table.Th style={{ width: 80 }}>{t('sale.cash', 'Cash')}</Table.Th>
-                <Table.Th style={{ width: 80 }}>{t('sale.receipt', 'Receipt')}</Table.Th>
+                <Table.Th style={{ width: 40, textAlign: 'center' }}>{t('sale.stock')}</Table.Th>
+                <Table.Th style={{ width: 170 }}>{t('sale.item')}</Table.Th>
+                <Table.Th style={{ width: 85 }}>{t('sale.rateMaund')}</Table.Th>
+                <Table.Th style={{ width: 85 }}>{t('sale.rateKg')}</Table.Th>
+                <Table.Th style={{ width: 170 }}>{t('sale.customer')}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t('sale.weightKg')}</Table.Th>
+                <Table.Th style={{ width: 70 }}>{t('sale.iceCharges')}</Table.Th>
+                <Table.Th style={{ width: 70 }}>{t('sale.fareCharges')}</Table.Th>
+                <Table.Th style={{ width: 90 }}>{t('sale.totalAmount')}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t('sale.cash')}</Table.Th>
+                <Table.Th style={{ width: 80 }}>{t('sale.receipt')}</Table.Th>
                 {lineItems.length > 1 && <Table.Th style={{ width: 40, textAlign: 'center' }}>X</Table.Th>}
               </Table.Tr>
             </Table.Thead>
@@ -729,15 +738,16 @@ function SaleForm({ editSale, onSaved, onCancel }) {
                     {/* Delete */}
                     {lineItems.length > 1 && (
                       <Table.Td style={{ textAlign: 'center', padding: '4px' }}>
-                        <Tooltip label={t('sale.removeLine', 'Remove Line')}>
-                          <ActionIcon
-                            color="red"
-                            variant="subtle"
-                            onClick={() => handleRemoveLine(index)}
-                          >
-                            ❌
-                          </ActionIcon>
-                        </Tooltip>
+                          <Tooltip label={t('sale.removeLine')}>
+                            <ActionIcon
+                              color="red"
+                              variant="subtle"
+                              onClick={() => handleRemoveLine(index)}
+                              disabled={lineItems.length === 1}
+                            >
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          </Tooltip>
                       </Table.Td>
                     )}
                   </Table.Tr>
@@ -763,18 +773,18 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           <Grid mb="xs" gutter="sm">
             {[
               {
-                label: t('sale.grossAmount', 'Gross Amount'),
-                val: `Rs. ${Math.round(totals.grossAmount).toLocaleString('en-US')}`,
+                label: t('sale.grossAmount'),
+                val: `${t('common.rs')} ${Math.round(totals.grossAmount).toLocaleString('en-US')}`,
                 color: 'dark',
               },
               {
-                label: t('sale.charges', 'Charges'),
-                val: `Rs. ${Math.round(totals.fareCharges + totals.iceCharges).toLocaleString('en-US')}`,
+                label: t('sale.charges'),
+                val: `${t('common.rs')} ${Math.round(totals.fareCharges + totals.iceCharges).toLocaleString('en-US')}`,
                 color: 'dark',
               },
               {
-                label: t('sale.netAmount', 'Net Amount'),
-                val: `Rs. ${Math.round(totals.netAmount).toLocaleString('en-US')}`,
+                label: t('sale.netAmount'),
+                val: `${t('common.rs')} ${Math.round(totals.netAmount).toLocaleString('en-US')}`,
                 color: 'blue',
               },
             ].map(({ label, val, color }, idx) => (
@@ -830,8 +840,14 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           </Grid>
         </Paper>
 
-        {/* Action Buttons */}
         <Group justify="flex-end" mt="md">
+          <Button
+            leftSection={<IconPlus size={16} />}
+            variant="light"
+            onClick={handleAddLine}
+          >
+            {t('sale.addLine')}
+          </Button>
           {editSale && (
             <Button variant="light" color="teal" onClick={handlePrint}>
               🖨️ {t('sale.printReceipt', 'Print Receipt')}
@@ -841,8 +857,8 @@ function SaleForm({ editSale, onSaved, onCancel }) {
             {onCancel ? t('app.cancel', 'Cancel') : t('app.clear', 'Clear')}
           </Button>
           <Button variant="filled" color="blue" onClick={handleSave}>
-            {editSale ? t('sale.updateSale', 'Update Sale') : t('sale.saveSale', 'Save Sale')}
-          </Button>
+                {t(editSale ? 'sale.updateSale' : 'sale.saveSale')}
+              </Button>
         </Group>
       </Stack>
     </Paper>

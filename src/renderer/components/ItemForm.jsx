@@ -112,18 +112,18 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
     // Required: Name (Urdu)
     const nameResult = validateRequired(formData.name, t('common.name', 'Name'));
     if (!nameResult.isValid) {
-      newErrors.name = t('item.nameUrduReq', 'Name (Urdu) is required');
+      newErrors.name = t('item.nameUrduReq');
     } else {
       const lengthResult = validateLength(formData.name.trim(), { min: 2, max: 100, fieldName: t('common.name', 'Name') });
       if (!lengthResult.isValid) {
-        newErrors.name = t('item.nameLength', 'Name must be at least 2 characters');
+        newErrors.name = t('item.nameLength');
       }
     }
 
     // Unit price must be non-negative
     const priceResult = validatePositiveNumber(formData.unit_price, t('item.unitPrice', 'Unit Price'), true);
     if (!priceResult.isValid) {
-      newErrors.unit_price = t('item.priceNegative', 'Unit price cannot be negative');
+      newErrors.unit_price = t('item.priceNegative');
     }
 
     setErrors(newErrors);
@@ -155,7 +155,7 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
         title: t('item.unsavedTitle', 'Unsaved Changes'),
         children: (
           <Text size="sm">
-            {t('item.unsavedMsg', 'You have unsaved changes. Are you sure you want to close? All changes will be lost.')}
+            {t('item.unsavedMsg')}
           </Text>
         ),
         labels: { confirm: t('app.discard', 'Discard'), cancel: t('app.keepEditing', 'Keep Editing') },
@@ -199,8 +199,8 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
 
       if (result.success) {
         notifications.show({
-          title: t('item.saved', 'Item Saved'),
-          message: isEditMode ? t('item.updated', 'Item updated successfully') : t('item.saved', 'Item saved successfully'),
+          title: t('item.saved'),
+          message: isEditMode ? t('item.updated') : t('item.saved'),
           color: 'green',
         });
         handleClear();
@@ -233,7 +233,7 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
         <Group gap="sm">
           <Text size="xl">📦</Text>
           <Text size="lg" fw={600}>
-            {isEditMode ? t('item.editTitle', 'Edit Item') : t('item.addTitle', 'Add New Item')}
+            {t(isEditMode ? 'item.editTitle' : 'item.addTitle')}
           </Text>
         </Group>
       }
@@ -248,7 +248,7 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
           {/* Name (Urdu) - Required */}
           <TextInput
             label={t('item.name', 'Item Name (Urdu)')}
-            placeholder={isUr ? 'اردو میں نام لکھیں' : 'Enter name in Urdu'}
+            placeholder={t('item.nameUrPlaceholder')}
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
             error={errors.name}
@@ -259,7 +259,7 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
           {/* Name (English) */}
           <TextInput
             label={t('item.nameEnglish', 'Item Name (English)')}
-            placeholder={isUr ? 'انگریزی میں مال کا نام لکھیں' : 'Enter item name in English'}
+            placeholder={t('item.nameEnPlaceholder')}
             value={formData.name_english}
             onChange={(e) => handleChange('name_english', e.target.value)}
             maxLength={100}
@@ -284,7 +284,7 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
           {/* Category */}
           <Select
             label={t('item.category', 'Category')}
-            placeholder={isUr ? 'زمرہ منتخب کریں' : 'Select category'}
+            placeholder={t('item.categoryPlaceholder')}
             data={categories}
             value={formData.category_id}
             onChange={(value) => handleChange('category_id', value)}
@@ -296,7 +296,7 @@ function ItemForm({ opened, onClose, item = null, onSuccess }) {
         {/* Notes */}
         <Textarea
           label={t('common.notes', 'Notes')}
-          placeholder={isUr ? 'اضافی نوٹس (اختیاری)' : 'Additional notes (optional)'}
+          placeholder={t('item.notesPlaceholder')}
           value={formData.notes}
           onChange={(e) => handleChange('notes', e.target.value)}
           rows={3}

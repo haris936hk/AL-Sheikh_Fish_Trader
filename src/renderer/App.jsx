@@ -80,16 +80,16 @@ function App() {
   // Dynamic window title
   useEffect(() => {
     const pageTitles = {
-      dashboard: `FISHPLUS - ${t('nav.dashboard')}`,
-      suppliers: `FISHPLUS - ${t('nav.suppliers')}`,
-      customers: `FISHPLUS - ${t('nav.customers')}`,
-      'supplier-bills': `FISHPLUS - ${t('nav.bills')}`,
-      item: `FISHPLUS - ${t('nav.items')}`,
-      sales: `FISHPLUS - ${t('nav.sales')}`,
-      purchases: `FISHPLUS - ${t('nav.purchases')}`,
-      reports: `FISHPLUS - ${t('nav.reports')}`,
+      dashboard: `${t('app.title')} - ${t('nav.dashboard')}`,
+      suppliers: `${t('app.title')} - ${t('nav.suppliers')}`,
+      customers: `${t('app.title')} - ${t('nav.customers')}`,
+      'supplier-bills': `${t('app.title')} - ${t('nav.bills')}`,
+      item: `${t('app.title')} - ${t('nav.items')}`,
+      sales: `${t('app.title')} - ${t('nav.sales')}`,
+      purchases: `${t('app.title')} - ${t('nav.purchases')}`,
+      reports: `${t('app.title')} - ${t('nav.reports')}`,
     };
-    document.title = pageTitles[currentPage] || 'FISHPLUS Distributor';
+    document.title = pageTitles[currentPage] || t('app.title');
   }, [currentPage, t]);
 
   // Navigation handler
@@ -235,7 +235,7 @@ function App() {
                   >
                     <Group gap={4} align="center" wrap="nowrap">
                       <IconFish size={14} />
-                      FISHPLUS
+                      {t('app.title')}
                     </Group>
                   </Text>
                   {menuItems.map((item) => {
@@ -268,7 +268,7 @@ function App() {
                 </Group>
                 <Group gap="xs">
                   <Tooltip
-                    label={language === 'ur' ? 'Switch to English' : 'اردو میں بدلیں'}
+                    label={t(language === 'ur' ? 'app.switchToEnglish' : 'app.switchToUrdu')}
                     position="bottom"
                   >
                     <Button
@@ -278,11 +278,11 @@ function App() {
                       onClick={toggleLanguage}
                       style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}
                     >
-                      {language === 'ur' ? 'English' : 'اردو'}
+                      {t(language === 'ur' ? 'app.english' : 'app.urdu')}
                     </Button>
                   </Tooltip>
                   <Text size="xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    Esc = {t('nav.dashboard')}
+                    {t('app.escDash')}
                   </Text>
                 </Group>
               </Group>

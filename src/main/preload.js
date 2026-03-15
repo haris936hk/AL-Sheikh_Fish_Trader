@@ -135,6 +135,8 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke(channels.PRINT_PREVIEW, { htmlContent, options }),
     exportPDF: (htmlContent, options) =>
       ipcRenderer.invoke(channels.EXPORT_PDF, { htmlContent, options }),
+    exportPDFSilent: (htmlContent, options) =>
+      ipcRenderer.invoke(channels.EXPORT_PDF_SILENT, { htmlContent, options }),
     exportExcel: (data, options) => ipcRenderer.invoke(channels.EXPORT_EXCEL, { data, options }),
     exportCSV: (data, options) => ipcRenderer.invoke(channels.EXPORT_CSV, { data, options }),
   },

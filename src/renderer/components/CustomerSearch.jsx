@@ -62,16 +62,16 @@ function CustomerSearch({ onEdit, onRefresh }) {
         setCustomers(result.data);
       } else {
         notifications.show({
-          title: t('error.title', 'Error'),
-          message: result.error || t('customerSearch.failedLoadData', 'Failed to load customers'),
+          title: t('error.title'),
+          message: result.error || t('customerSearch.failedLoadData'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Load customers error:', error);
       notifications.show({
-        title: t('error.title', 'Error'),
-        message: t('customerSearch.failedLoadData', 'Failed to load customers'),
+        title: t('error.title'),
+        message: t('customerSearch.failedLoadData'),
         color: 'red',
       });
     } finally {
@@ -97,8 +97,8 @@ function CustomerSearch({ onEdit, onRefresh }) {
         setCustomers(result.data);
         if (result.data.length === 0) {
           notifications.show({
-            title: t('search.noResultsTitle', 'No Results'),
-            message: t('customerSearch.noResultsMsg', 'No customers found matching your search'),
+            title: t('search.noResultsTitle'),
+            message: t('customerSearch.noResultsMsg'),
             color: 'blue',
           });
         }
@@ -106,8 +106,8 @@ function CustomerSearch({ onEdit, onRefresh }) {
     } catch (error) {
       console.error('Search error:', error);
       notifications.show({
-        title: t('error.title', 'Error'),
-        message: t('search.searchFailed', 'Search failed'),
+        title: t('error.title'),
+        message: t('search.searchFailed'),
         color: 'red',
       });
     } finally {
@@ -119,37 +119,37 @@ function CustomerSearch({ onEdit, onRefresh }) {
   const handleDelete = useCallback(
     (customer) => {
       modals.openConfirmModal({
-        title: t('customerSearch.deleteTitle', 'Delete Customer'),
+        title: t('customerSearch.deleteTitle'),
         centered: true,
         children: (
           <Text size="sm">
-            {t('customerSearch.deleteConfirm1', 'Are you sure you want to delete customer ')}<strong>{formatDisplayName(customer.name, customer.name_english, isUr)}</strong>{t('customerSearch.deleteConfirm2', '? This action cannot be undone.')}
+            {t('customerSearch.deleteConfirm1')}<strong>{formatDisplayName(customer.name, customer.name_english, isUr)}</strong>{t('customerSearch.deleteConfirm2')}
           </Text>
         ),
-        labels: { confirm: t('app.delete', 'Delete'), cancel: t('app.cancel', 'Cancel') },
+        labels: { confirm: t('app.delete'), cancel: t('app.cancel') },
         confirmProps: { color: 'red' },
         onConfirm: async () => {
           try {
             const result = await window.api.customers.delete(customer.id);
             if (result.success) {
               notifications.show({
-                title: t('app.deleted', 'Deleted'),
-                message: `${t('customerSearch.deletedMsg1', 'Customer "')}${formatDisplayName(customer.name, customer.name_english, isUr)}${t('customerSearch.deletedMsg2', '" has been deleted')}`,
+                title: t('app.deleted'),
+                message: `${t('customerSearch.deletedMsg1')}${formatDisplayName(customer.name, customer.name_english, isUr)}${t('customerSearch.deletedMsg2')}`,
                 color: 'green',
               });
               loadCustomers();
               onRefresh?.();
             } else {
               notifications.show({
-                title: t('app.cannotDelete', 'Cannot Delete'),
+                title: t('app.cannotDelete'),
                 message: result.error,
                 color: 'red',
               });
             }
           } catch {
             notifications.show({
-              title: t('error.title', 'Error'),
-              message: t('customerSearch.failedDelete', 'Failed to delete customer'),
+              title: t('error.title'),
+              message: t('customerSearch.failedDelete'),
               color: 'red',
             });
           }
@@ -207,12 +207,12 @@ function CustomerSearch({ onEdit, onRefresh }) {
       </Table.Td>
       <Table.Td>
         <Group gap="xs">
-          <Tooltip label="Edit">
+          <Tooltip label={t('app.edit')}>
             <ActionIcon variant="light" color="blue" onClick={() => onEdit?.(customer)}>
               <span>✏️</span>
             </ActionIcon>
           </Tooltip>
-          <Tooltip label="Delete">
+          <Tooltip label={t('app.delete')}>
             <ActionIcon variant="light" color="red" onClick={() => handleDelete(customer)}>
               <span>🗑️</span>
             </ActionIcon>
@@ -249,7 +249,7 @@ function CustomerSearch({ onEdit, onRefresh }) {
             </Button>
           </Group>
           <Text size="sm" c="dimmed">
-            {customers.length} {customers.length !== 1 ? t('customerSearch.itemsFound', 'customers found') : t('customerSearch.itemFound', 'customer found')}
+            {customers.length} {customers.length !== 1 ? t('customerSearch.itemsFound') : t('customerSearch.itemFound')}
           </Text>
         </Group>
 
@@ -269,13 +269,13 @@ function CustomerSearch({ onEdit, onRefresh }) {
               color="red"
               onClick={() => {
                 modals.openConfirmModal({
-                  title: t('customerSearch.bulkDeleteTitle', 'Delete Selected Customers'),
+                  title: t('customerSearch.bulkDeleteTitle'),
                   children: (
                     <Text size="sm">
-                      {t('customerSearch.bulkDeleteConfirm1', 'Are you sure you want to delete ')}{selectedIds.size}{t('customerSearch.bulkDeleteConfirm2', ' selected customer(s)?')}
+                      {t('customerSearch.bulkDeleteConfirm1')}{selectedIds.size}{t('customerSearch.bulkDeleteConfirm2')}
                     </Text>
                   ),
-                  labels: { confirm: t('app.deleteAll', 'Delete All'), cancel: t('app.cancel', 'Cancel') },
+                  labels: { confirm: t('app.deleteAll'), cancel: t('app.cancel') },
                   confirmProps: { color: 'red' },
                   onConfirm: async () => {
                     for (const id of selectedIds) {
@@ -284,8 +284,8 @@ function CustomerSearch({ onEdit, onRefresh }) {
                     setSelectedIds(new Set());
                     loadCustomers();
                     notifications.show({
-                      title: t('app.deleted', 'Deleted'),
-                      message: `${selectedIds.size}${t('customerSearch.bulkDeletedMsg', ' customer(s) deleted')}`,
+                      title: t('app.deleted'),
+                      message: `${selectedIds.size}${t('customerSearch.bulkDeletedMsg')}`,
                       color: 'green',
                     });
                   },

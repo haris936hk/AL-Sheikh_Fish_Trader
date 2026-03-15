@@ -172,7 +172,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
     // Required: At least one name (Urdu or English)
     if (!formData.name.trim() && !formData.name_english.trim()) {
-      newErrors.name = t('customer.nameRequired', 'Name is required');
+      newErrors.name = t('customer.nameRequired');
     }
 
     // NIC format validation (if provided)
@@ -201,9 +201,8 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
     // At least one contact method
     if (!formData.phone && !formData.mobile && !formData.email) {
-      newErrors.contact = t('customer.contactRequired', 'At least one contact method is required');
+      newErrors.contact = t('customer.contactRequired');
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData, t]);
@@ -282,8 +281,10 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
 
       if (result.success) {
         notifications.show({
-          title: t('customer.saved', 'Customer Saved'),
-          message: isUr ? `"${formData.name || formData.name_english}" کامیابی سے ${isEditMode ? 'اپ ڈیٹ' : 'محفوظ'} ہو گیا` : `"${formData.name || formData.name_english}" ${isEditMode ? 'updated' : 'created'} successfully`,
+          title: t('customer.saved'),
+          message: isEditMode
+            ? t('customer.updatedSuccess', { name: formData.name || formData.name_english })
+            : t('customer.createdSuccess', { name: formData.name || formData.name_english }),
           color: 'green',
         });
         handleClear();
@@ -306,7 +307,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
     } finally {
       setLoading(false);
     }
-  }, [formData, isEditMode, customer, validate, handleClear, onSuccess, onClose, isUr, t]);
+  }, [formData, isEditMode, customer, validate, handleClear, onSuccess, onClose, t]);
 
   return (
     <Modal
@@ -316,7 +317,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
         <Group gap="sm">
           <Text size="xl">👤</Text>
           <Text size="lg" fw={600}>
-            {isEditMode ? t('customer.edit', 'Edit Customer') : t('customer.add', 'Add New Customer')}
+            {t(isEditMode ? 'customer.edit' : 'customer.addNew')}
           </Text>
         </Group>
       }
@@ -338,7 +339,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
           {/* Name (Urdu) */}
           <TextInput
             label={t('customer.nameUr', 'Name (Urdu)')}
-            placeholder={isUr ? 'اردو میں نام لکھیں' : 'Enter name in Urdu'}
+            placeholder={t('customer.nameUrPlaceholder')}
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
             error={errors.name}
@@ -348,7 +349,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
           {/* Name (English) */}
           <TextInput
             label={t('customer.nameEn', 'Name (English)')}
-            placeholder={isUr ? 'انگریزی میں گاہک کا نام لکھیں' : 'Enter customer name in English'}
+            placeholder={t('customer.nameEnPlaceholder')}
             value={formData.name_english}
             onChange={(e) => handleChange('name_english', e.target.value)}
             maxLength={100}
@@ -405,7 +406,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
           {/* Country */}
           <Select
             label={t('customer.country', 'Country')}
-            placeholder={isUr ? 'ملک منتخب کریں' : 'Select country'}
+            placeholder={t('customer.countryPlaceholder')}
             data={countries}
             value={formData.country_id}
             onChange={(value) => handleChange('country_id', value)}
@@ -416,7 +417,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
           {/* City */}
           <Select
             label={t('customer.city', 'City')}
-            placeholder={isUr ? 'شہر منتخب کریں' : 'Select city'}
+            placeholder={t('customer.cityPlaceholder')}
             data={cities}
             value={formData.city_id}
             onChange={(value) => handleChange('city_id', value)}
@@ -428,7 +429,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
         {/* Address */}
         <Textarea
           label={t('customer.address', 'Address')}
-          placeholder={isUr ? 'مکمل پتہ درج کریں' : 'Enter complete address'}
+          placeholder={t('customer.addressPlaceholder')}
           value={formData.address}
           onChange={(e) => handleChange('address', e.target.value)}
           rows={3}
@@ -439,7 +440,7 @@ function CustomerForm({ opened, onClose, customer = null, onSuccess }) {
         {/* Notes */}
         <Textarea
           label={t('customer.notes', 'Notes')}
-          placeholder={isUr ? 'اضافی نوٹس (اختیاری)' : 'Additional notes (optional)'}
+          placeholder={t('customer.notesPlaceholder')}
           value={formData.notes}
           onChange={(e) => handleChange('notes', e.target.value)}
           rows={2}
