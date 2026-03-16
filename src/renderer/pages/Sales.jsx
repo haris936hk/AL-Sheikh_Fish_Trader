@@ -1,5 +1,4 @@
-import { Box, Group, Title, Button, Tabs } from '@mantine/core';
-import PropTypes from 'prop-types';
+import { Box, Tabs } from '@mantine/core';
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +10,7 @@ import { SaleForm, SaleSearch } from '../components';
  *
  * @param {function} onBack - Callback to navigate back to dashboard
  */
-function Sales({ onBack }) {
+function Sales() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('new');
   const [editSale, setEditSale] = useState(null);
@@ -47,17 +46,6 @@ function Sales({ onBack }) {
         background: 'linear-gradient(180deg, #1a365d 0%, #2d3748 50%, #1a202c 100%)',
       }}
     >
-      <div className="flex-none p-4 pb-2">
-        {/* Header */}
-        <Group justify="space-between" align="center" mb="sm">
-          <Title order={3} c="white">
-            💰 {t('sale.title')}
-          </Title>
-          <Button variant="light" color="gray" size="sm" onClick={onBack}>
-            ← {t('nav.dashboard')}
-          </Button>
-        </Group>
-      </div>
 
       <div className="flex-1 overflow-hidden px-4 pb-4">
         <Tabs value={activeTab} onChange={setActiveTab} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -86,9 +74,5 @@ function Sales({ onBack }) {
     </Box>
   );
 }
-
-Sales.propTypes = {
-  onBack: PropTypes.func.isRequired,
-};
 
 export default Sales;

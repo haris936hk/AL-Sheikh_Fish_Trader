@@ -32,8 +32,9 @@ import { formatDisplayName } from '../utils/formatters';
  *
  * @param {function} onEdit - Callback when edit is clicked
  * @param {function} onRefresh - Callback to refresh after delete
+ * @param {function} onAdd - Callback when add is clicked
  */
-function SupplierSearch({ onEdit, onRefresh }) {
+function SupplierSearch({ onEdit, onRefresh, onAdd }) {
   const isUr = useStore((s) => s.language === 'ur');
   const { t } = useTranslation();
 
@@ -256,6 +257,16 @@ function SupplierSearch({ onEdit, onRefresh }) {
             >
               {t('app.clear', 'Clear')}
             </Button>
+            {onAdd && (
+              <Button
+                variant="light"
+                color="teal"
+                onClick={onAdd}
+                leftSection={<span>➕</span>}
+              >
+                {t('supplier.addNew')}
+              </Button>
+            )}
           </Group>
           <Text size="sm" c="dimmed">
             {suppliers.length} {suppliers.length !== 1 ? t('supplierSearch.itemsFound') : t('supplierSearch.itemFound')}
@@ -388,6 +399,7 @@ function SupplierSearch({ onEdit, onRefresh }) {
 SupplierSearch.propTypes = {
   onEdit: PropTypes.func,
   onRefresh: PropTypes.object,
+  onAdd: PropTypes.func,
 };
 
 export default SupplierSearch;

@@ -346,9 +346,9 @@ function SupplierBillPreview({ previewData }) {
           <div ref={printRef} className="printable-bill" style={{ color: '#000' }}>
 
           <div className="header-english">
-            <h2>${settings.company_name || 'AL-Sheikh Traders and Distributors'}</h2>
-            <p>${isUr ? (settings.company_address_urdu || settings.company_address) : (settings.company_address || 'Shop No. W-644 Gunj Mandi Rawalpindi')}</p>
-            <p>${settings.company_phone || '+92-3008501724, 051-5534607'}</p>
+            <h2>{settings.company_name || 'AL-Sheikh Traders and Distributors'}</h2>
+            <p>{isUr ? (settings.company_address_urdu || settings.company_address) : (settings.company_address || 'Shop No. W-644 Gunj Mandi Rawalpindi')}</p>
+            <p>{settings.company_phone || '+92-3008501724, 051-5534607'}</p>
           </div>
           
           {/* Bill Title & Supplier Info */}

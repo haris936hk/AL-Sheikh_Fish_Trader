@@ -1080,14 +1080,14 @@ const sales = {
       let receiptAmount = 0;
 
       for (const item of saleItems) {
-        const lineWeight = item.weight || 0;
-        const lineAmount = lineWeight * (item.rate || 0);
+        const lineWeight = Number(item.weight) || 0;
+        const lineAmount = lineWeight * (Number(item.rate) || 0);
         totalWeight += lineWeight;
         grossAmount += lineAmount;
-        fareCharges += item.fare_charges || 0;
-        iceCharges += item.ice_charges || 0;
-        cashReceived += item.cash_amount || 0;
-        receiptAmount += item.receipt_amount || 0;
+        fareCharges += Number(item.fare_charges) || 0;
+        iceCharges += Number(item.ice_charges) || 0;
+        cashReceived += Number(item.cash_amount) || 0;
+        receiptAmount += Number(item.receipt_amount) || 0;
       }
 
       const netAmount = grossAmount + fareCharges + iceCharges;
@@ -1131,12 +1131,12 @@ const sales = {
 
       for (let i = 0; i < saleItems.length; i++) {
         const item = saleItems[i];
-        const lineWeight = item.weight || 0;
-        const lineAmount = lineWeight * (item.rate || 0);
-        const lineFare = item.fare_charges || 0;
-        const lineIce = item.ice_charges || 0;
+        const lineWeight = Number(item.weight) || 0;
+        const lineAmount = lineWeight * (Number(item.rate) || 0);
+        const lineFare = Number(item.fare_charges) || 0;
+        const lineIce = Number(item.ice_charges) || 0;
         const lineNetAmount = lineAmount + lineFare + lineIce;
-        const lineBalance = lineNetAmount - (item.cash_amount || 0) - (item.receipt_amount || 0);
+        const lineBalance = lineNetAmount - (Number(item.cash_amount) || 0) - (Number(item.receipt_amount) || 0);
 
         db.execute(
           `INSERT INTO sale_items (
@@ -1326,14 +1326,14 @@ const sales = {
       let receiptAmount = 0;
 
       for (const item of saleItems) {
-        const lineWeight = item.weight || 0;
-        const lineAmount = lineWeight * (item.rate || 0);
+        const lineWeight = Number(item.weight) || 0;
+        const lineAmount = lineWeight * (Number(item.rate) || 0);
         totalWeight += lineWeight;
         grossAmount += lineAmount;
-        fareCharges += item.fare_charges || 0;
-        iceCharges += item.ice_charges || 0;
-        cashReceived += item.cash_amount || 0;
-        receiptAmount += item.receipt_amount || 0;
+        fareCharges += Number(item.fare_charges) || 0;
+        iceCharges += Number(item.ice_charges) || 0;
+        cashReceived += Number(item.cash_amount) || 0;
+        receiptAmount += Number(item.receipt_amount) || 0;
       }
 
       const netAmount = grossAmount + fareCharges + iceCharges;
@@ -1372,12 +1372,12 @@ const sales = {
 
       for (let i = 0; i < saleItems.length; i++) {
         const item = saleItems[i];
-        const lineWeight = item.weight || 0;
-        const lineAmount = lineWeight * (item.rate || 0);
-        const lineFare = item.fare_charges || 0;
-        const lineIce = item.ice_charges || 0;
+        const lineWeight = Number(item.weight) || 0;
+        const lineAmount = lineWeight * (Number(item.rate) || 0);
+        const lineFare = Number(item.fare_charges) || 0;
+        const lineIce = Number(item.ice_charges) || 0;
         const lineNetAmount = lineAmount + lineFare + lineIce;
-        const lineBalance = lineNetAmount - (item.cash_amount || 0) - (item.receipt_amount || 0);
+        const lineBalance = lineNetAmount - (Number(item.cash_amount) || 0) - (Number(item.receipt_amount) || 0);
 
         db.execute(
           `INSERT INTO sale_items (
@@ -1655,12 +1655,13 @@ const purchases = {
       let grossAmount = 0;
 
       for (const item of purchaseItems) {
-        totalWeight += item.weight || 0;
-        grossAmount += item.amount || 0;
+        const w = Number(item.weight) || 0;
+        totalWeight += w;
+        grossAmount += w * (Number(item.rate) || 0);
       }
 
-      const netAmount = grossAmount - (concession_amount || 0);
-      const balanceAmount = netAmount - (cash_paid || 0) + previousBalance;
+      const netAmount = grossAmount - (Number(concession_amount) || 0);
+      const balanceAmount = netAmount - (Number(cash_paid) || 0) + previousBalance;
 
       // Insert purchase header
       const purchaseResult = db.execute(
@@ -1678,9 +1679,9 @@ const purchases = {
           details || null,
           totalWeight,
           grossAmount,
-          concession_amount || 0,
+          Number(concession_amount) || 0,
           netAmount,
-          cash_paid || 0,
+          Number(cash_paid) || 0,
           previousBalance,
           balanceAmount,
           created_by || null,
@@ -1692,7 +1693,9 @@ const purchases = {
       // Insert line items and update stock
       for (let i = 0; i < purchaseItems.length; i++) {
         const item = purchaseItems[i];
-        const lineAmount = (item.weight || 0) * (item.rate || 0);
+        const w = Number(item.weight) || 0;
+        const r = Number(item.rate) || 0;
+        const lineAmount = w * r;
 
         db.execute(
           `INSERT INTO purchase_items (
@@ -1731,7 +1734,7 @@ const purchases = {
           current_balance = current_balance + ?,
           updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`,
-        [netAmount - (cash_paid || 0), supplier_id]
+        [netAmount - (Number(cash_paid) || 0), supplier_id]
       );
 
       return { lastInsertRowid: purchaseId, purchaseNumber };
@@ -1786,18 +1789,24 @@ const purchases = {
       let grossAmount = 0;
 
       for (const item of purchaseItems) {
-        totalWeight += item.weight || 0;
-        grossAmount += item.amount || 0;
+        const w = Number(item.weight) || 0;
+        totalWeight += w;
+        grossAmount += w * (Number(item.rate) || 0);
       }
 
-      const netAmount = grossAmount - (concession_amount || 0);
+      const netAmount = grossAmount - (Number(concession_amount) || 0);
 
-      // Get new supplier's previous balance
-      const supplierResult = db.query('SELECT current_balance FROM suppliers WHERE id = ?', [
-        supplier_id,
-      ]);
-      const previousBalance = supplierResult[0]?.current_balance || 0;
-      const balanceAmount = netAmount - (cash_paid || 0) + previousBalance;
+      // Get previous balance (preserve existing if supplier hasn't changed, else get current)
+      let previousBalance = 0;
+      if (supplier_id === existingPurchase.supplier_id) {
+        previousBalance = existingPurchase.previous_balance || 0;
+      } else {
+        const supplierResult = db.query('SELECT current_balance FROM suppliers WHERE id = ?', [
+          supplier_id,
+        ]);
+        previousBalance = supplierResult[0]?.current_balance || 0;
+      }
+      const balanceAmount = netAmount - (Number(cash_paid) || 0) + previousBalance;
 
       // Update purchase header
       db.execute(
@@ -1814,9 +1823,9 @@ const purchases = {
           details || null,
           totalWeight,
           grossAmount,
-          concession_amount || 0,
+          Number(concession_amount) || 0,
           netAmount,
-          cash_paid || 0,
+          Number(cash_paid) || 0,
           previousBalance,
           balanceAmount,
           id,
@@ -1826,26 +1835,28 @@ const purchases = {
       // Insert new line items
       for (let i = 0; i < purchaseItems.length; i++) {
         const item = purchaseItems[i];
-        const lineAmount = (item.weight || 0) * (item.rate || 0);
+        const w = Number(item.weight) || 0;
+        const r = Number(item.rate) || 0;
+        const lineAmount = w * r;
 
         db.execute(
           `INSERT INTO purchase_items (
             purchase_id, line_number, item_id, weight, rate, amount, notes
           ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [id, i + 1, item.item_id, item.weight || 0, item.rate || 0, lineAmount, item.notes || null]
+          [id, i + 1, item.item_id, w, r, lineAmount, item.notes || null]
         );
 
         // Update item stock
         db.execute(
           'UPDATE items SET current_stock = current_stock + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-          [item.weight || 0, item.item_id]
+          [w, item.item_id]
         );
       }
 
       // Update supplier balance
       db.execute(
         'UPDATE suppliers SET current_balance = current_balance + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [netAmount - (cash_paid || 0), supplier_id]
+        [netAmount - (Number(cash_paid) || 0), supplier_id]
       );
 
       return { changes: 1 };

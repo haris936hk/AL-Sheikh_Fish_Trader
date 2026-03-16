@@ -29,8 +29,9 @@ import { formatDisplayName } from '../utils/formatters';
  *
  * @param {function} onEdit - Callback when edit is clicked
  * @param {function} onRefresh - Callback to refresh after delete
+ * @param {function} onAdd - Callback when add is clicked
  */
-function ItemSearch({ onEdit, onRefresh }) {
+function ItemSearch({ onEdit, onRefresh, onAdd }) {
   const isUr = useStore((s) => s.language === 'ur');
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -224,6 +225,16 @@ function ItemSearch({ onEdit, onRefresh }) {
             >
               {t('app.clear', 'Clear')}
             </Button>
+            {onAdd && (
+              <Button
+                variant="light"
+                color="indigo"
+                onClick={onAdd}
+                leftSection={<span>➕</span>}
+              >
+                {t('item.addNew')}
+              </Button>
+            )}
           </Group>
           <Text size="sm" c="dimmed">
             {items.length} {items.length !== 1 ? t('itemSearch.itemsFound') : t('itemSearch.itemFound')}
@@ -268,6 +279,7 @@ function ItemSearch({ onEdit, onRefresh }) {
 ItemSearch.propTypes = {
   onEdit: PropTypes.func,
   onRefresh: PropTypes.object,
+  onAdd: PropTypes.func,
 };
 
 export default ItemSearch;

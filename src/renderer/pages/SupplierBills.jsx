@@ -1,7 +1,4 @@
-import { Title, Text, Button, Group, Paper } from '@mantine/core';
-import PropTypes from 'prop-types';
 import { useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { SupplierBillForm, SupplierBillPreview } from '../components';
 
@@ -12,8 +9,7 @@ import { SupplierBillForm, SupplierBillPreview } from '../components';
  *
  * @param {function} onBack - Callback to navigate back to dashboard
  */
-function SupplierBills({ onBack }) {
-  const { t } = useTranslation();
+function SupplierBills() {
   const [previewData, setPreviewData] = useState(null);
 
   // Handle preview generation
@@ -29,28 +25,6 @@ function SupplierBills({ onBack }) {
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-gradient-to-br from-slate-100 to-blue-100 dark:from-gray-900 dark:to-slate-800">
-      {/* Header */}
-      <Paper
-        shadow="md"
-        className="bg-gradient-to-r from-teal-600 via-teal-700 to-cyan-800 flex-none"
-        style={{ borderRadius: 0 }}
-      >
-        <div className="px-4 py-3">
-          <Group justify="space-between" align="center">
-            <Group gap="sm">
-              <Title order={3} c="white" className="font-bold m-0">
-                📄 {t('supplierBill.title')}
-              </Title>
-              <Text c="white" opacity={0.9} size="sm">
-                | {t('supplierBill.addNew')}
-              </Text>
-            </Group>
-            <Button size="sm" variant="light" color="gray" onClick={onBack} leftSection={<span>🏠</span>}>
-              {t('nav.dashboard')}
-            </Button>
-          </Group>
-        </div>
-      </Paper>
 
       {/* Main Content - Split Layout */}
       <div className="flex-1 overflow-hidden p-3 relative">
@@ -72,9 +46,5 @@ function SupplierBills({ onBack }) {
     </div>
   );
 }
-
-SupplierBills.propTypes = {
-  onBack: PropTypes.func.isRequired,
-};
 
 export default SupplierBills;

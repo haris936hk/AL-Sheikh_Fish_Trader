@@ -1,13 +1,11 @@
-import { Paper, Stack, Group, Title, Text, Button, Divider, Menu } from '@mantine/core';
+import { Paper, Stack, Group, Title, Text, Button, Divider } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconPrinter,
-  IconFileTypePdf,
   IconFileSpreadsheet,
-  IconChevronDown,
 } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import useStore from '../store';
@@ -35,6 +33,8 @@ export function ReportViewer({
 
   // Determine the display title based on the active language
   const displayTitle = language === 'ur' && titleUrdu ? titleUrdu : title;
+
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const generatePrintHTML = () => {
     const content = printRef.current;
@@ -306,59 +306,33 @@ export function ReportViewer({
 
   const handlePrint = async () => {
     try {
+      setIsPrinting(true);
       const htmlContent = generatePrintHTML();
-      const response = await window.api.print.preview(htmlContent, {
-        title: `${displayTitle} - ${t('report.print')}`,
+      const filename = `${displayTitle.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+      const response = await window.api.print.exportPDFSilent(htmlContent, {
+        filename,
         landscape: false,
       });
 
-      if (!response?.success && response?.error) {
+      if (response && response.success) {
         notifications.show({
-          title: t('report.printFailed'),
-          message: response.error,
-          color: 'red',
+          title: t('report.exportSuccess'),
+          message: `${t('report.exportSuccess')}: ${response.data.filePath}`,
+          color: 'teal',
         });
+      } else {
+        throw new Error(response?.error || 'Failed to print/save PDF silently');
       }
     } catch (error) {
-      console.error('Print preview error:', error);
+      console.error('Print error:', error);
       notifications.show({
         title: t('report.printFailed'),
         message: t('report.printFailed'),
         color: 'red',
       });
-    }
-  };
-
-  const handleExportPDF = async () => {
-    try {
-      const htmlContent = generatePrintHTML();
-      const response = await window.api.print.exportPDF(htmlContent, {
-        filename: `${displayTitle.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-        landscape: false,
-      });
-
-      if (response.success) {
-        notifications.show({
-          title: t('report.exportSuccess'),
-          message: `${t('report.exportSuccess')}: ${response.data.filePath}`,
-          color: 'green',
-        });
-      } else {
-        if (response.error !== 'Export cancelled') {
-          notifications.show({
-            title: t('report.exportFailed'),
-            message: response.error,
-            color: 'red',
-          });
-        }
-      }
-    } catch (error) {
-      console.error('PDF export error:', error);
-      notifications.show({
-        title: t('report.exportFailed'),
-        message: t('report.exportFailed'),
-        color: 'red',
-      });
+    } finally {
+      setIsPrinting(false);
     }
   };
 
@@ -466,27 +440,22 @@ export function ReportViewer({
             )}
           </Stack>
           <Group gap="xs">
-            <Button leftSection={<IconPrinter size={16} />} onClick={handlePrint} variant="light">
+            <Button 
+              leftSection={<IconPrinter size={16} />} 
+              onClick={handlePrint} 
+              variant="light"
+              loading={isPrinting}
+            >
               {t('report.print')}
             </Button>
-            <Menu shadow="md" width={200}>
-              <Menu.Target>
-                <Button variant="light" rightSection={<IconChevronDown size={14} />}>
-                  {t('report.export')}
-                </Button>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Item leftSection={<IconFileTypePdf size={16} />} onClick={handleExportPDF}>
-                  {t('report.exportPdf')}
-                </Menu.Item>
-                <Menu.Item
-                  leftSection={<IconFileSpreadsheet size={16} />}
-                  onClick={handleExportExcel}
-                >
-                  {t('report.exportExcel')}
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
+            <Button 
+              leftSection={<IconFileSpreadsheet size={16} />} 
+              onClick={handleExportExcel} 
+              variant="light"
+              color="green"
+            >
+              {t('report.exportExcel')}
+            </Button>
           </Group>
         </Group>
 

@@ -612,12 +612,7 @@ function SaleSearch({ onEdit }) {
                           color="blue"
                           variant="subtle"
                           onClick={() => onEdit?.(sale)}
-                          title={
-                            sale.status === 'posted'
-                              ? translate('saleSearch.postedNoEdit')
-                              : translate('app.edit')
-                          }
-                          disabled={sale.status === 'posted'}
+                          title={translate('app.edit')}
                         >
                           ✏️
                         </ActionIcon>
@@ -625,12 +620,7 @@ function SaleSearch({ onEdit }) {
                           color="red"
                           variant="subtle"
                           onClick={() => handleDelete(sale)}
-                          title={
-                            sale.status === 'posted'
-                              ? translate('saleSearch.postedNoDelete')
-                              : translate('app.delete')
-                          }
-                          disabled={sale.status === 'posted'}
+                          title={translate('app.delete')}
                         >
                           🗑️
                         </ActionIcon>

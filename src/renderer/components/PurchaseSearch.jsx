@@ -510,12 +510,7 @@ function PurchaseSearch({ onEdit }) {
                           color="blue"
                           variant="subtle"
                           onClick={() => onEdit?.(purchase)}
-                          title={
-                            purchase.status === 'posted'
-                              ? translate('purchaseSearch.postedNoEdit')
-                              : translate('app.edit')
-                          }
-                          disabled={purchase.status === 'posted'}
+                          title={translate('app.edit')}
                         >
                           ✏️
                         </ActionIcon>
@@ -523,12 +518,7 @@ function PurchaseSearch({ onEdit }) {
                           color="red"
                           variant="subtle"
                           onClick={() => handleDelete(purchase)}
-                          title={
-                            purchase.status === 'posted'
-                              ? translate('purchaseSearch.postedNoDelete')
-                              : translate('app.delete')
-                          }
-                          disabled={purchase.status === 'posted'}
+                          title={translate('app.delete')}
                         >
                           🗑️
                         </ActionIcon>

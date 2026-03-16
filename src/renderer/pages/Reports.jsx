@@ -1,4 +1,4 @@
-import { Paper, Tabs, Title, Group, ActionIcon } from '@mantine/core';
+import { Paper, Tabs } from '@mantine/core';
 import {
   IconChartBar,
   IconReceipt,
@@ -9,7 +9,6 @@ import {
   IconUsers,
   IconDiscount,
   IconFileDescription,
-  IconArrowLeft,
   IconTruck,
   IconCalculator,
   IconClipboardList,
@@ -17,7 +16,6 @@ import {
 } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 
 
 import {
@@ -81,8 +79,7 @@ const REPORT_TABS = [
  * @param {function} onBack - Callback to navigate back to dashboard
  * @param {string} initialTab - Initial tab to display (optional)
  */
-export function Reports({ onBack, initialTab = null }) {
-  const { t } = useTranslation();
+export function Reports({ initialTab = null }) {
   const language = useStore((s) => s.language);
   const isUrdu = language === 'ur';
   // Use state with initialTab on first render only
@@ -100,10 +97,6 @@ export function Reports({ onBack, initialTab = null }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTab]);
-
-  const handleBack = () => {
-    if (onBack) onBack();
-  };
 
   const renderReportContent = () => {
     switch (activeTab) {
@@ -141,18 +134,6 @@ export function Reports({ onBack, initialTab = null }) {
   return (
     <div className="h-full flex flex-col p-4 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 overflow-hidden">
       <Paper shadow="md" radius="md" className="flex-1 w-full max-w-[1400px] mx-auto flex flex-col overflow-hidden">
-        <div className="p-3 flex-none border-b border-gray-200 dark:border-gray-800">
-          {/* Header */}
-          <Group justify="space-between" align="center">
-            <Group>
-              <ActionIcon variant="subtle" size="sm" onClick={handleBack}>
-                <IconArrowLeft size={16} />
-              </ActionIcon>
-              <Title order={4}>{t('report.title')}</Title>
-            </Group>
-          </Group>
-        </div>
-
         {/* Tabs container */}
         <div className="flex-1 flex flex-col overflow-hidden mt-1">
           <Tabs value={activeTab} onChange={setActiveTab} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -182,7 +163,6 @@ export function Reports({ onBack, initialTab = null }) {
 }
 
 Reports.propTypes = {
-  onBack: PropTypes.func,
   initialTab: PropTypes.string,
 };
 

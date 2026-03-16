@@ -231,13 +231,7 @@ function Settings() {
       <div className="max-w-4xl mx-auto w-full h-full flex flex-col overflow-hidden relative">
         <LoadingOverlay visible={loading} overlayProps={{ blur: 2 }} />
 
-        <Group justify="space-between" mb="sm" className="flex-none">
-          <Title order={3}>
-            <Group gap="xs">
-              <IconSettings size={24} />
-              {t('settings.title')}
-            </Group>
-          </Title>
+        <Group justify="flex-end" mb="sm" className="flex-none">
           <Button size="sm" leftSection={<IconDeviceFloppy size={16} />} onClick={handleSave} loading={saving}>
             {t('settings.save')}
           </Button>
