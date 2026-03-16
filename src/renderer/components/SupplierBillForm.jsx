@@ -337,10 +337,10 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
   }, [onPreviewGenerated]);
 
   return (
-    <Paper shadow="sm" p="lg" radius="md" withBorder pos="relative">
+    <Paper shadow="sm" p="sm" radius="md" withBorder pos="relative" className="h-full flex flex-col overflow-hidden">
       <LoadingOverlay visible={loading} />
 
-      <Stack gap="md">
+      <Stack gap="sm" className="flex-1 overflow-y-auto min-h-0 pr-2 pb-2">
         <Title order={4} className="text-blue-700">
           📄 {t('supplierBill.title')}
         </Title>
@@ -405,7 +405,6 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               onChange={(val) => setDrugsCharges(val === '' ? '' : val)}
               min={0}
               decimalScale={0}
-              prefix={`${t('common.rs')} `}
             />
           </Grid.Col>
           <Grid.Col span={6}>
@@ -415,7 +414,6 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               onChange={(val) => setFareCharges(val === '' ? '' : val)}
               min={0}
               decimalScale={0}
-              prefix={`${t('common.rs')} `}
             />
           </Grid.Col>
         </Grid>
@@ -428,7 +426,6 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               onChange={(val) => setLaborCharges(val === '' ? '' : val)}
               min={0}
               decimalScale={0}
-              prefix={`${t('common.rs')} `}
             />
           </Grid.Col>
           <Grid.Col span={4}>
@@ -438,7 +435,6 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               onChange={(val) => setIceCharges(val === '' ? '' : val)}
               min={0}
               decimalScale={0}
-              prefix={`${t('common.rs')} `}
             />
           </Grid.Col>
           <Grid.Col span={4}>
@@ -461,7 +457,6 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               value={Math.round(commissionAmount)}
               readOnly
               decimalScale={0}
-              prefix={`${t('common.rs')} `}
               styles={{ input: { backgroundColor: '#f8f9fa' } }}
             />
           </Grid.Col>
@@ -472,7 +467,6 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               onChange={(val) => setConcessionAmount(val === '' ? '' : val)}
               min={0}
               decimalScale={0}
-              prefix={`${t('common.rs')} `}
             />
           </Grid.Col>
           <Grid.Col span={4}>
@@ -482,7 +476,6 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
               onChange={(val) => setCashPaid(val === '' ? '' : val)}
               min={0}
               decimalScale={0}
-              prefix={`${t('common.rs')} `}
             />
           </Grid.Col>
         </Grid>
@@ -505,7 +498,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
                 <Text size="sm" c="dimmed">
                   {t('supplierBill.grossAmount', 'Gross Amount')}:
                 </Text>
-                <Text fw={500} dir="ltr">{t('common.rs')} {Math.round(grossAmount).toLocaleString('en-US')}</Text>
+                <Text fw={500} dir="ltr">{Math.round(grossAmount).toLocaleString('en-US')}</Text>
               </Group>
             </Grid.Col>
             <Grid.Col span={6}>
@@ -514,7 +507,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
                   {t('supplierBill.totalCharges', 'Total Charges')}:
                 </Text>
                 <Text fw={500} c="red" dir="ltr">
-                  - {t('common.rs')} {Math.round(commissionAmount + totalCharges).toLocaleString('en-US')}
+                  - {Math.round(commissionAmount + totalCharges).toLocaleString('en-US')}
                 </Text>
               </Group>
             </Grid.Col>
@@ -524,7 +517,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
                   {t('supplierBill.netPayable')}:
                 </Text>
                 <Text fw={600} c="blue" dir="ltr">
-                  {t('common.rs')} {Math.round(totalPayable).toLocaleString('en-US')}
+                  {Math.round(totalPayable).toLocaleString('en-US')}
                 </Text>
               </Group>
             </Grid.Col>
@@ -535,15 +528,17 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
                   {t('supplierBill.balanceAmount')}:
                 </Text>
                 <Text size="xl" fw={700} c={balanceAmount >= 0 ? 'green' : 'red'} dir="ltr">
-                  {t('common.rs')} {Math.round(balanceAmount).toLocaleString('en-US')}
+                  {Math.round(balanceAmount).toLocaleString('en-US')}
                 </Text>
               </Group>
             </Grid.Col>
           </Grid>
         </Paper>
+      </Stack>
 
+      <div className="flex-none pt-3 mt-auto border-t border-gray-200 dark:border-gray-700">
         {/* Action Buttons */}
-        <Group justify="flex-end" mt="md" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+        <Group justify="flex-end" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Button variant="light" color="gray" onClick={handleClear}>
             {t('app.clear')}
           </Button>
@@ -554,7 +549,7 @@ function SupplierBillForm({ onPreviewGenerated, onBillSaved }) {
             {t('supplierBill.saveBtn', 'Save Bill')}
           </Button>
         </Group>
-      </Stack>
+      </div>
     </Paper>
   );
 }

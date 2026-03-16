@@ -12,6 +12,7 @@ import {
   IconChartBar,
   IconWorld,
   IconFish,
+  IconSettings,
 } from '@tabler/icons-react';
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +32,7 @@ const Items = lazy(() => import('./pages/Items'));
 const Sales = lazy(() => import('./pages/Sales'));
 const Purchases = lazy(() => import('./pages/Purchases'));
 const Reports = lazy(() => import('./pages/Reports'));
+const Settings = lazy(() => import('./pages/Settings'));
 
 /**
  * Root App Component
@@ -75,6 +77,7 @@ function App() {
     { key: 'item', labelKey: 'nav.items', icon: IconPackage, shortcut: 'Ctrl+6' },
     { key: 'supplier-bills', labelKey: 'nav.bills', icon: IconFileInvoice, shortcut: 'Ctrl+7' },
     { key: 'reports', labelKey: 'nav.reports', icon: IconChartBar, shortcut: 'Ctrl+8' },
+    { key: 'settings', labelKey: 'settings.title', icon: IconSettings, shortcut: 'Ctrl+9' },
   ];
 
   // Dynamic window title
@@ -88,6 +91,7 @@ function App() {
       sales: `${t('app.title')} - ${t('nav.sales')}`,
       purchases: `${t('app.title')} - ${t('nav.purchases')}`,
       reports: `${t('app.title')} - ${t('nav.reports')}`,
+      settings: `${t('app.title')} - ${t('settings.title')}`,
     };
     document.title = pageTitles[currentPage] || t('app.title');
   }, [currentPage, t]);
@@ -182,6 +186,9 @@ function App() {
       case 'reports':
         pageContent = <Reports onBack={() => navigateTo('dashboard')} initialTab={reportTab} />;
         break;
+      case 'settings':
+        pageContent = <Settings onBack={() => navigateTo('dashboard')} />;
+        break;
       default:
         pageContent = <Dashboard onNavigate={navigateTo} onToggleLanguage={toggleLanguage} />;
         break;
@@ -201,96 +208,129 @@ function App() {
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Noto Sans Arabic'",
         primaryColor: 'blue',
+        components: {
+          Button: { defaultProps: { size: 'sm' } },
+          Input: { defaultProps: { size: 'sm' } },
+          Select: { defaultProps: { size: 'sm' } },
+          TextInput: { defaultProps: { size: 'sm' } },
+          NumberInput: { defaultProps: { size: 'sm' } },
+          Table: { defaultProps: { verticalSpacing: 'xs', horizontalSpacing: 'sm' } },
+          Modal: { defaultProps: { size: 'md' } },
+          Badge: { defaultProps: { size: 'sm' } },
+          ActionIcon: { defaultProps: { size: 'sm' } },
+          Tabs: { defaultProps: { variant: 'outline' } },
+        },
+        fontSizes: {
+          xs: '10px',
+          sm: '12px',
+          md: '13px',
+          lg: '14px',
+          xl: '16px',
+        },
+        spacing: {
+          xs: '4px',
+          sm: '8px',
+          md: '12px',
+          lg: '16px',
+          xl: '24px',
+        },
+        radius: {
+          sm: '4px',
+          md: '6px',
+        },
       }}
     >
-      {/* RTL-aware notification position: top-right for LTR (en), top-left for RTL (ur).
-           Mantine v8 removed top-start/top-end; use explicit left/right instead. */}
-      <Notifications position={language === 'ur' ? 'top-left' : 'top-right'} />
-      <ModalsProvider>
-        <ErrorBoundary>
-          {/* Menu Bar - visible on all non-dashboard pages (FR-MENU-001) */}
-          {currentPage !== 'dashboard' && (
-            <div
-              style={{
-                background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-                padding: '6px 16px',
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                position: 'sticky',
-                top: 0,
-                zIndex: 100,
-              }}
-            >
-              <Group gap="xs" justify="space-between">
-                <Group gap={4}>
-                  <Text
-                    fw={700}
-                    size="sm"
-                    style={{
-                      color: '#38bdf8',
-                      letterSpacing: '0.5px',
-                      marginInlineEnd: 12,
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => navigateTo('dashboard')}
-                  >
-                    <Group gap={4} align="center" wrap="nowrap">
-                      <IconFish size={14} />
-                      {t('app.title')}
-                    </Group>
-                  </Text>
-                  {menuItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = currentPage === item.key;
-                    return (
-                      <Tooltip
-                        key={item.key}
-                        label={`${t(item.labelKey)} (${item.shortcut})`}
-                        position="bottom"
-                        withArrow
-                      >
-                        <Button
-                          size="compact-xs"
-                          variant={isActive ? 'filled' : 'subtle'}
-                          color={isActive ? 'blue' : 'gray'}
-                          leftSection={<Icon size={14} />}
-                          onClick={() => navigateTo(item.key)}
-                          style={{
-                            color: isActive ? '#fff' : 'rgba(255,255,255,0.7)',
-                            fontWeight: isActive ? 600 : 400,
-                            fontSize: '12px',
-                          }}
-                        >
-                          {t(item.labelKey)}
-                        </Button>
-                      </Tooltip>
-                    );
-                  })}
-                </Group>
-                <Group gap="xs">
-                  <Tooltip
-                    label={t(language === 'ur' ? 'app.switchToEnglish' : 'app.switchToUrdu')}
-                    position="bottom"
-                  >
-                    <Button
-                      size="compact-xs"
-                      variant="subtle"
-                      leftSection={<IconWorld size={14} />}
-                      onClick={toggleLanguage}
-                      style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}
+      <div className="h-screen w-screen overflow-hidden flex flex-col">
+        {/* RTL-aware notification position: top-right for LTR (en), top-left for RTL (ur).
+             Mantine v8 removed top-start/top-end; use explicit left/right instead. */}
+        <Notifications position={language === 'ur' ? 'top-left' : 'top-right'} />
+        <ModalsProvider>
+          <ErrorBoundary>
+            {/* Menu Bar - visible on all non-dashboard pages (FR-MENU-001) */}
+            {currentPage !== 'dashboard' && (
+              <div
+                style={{
+                  flex: 'none',
+                  background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                  padding: '6px 16px',
+                  borderBottom: '1px solid rgba(255,255,255,0.1)',
+                  zIndex: 100,
+                }}
+              >
+                <Group gap="xs" justify="space-between">
+                  <Group gap={4}>
+                    <Text
+                      fw={700}
+                      size="sm"
+                      style={{
+                        color: '#38bdf8',
+                        letterSpacing: '0.5px',
+                        marginInlineEnd: 12,
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => navigateTo('dashboard')}
                     >
-                      {t(language === 'ur' ? 'app.english' : 'app.urdu')}
-                    </Button>
-                  </Tooltip>
-                  <Text size="xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {t('app.escDash')}
-                  </Text>
+                      <Group gap={4} align="center" wrap="nowrap">
+                        <IconFish size={14} />
+                        {t('app.title')}
+                      </Group>
+                    </Text>
+                    {menuItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = currentPage === item.key;
+                      return (
+                        <Tooltip
+                          key={item.key}
+                          label={`${t(item.labelKey)} (${item.shortcut})`}
+                          position="bottom"
+                          withArrow
+                        >
+                          <Button
+                            size="compact-xs"
+                            variant={isActive ? 'filled' : 'subtle'}
+                            color={isActive ? 'blue' : 'gray'}
+                            leftSection={<Icon size={14} />}
+                            onClick={() => navigateTo(item.key)}
+                            style={{
+                              color: isActive ? '#fff' : 'rgba(255,255,255,0.7)',
+                              fontWeight: isActive ? 600 : 400,
+                              fontSize: '12px',
+                            }}
+                          >
+                            {t(item.labelKey)}
+                          </Button>
+                        </Tooltip>
+                      );
+                    })}
+                  </Group>
+                  <Group gap="xs">
+                    <Tooltip
+                      label={t(language === 'ur' ? 'app.switchToEnglish' : 'app.switchToUrdu')}
+                      position="bottom"
+                    >
+                      <Button
+                        size="compact-xs"
+                        variant="subtle"
+                        leftSection={<IconWorld size={14} />}
+                        onClick={toggleLanguage}
+                        style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}
+                      >
+                        {t(language === 'ur' ? 'app.english' : 'app.urdu')}
+                      </Button>
+                    </Tooltip>
+                    <Text size="xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      {t('app.escDash')}
+                    </Text>
+                  </Group>
                 </Group>
-              </Group>
-            </div>
-          )}
-          <Suspense fallback={pageFallback}>{renderPage()}</Suspense>
-        </ErrorBoundary>
-      </ModalsProvider>
+              </div>
+            )}
+            <main className="flex-1 overflow-hidden flex flex-col">
+              <Suspense fallback={pageFallback}>{renderPage()}</Suspense>
+            </main>
+          </ErrorBoundary>
+        </ModalsProvider>
+      </div>
     </MantineProvider>
   );
 }

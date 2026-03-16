@@ -9,7 +9,6 @@ import {
   Center,
   Paper,
   Box,
-  ScrollArea,
   ActionIcon,
   Tooltip,
   Button,
@@ -42,6 +41,7 @@ import {
   IconReportAnalytics,
   IconCoins,
   IconCurrencyDollar,
+  IconSettings,
 } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 import { useEffect, useCallback, useState, memo } from 'react';
@@ -262,7 +262,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
   ];
 
   return (
-    <Box style={{ minHeight: '100vh', background: '#0f172a' }}>
+    <Box className="h-full flex flex-col overflow-hidden" style={{ background: '#0f172a' }}>
       {/* Header */}
       <Paper
         shadow="sm"
@@ -270,9 +270,10 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
           background: '#1e293b',
           borderRadius: 0,
           borderBottom: '1px solid rgba(255,255,255,0.08)',
+          flex: 'none'
         }}
       >
-        <div style={{ padding: '16px 28px' }}>
+        <div style={{ padding: '12px 16px' }}>
           <Group justify="space-between" align="center" wrap="nowrap">
             <Stack gap={2}>
               <Group gap="xs" align="center">
@@ -280,7 +281,7 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
                   <IconFish size={16} />
                 </ThemeIcon>
                 <Title order={3} c="white" style={{ letterSpacing: '-0.3px' }}>
-                  {(isUrdu && settings.company_name_urdu) || (settings.company_name || t('app.title'))}
+                  {settings.company_name || 'AL-Sheikh Traders and Distributors'}
                 </Title>
               </Group>
               <Text c="dimmed" size="xs" ms={42}>
@@ -318,6 +319,16 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
               <Divider orientation="vertical" color="rgba(255,255,255,0.1)" />
 
               {/* Controls */}
+              <Tooltip label={t('settings.title')}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="md"
+                  onClick={() => onNavigate?.('settings')}
+                >
+                  <IconSettings size={16} color="rgba(255,255,255,0.6)" />
+                </ActionIcon>
+              </Tooltip>
               <Tooltip label={t('dashboard.autoRefresh')}>
                 <ActionIcon
                   variant="subtle"
@@ -359,92 +370,26 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
       </Paper>
 
       {/* Main Content */}
-      <ScrollArea h="calc(100vh - 90px)" offsetScrollbars>
-        <div style={{ padding: '20px 28px', display: 'flex', gap: '20px' }}>
-          {/* Left Section - Navigation Buttons */}
-          <div style={{ flex: '1 1 70%', minWidth: 0 }}>
-            <Stack gap="md">
-              {/* Row 1: Administration & Transactions */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                {/* Administration */}
-                <Card shadow="xs" padding="md" radius="md" style={{ background: '#ffffff' }}>
-                  <SectionHeader
-                    icon={IconFolder}
-                    label={t('dashboard.administration')}
-                    color="blue"
-                  />
-                  <Stack gap="xs">
-                    {adminButtons.map((btn) => (
-                      <DashboardButton
-                        key={btn.key}
-                        label={btn.label}
-                        icon={btn.icon}
-                        variant="administration"
-                        onClick={() =>
-                          btn.navigate
-                            ? onNavigate?.(btn.navigate, { tab: btn.tab })
-                            : handleNavigation(btn.label)
-                        }
-                      />
-                    ))}
-                  </Stack>
-                </Card>
-
-                {/* Transactions */}
-                <Card shadow="xs" padding="md" radius="md" style={{ background: '#ffffff' }}>
-                  <SectionHeader
-                    icon={IconArrowsExchange}
-                    label={t('dashboard.transactions')}
-                    color="teal"
-                  />
-                  <Stack gap="xs">
-                    {transactionButtons.map((btn) => (
-                      <DashboardButton
-                        key={btn.key}
-                        label={btn.label}
-                        icon={btn.icon}
-                        variant="transaction"
-                        onClick={() =>
-                          btn.navigate ? onNavigate?.(btn.navigate) : handleNavigation(btn.label)
-                        }
-                      />
-                    ))}
-                  </Stack>
-                </Card>
-              </div>
-
-              {/* Row 2: Contacts */}
-              <Card shadow="xs" padding="md" radius="md" style={{ background: '#ffffff' }}>
+      <div className="flex-1 overflow-hidden" style={{ padding: '12px 16px', display: 'flex', gap: '16px' }}>
+        {/* Left Section - Navigation Buttons */}
+        <div className="flex-1 overflow-y-auto min-h-0" style={{ paddingRight: '4px' }}>
+          <Stack gap="sm">
+            {/* Row 1: Administration & Transactions */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              {/* Administration */}
+              <Card shadow="xs" padding="sm" radius="md" style={{ background: '#ffffff' }}>
                 <SectionHeader
-                  icon={IconAddressBook}
-                  label={t('dashboard.contacts')}
-                  color="violet"
+                  icon={IconFolder}
+                  label={t('dashboard.administration')}
+                  color="blue"
                 />
-                <SimpleGrid cols={2} spacing="xs">
-                  {contactButtons.map((btn) => (
+                <Stack gap="xs">
+                  {adminButtons.map((btn) => (
                     <DashboardButton
                       key={btn.key}
                       label={btn.label}
                       icon={btn.icon}
-                      variant="user"
-                      onClick={() =>
-                        btn.navigate ? onNavigate?.(btn.navigate) : handleNavigation(btn.label)
-                      }
-                    />
-                  ))}
-                </SimpleGrid>
-              </Card>
-
-              {/* Row 3: Reports */}
-              <Card shadow="xs" padding="md" radius="md" style={{ background: '#ffffff' }}>
-                <SectionHeader icon={IconChartBar} label={t('nav.reports')} color="orange" />
-                <SimpleGrid cols={3} spacing="xs">
-                  {reportButtons.map((btn) => (
-                    <DashboardButton
-                      key={btn.key}
-                      label={btn.label}
-                      icon={btn.icon}
-                      variant="report"
+                      variant="administration"
                       onClick={() =>
                         btn.navigate
                           ? onNavigate?.(btn.navigate, { tab: btn.tab })
@@ -452,36 +397,100 @@ function Dashboard({ onNavigate, onToggleLanguage }) {
                       }
                     />
                   ))}
-                </SimpleGrid>
+                </Stack>
               </Card>
-            </Stack>
-          </div>
 
-          {/* Right Section - Information Panels */}
-          <div style={{ flex: '0 0 320px', minWidth: '280px' }}>
-            <Stack gap="md">
-              {dashboardLoading ? (
-                <Card
-                  shadow="xs"
-                  padding="xl"
-                  radius="md"
-                  h={400}
-                  style={{ background: '#ffffff' }}
-                >
-                  <Center h="100%">
-                    <Loader size="lg" />
-                  </Center>
-                </Card>
-              ) : (
-                <>
-                  <SupplierAdvancesList data={supplierAdvances} loading={dashboardLoading} />
-                  <ItemStockDisplay data={itemsStock} loading={dashboardLoading} />
-                </>
-              )}
-            </Stack>
-          </div>
+              {/* Transactions */}
+              <Card shadow="xs" padding="sm" radius="md" style={{ background: '#ffffff' }}>
+                <SectionHeader
+                  icon={IconArrowsExchange}
+                  label={t('dashboard.transactions')}
+                  color="teal"
+                />
+                <Stack gap="xs">
+                  {transactionButtons.map((btn) => (
+                    <DashboardButton
+                      key={btn.key}
+                      label={btn.label}
+                      icon={btn.icon}
+                      variant="transaction"
+                      onClick={() =>
+                        btn.navigate ? onNavigate?.(btn.navigate) : handleNavigation(btn.label)
+                      }
+                    />
+                  ))}
+                </Stack>
+              </Card>
+            </div>
+
+            {/* Row 2: Contacts */}
+            <Card shadow="xs" padding="sm" radius="md" style={{ background: '#ffffff' }}>
+              <SectionHeader
+                icon={IconAddressBook}
+                label={t('dashboard.contacts')}
+                color="violet"
+              />
+              <SimpleGrid cols={2} spacing="xs">
+                {contactButtons.map((btn) => (
+                  <DashboardButton
+                    key={btn.key}
+                    label={btn.label}
+                    icon={btn.icon}
+                    variant="user"
+                    onClick={() =>
+                      btn.navigate ? onNavigate?.(btn.navigate) : handleNavigation(btn.label)
+                    }
+                  />
+                ))}
+              </SimpleGrid>
+            </Card>
+
+            {/* Row 3: Reports */}
+            <Card shadow="xs" padding="sm" radius="md" style={{ background: '#ffffff' }}>
+              <SectionHeader icon={IconChartBar} label={t('nav.reports')} color="orange" />
+              <SimpleGrid cols={3} spacing="xs">
+                {reportButtons.map((btn) => (
+                  <DashboardButton
+                    key={btn.key}
+                    label={btn.label}
+                    icon={btn.icon}
+                    variant="report"
+                    onClick={() =>
+                      btn.navigate
+                        ? onNavigate?.(btn.navigate, { tab: btn.tab })
+                        : handleNavigation(btn.label)
+                    }
+                  />
+                ))}
+              </SimpleGrid>
+            </Card>
+          </Stack>
         </div>
-      </ScrollArea>
+
+        {/* Right Section - Information Panels */}
+        <div className="flex-none overflow-y-auto min-h-0" style={{ width: '320px', paddingRight: '4px' }}>
+          <Stack gap="sm">
+            {dashboardLoading ? (
+              <Card
+                shadow="xs"
+                padding="xl"
+                radius="md"
+                h={400}
+                style={{ background: '#ffffff' }}
+              >
+                <Center h="100%">
+                  <Loader size="lg" />
+                </Center>
+              </Card>
+            ) : (
+              <>
+                <SupplierAdvancesList data={supplierAdvances} loading={dashboardLoading} />
+                <ItemStockDisplay data={itemsStock} loading={dashboardLoading} />
+              </>
+            )}
+          </Stack>
+        </div>
+      </div>
     </Box>
   );
 }

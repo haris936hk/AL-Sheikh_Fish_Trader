@@ -1,4 +1,4 @@
-import { Paper, Stack, Tabs, Title, Group, ActionIcon } from '@mantine/core';
+import { Paper, Tabs, Title, Group, ActionIcon } from '@mantine/core';
 import {
   IconChartBar,
   IconReceipt,
@@ -139,24 +139,26 @@ export function Reports({ onBack, initialTab = null }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-4">
-      <Paper shadow="md" p="md" radius="md" className="max-w-[1400px] mx-auto">
-        <Stack gap="md">
+    <div className="h-full flex flex-col p-4 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 overflow-hidden">
+      <Paper shadow="md" radius="md" className="flex-1 w-full max-w-[1400px] mx-auto flex flex-col overflow-hidden">
+        <div className="p-3 flex-none border-b border-gray-200 dark:border-gray-800">
           {/* Header */}
           <Group justify="space-between" align="center">
             <Group>
-              <ActionIcon variant="subtle" size="lg" onClick={handleBack}>
-                <IconArrowLeft size={20} />
+              <ActionIcon variant="subtle" size="sm" onClick={handleBack}>
+                <IconArrowLeft size={16} />
               </ActionIcon>
-              <Title order={3}>{t('report.title')}</Title>
+              <Title order={4}>{t('report.title')}</Title>
             </Group>
           </Group>
+        </div>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onChange={setActiveTab}>
-            <Tabs.List grow>
+        {/* Tabs container */}
+        <div className="flex-1 flex flex-col overflow-hidden mt-1">
+          <Tabs value={activeTab} onChange={setActiveTab} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <Tabs.List grow style={{ flex: 'none', paddingInline: '12px' }}>
               {REPORT_TABS.map((tab) => (
-                <Tabs.Tab key={tab.key} value={tab.key} leftSection={<tab.icon size={16} />}>
+                <Tabs.Tab key={tab.key} value={tab.key} leftSection={<tab.icon size={14} />} style={{ fontSize: '12px', padding: '8px 4px' }}>
                   {isUrdu ? tab.urdu : tab.label}
                 </Tabs.Tab>
               ))}
@@ -164,12 +166,16 @@ export function Reports({ onBack, initialTab = null }) {
 
             {/* Tab Panels */}
             {REPORT_TABS.map((tab) => (
-              <Tabs.Panel key={tab.key} value={tab.key} pt="md">
-                {activeTab === tab.key && renderReportContent()}
+              <Tabs.Panel key={tab.key} value={tab.key} style={{ flex: 1, overflow: 'hidden', minHeight: 0, position: 'relative' }}>
+                {activeTab === tab.key && (
+                  <div className="h-full overflow-y-auto p-4">
+                    {renderReportContent()}
+                  </div>
+                )}
               </Tabs.Panel>
             ))}
           </Tabs>
-        </Stack>
+        </div>
       </Paper>
     </div>
   );

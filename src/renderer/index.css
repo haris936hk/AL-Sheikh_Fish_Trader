@@ -1,11 +1,18 @@
 @import 'tailwindcss';
 
+html,
+body,
+#root {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Noto Sans Arabic';
   margin: 0;
   padding: 0;
-  min-height: 100vh;
-  overflow-x: hidden;
+  line-height: 1.4;
 }
 
 /* Ensure Mantine number inputs and specific LTR fields stay LTR */
@@ -18,10 +25,29 @@ body {
 
 /* RTL-specific tweaks */
 [dir='rtl'] body {
-  font-weight: 500; /* Noto Sans Arabic often needs a slight weight bump for readability */
+  font-weight: 500;
+  /* Noto Sans Arabic often needs a slight weight bump for readability */
 }
 
-/* Thin scrollbar */
+/* Thin scrollbars for desktop density */
 * {
   scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mantine-color-gray-4, #ced4da);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mantine-color-gray-5, #adb5bd);
 }

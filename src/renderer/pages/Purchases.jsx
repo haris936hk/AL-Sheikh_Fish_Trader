@@ -1,4 +1,4 @@
-import { Box, Container, Group, Title, Button, Tabs } from '@mantine/core';
+import { Box, Group, Title, Button, Tabs } from '@mantine/core';
 import PropTypes from 'prop-types';
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,25 +42,26 @@ function Purchases({ onBack }) {
 
   return (
     <Box
-      className="min-h-screen"
+      className="h-full flex flex-col overflow-hidden"
       style={{
         background: 'linear-gradient(180deg, #1a4731 0%, #2d3748 50%, #1a202c 100%)',
       }}
     >
-      <Container size="xl" py="xl">
+      <div className="flex-none p-4 pb-2">
         {/* Header */}
-        <Group justify="space-between" align="center" mb="xl">
-          <Title order={2} c="white">
+        <Group justify="space-between" align="center" mb="sm">
+          <Title order={3} c="white">
             📦 {t('purchase.title')}
           </Title>
-          <Button variant="light" color="gray" onClick={onBack}>
+          <Button variant="light" color="gray" size="sm" onClick={onBack}>
             ← {t('nav.dashboard')}
           </Button>
         </Group>
+      </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onChange={setActiveTab}>
-          <Tabs.List mb="md">
+      <div className="flex-1 overflow-hidden px-4 pb-4">
+        <Tabs value={activeTab} onChange={setActiveTab} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Tabs.List mb="sm" style={{ flex: 'none' }}>
             <Tabs.Tab value="new" color="green">
               {editPurchase ? t('purchase.edit') : t('purchase.addNew')}
             </Tabs.Tab>
@@ -69,7 +70,7 @@ function Purchases({ onBack }) {
             </Tabs.Tab>
           </Tabs.List>
 
-          <Tabs.Panel value="new">
+          <Tabs.Panel value="new" style={{ flex: 1, overflow: 'hidden', minHeight: 0, position: 'relative' }}>
             <PurchaseForm
               editPurchase={editPurchase}
               onSaved={handlePurchaseSaved}
@@ -77,11 +78,11 @@ function Purchases({ onBack }) {
             />
           </Tabs.Panel>
 
-          <Tabs.Panel value="search">
+          <Tabs.Panel value="search" style={{ flex: 1, overflow: 'hidden', minHeight: 0, position: 'relative' }}>
             <PurchaseSearch onEdit={handleEdit} />
           </Tabs.Panel>
         </Tabs>
-      </Container>
+      </div>
     </Box>
   );
 }

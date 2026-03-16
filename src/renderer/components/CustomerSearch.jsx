@@ -223,8 +223,8 @@ function CustomerSearch({ onEdit, onRefresh }) {
   ));
 
   return (
-    <Card shadow="sm" padding="lg" radius="md" withBorder>
-      <Stack gap="md">
+    <Card shadow="sm" padding="sm" radius="md" withBorder className="h-full flex flex-col overflow-hidden" pos="relative">
+      <div className="flex-none flex flex-col gap-3">
         {/* Search Section */}
         <Group justify="space-between">
           <Group>
@@ -299,9 +299,11 @@ function CustomerSearch({ onEdit, onRefresh }) {
             </Button>
           </Group>
         )}
+      </div>
 
-        {/* Results Table */}
-        <ScrollArea h={400}>
+      {/* Results Table */}
+      <div className="flex-1 overflow-hidden min-h-0 mt-3 relative border border-gray-200 dark:border-gray-700 rounded-md">
+        <ScrollArea className="h-full">
           {loading && initialLoad ? (
             <Center h={300}>
               <Loader size="lg" />
@@ -359,7 +361,7 @@ function CustomerSearch({ onEdit, onRefresh }) {
             </Table>
           )}
         </ScrollArea>
-      </Stack>
+      </div>
     </Card>
   );
 }

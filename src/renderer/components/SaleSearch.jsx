@@ -1,6 +1,5 @@
 import {
   Paper,
-  Stack,
   Group,
   Text,
   Title,
@@ -299,9 +298,9 @@ function SaleSearch({ onEdit }) {
                         <tbody>${itemRows}</tbody>
                     </table>
                     <table class="totals">
-                        <tr><td>${t.netAmtCol}:</td><td><strong>${translate('common.rs')} ${Math.round(sale.net_amount || 0).toLocaleString('en-US')}</strong></td></tr>
-                        <tr><td>${t.cashReceivedCol}:</td><td>${translate('common.rs')} ${Math.round(sale.cash_received || 0).toLocaleString('en-US')}</td></tr>
-                        <tr class="grand-total"><td>${t.balanceCol}:</td><td>${translate('common.rs')} ${Math.round(sale.balance_amount || 0).toLocaleString('en-US')}</td></tr>
+                        <tr><td>${t.netAmtCol}:</td><td><strong>${Math.round(sale.net_amount || 0).toLocaleString('en-US')}</strong></td></tr>
+                        <tr><td>${t.cashReceivedCol}:</td><td>${Math.round(sale.cash_received || 0).toLocaleString('en-US')}</td></tr>
+                        <tr class="grand-total"><td>${t.balanceCol}:</td><td>${Math.round(sale.balance_amount || 0).toLocaleString('en-US')}</td></tr>
                     </table>
                 </div>`;
         })
@@ -341,14 +340,14 @@ function SaleSearch({ onEdit }) {
     } finally {
       setLoading(false);
     }
-  }, [sales, t, isUr, translate]);
+  }, [sales, t, isUr]);
 
   return (
-    <Paper shadow="sm" p="lg" radius="md" withBorder pos="relative">
+    <Paper shadow="sm" p="sm" radius="md" withBorder pos="relative" className="h-full flex flex-col overflow-hidden">
       <LoadingOverlay visible={loading} />
 
-      <Stack gap="md">
-        <Title order={4} className="text-blue-700">
+      <div className="flex-none flex flex-col gap-3">
+        <Title order={4} className="text-blue-700 m-0">
           🔍 {t.title}
         </Title>
 
@@ -481,8 +480,10 @@ function SaleSearch({ onEdit }) {
             {t.recordsFound}: <strong>{sales.length}</strong>
           </Text>
         </Group>
+      </div>
 
-        <ScrollArea h={400} style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+      <div className="flex-1 overflow-hidden min-h-0 mt-3 relative border border-gray-200 dark:border-gray-700 rounded-md">
+        <ScrollArea className="h-full" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Table striped withTableBorder withColumnBorders highlightOnHover style={{ tableLayout: 'fixed' }}>
             <Table.Thead>
               <Table.Tr>
@@ -589,11 +590,11 @@ function SaleSearch({ onEdit }) {
                       {sale.vehicle_number || '-'}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {translate('common.rs')} {Math.round(sale.net_amount || 0).toLocaleString('en-US')}
+                      {Math.round(sale.net_amount || 0).toLocaleString('en-US')}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                       <Text c={sale.balance_amount > 0 ? 'red' : 'green'}>
-                        {translate('common.rs')} {Math.round(sale.balance_amount || 0).toLocaleString('en-US')}
+                        {Math.round(sale.balance_amount || 0).toLocaleString('en-US')}
                       </Text>
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'right' : 'left' }}>
@@ -641,9 +642,11 @@ function SaleSearch({ onEdit }) {
             </Table.Tbody>
           </Table>
         </ScrollArea>
+      </div>
 
-        {/* Pagination */}
-        {Math.ceil(sales.length / PAGE_SIZE) > 1 && (
+      {/* Pagination */}
+      {Math.ceil(sales.length / PAGE_SIZE) > 1 && (
+        <div className="flex-none">
           <Group justify="center" mt="sm">
             <Pagination
               total={Math.ceil(sales.length / PAGE_SIZE)}
@@ -652,8 +655,8 @@ function SaleSearch({ onEdit }) {
               size="sm"
             />
           </Group>
-        )}
-      </Stack>
+        </div>
+      )}
     </Paper>
   );
 }

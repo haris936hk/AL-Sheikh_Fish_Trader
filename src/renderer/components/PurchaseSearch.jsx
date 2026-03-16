@@ -1,6 +1,5 @@
 import {
   Paper,
-  Stack,
   Group,
   Text,
   Title,
@@ -243,11 +242,11 @@ function PurchaseSearch({ onEdit }) {
   };
 
   return (
-    <Paper shadow="sm" p="lg" radius="md" withBorder pos="relative">
+    <Paper shadow="sm" p="sm" radius="md" withBorder pos="relative" className="h-full flex flex-col overflow-hidden">
       <LoadingOverlay visible={loading} />
 
-      <Stack gap="md">
-        <Title order={4} className="text-green-700">
+      <div className="flex-none flex flex-col gap-3">
+        <Title order={4} className="text-green-700 m-0">
           🔍 {t.title}
         </Title>
 
@@ -376,8 +375,10 @@ function PurchaseSearch({ onEdit }) {
             {t.recordsFound}: <strong>{purchases.length}</strong>
           </Text>
         </Group>
+      </div>
 
-        <ScrollArea h={400} style={{ direction: isUr ? 'rtl' : 'ltr' }}>
+      <div className="flex-1 overflow-hidden min-h-0 mt-3 relative border border-gray-200 dark:border-gray-700 rounded-md">
+        <ScrollArea className="h-full" style={{ direction: isUr ? 'rtl' : 'ltr' }}>
           <Table striped withTableBorder withColumnBorders highlightOnHover style={{ tableLayout: 'fixed' }}>
             <Table.Thead>
               <Table.Tr>
@@ -487,11 +488,11 @@ function PurchaseSearch({ onEdit }) {
                       {(purchase.total_weight || 0).toFixed(2)}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
-                      {translate('common.rs')} {Math.round(purchase.net_amount || 0).toLocaleString('en-US')}
+                      {Math.round(purchase.net_amount || 0).toLocaleString('en-US')}
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'left' : 'right', direction: 'ltr' }}>
                       <Text c={purchase.balance_amount > 0 ? 'red' : 'green'}>
-                        {translate('common.rs')} {Math.round(purchase.balance_amount || 0).toLocaleString('en-US')}
+                        {Math.round(purchase.balance_amount || 0).toLocaleString('en-US')}
                       </Text>
                     </Table.Td>
                     <Table.Td style={{ textAlign: isUr ? 'right' : 'left' }}>
@@ -539,9 +540,11 @@ function PurchaseSearch({ onEdit }) {
             </Table.Tbody>
           </Table>
         </ScrollArea>
+      </div>
 
-        {/* Pagination */}
-        {Math.ceil(purchases.length / PAGE_SIZE) > 1 && (
+      {/* Pagination */}
+      {Math.ceil(purchases.length / PAGE_SIZE) > 1 && (
+        <div className="flex-none">
           <Group justify="center" mt="sm">
             <Pagination
               total={Math.ceil(purchases.length / PAGE_SIZE)}
@@ -550,8 +553,8 @@ function PurchaseSearch({ onEdit }) {
               size="sm"
             />
           </Group>
-        )}
-      </Stack>
+        </div>
+      )}
     </Paper>
   );
 }

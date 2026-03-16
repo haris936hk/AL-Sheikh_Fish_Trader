@@ -174,7 +174,7 @@ function ItemSearch({ onEdit, onRefresh }) {
       <Table.Td>{item.category_name || item.category_name_urdu || t('common.none')}</Table.Td>
       <Table.Td>
         <Badge variant="light" color="green">
-          {t('common.rs')} {Math.round(Number(item.unit_price || 0)).toLocaleString('en-US')}
+          {Math.round(Number(item.unit_price || 0)).toLocaleString('en-US')}
         </Badge>
       </Table.Td>
       <Table.Td>
@@ -200,8 +200,8 @@ function ItemSearch({ onEdit, onRefresh }) {
   ));
 
   return (
-    <Card shadow="sm" padding="lg" radius="md" withBorder>
-      <Stack gap="md">
+    <Card shadow="sm" padding="sm" radius="md" withBorder className="h-full flex flex-col overflow-hidden" pos="relative">
+      <div className="flex-none flex flex-col gap-3">
         {/* Search Section */}
         <Group justify="space-between">
           <Group>
@@ -229,9 +229,11 @@ function ItemSearch({ onEdit, onRefresh }) {
             {items.length} {items.length !== 1 ? t('itemSearch.itemsFound') : t('itemSearch.itemFound')}
           </Text>
         </Group>
+      </div>
 
-        {/* Results Table */}
-        <ScrollArea h={400}>
+      {/* Results Table */}
+      <div className="flex-1 overflow-hidden min-h-0 mt-3 relative border border-gray-200 dark:border-gray-700 rounded-md">
+        <ScrollArea className="h-full">
           {loading && initialLoad ? (
             <Center h={300}>
               <Loader size="lg" />
@@ -258,7 +260,7 @@ function ItemSearch({ onEdit, onRefresh }) {
             </Table>
           )}
         </ScrollArea>
-      </Stack>
+      </div>
     </Card>
   );
 }

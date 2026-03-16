@@ -150,16 +150,16 @@ function SupplierBillPreview({ previewData }) {
       const filename = `SupplierBill_${cleanName}_${formatDisplayDateLocal(dateTo)}.pdf`;
 
       // Send the payload off to the backend API explicitly avoiding browser print dialog
-      const savedPath = await window.api.print.exportPDFSilent(htmlPayload, { filename });
-      
-      if (savedPath) {
+      const result = await window.api.print.exportPDFSilent(htmlPayload, { filename });
+
+      if (result && result.success) {
         notifications.show({
           title: t('app.saved'),
           message: t('supplierBill.pdfSaved'),
           color: 'teal',
         });
       } else {
-        throw new Error('Failed to save PDF silently');
+        throw new Error(result?.error || 'Failed to save PDF silently');
       }
 
     } catch (error) {
@@ -176,8 +176,8 @@ function SupplierBillPreview({ previewData }) {
 
   if (!previewData) {
     return (
-      <Paper shadow="sm" p="xl" radius="md" withBorder h="100%">
-        <Center h={300}>
+      <Paper shadow="sm" p="sm" radius="md" withBorder h="100%" className="flex flex-col">
+        <Center className="flex-1">
           <Stack align="center" gap="md">
             <Text size="4rem">📋</Text>
             <Text c="dimmed" size="lg">
@@ -237,8 +237,8 @@ function SupplierBillPreview({ previewData }) {
   const displayVehicle = vehicleNumber || vehicles.join(', ');
 
   return (
-    <Paper shadow="sm" p="lg" radius="md" withBorder dir={isUr ? 'rtl' : 'ltr'}>
-      <Stack gap="md">
+    <Paper shadow="sm" p="sm" radius="md" withBorder dir={isUr ? 'rtl' : 'ltr'} className="h-full flex flex-col overflow-hidden">
+      <div className="flex-none pb-3 mb-3 border-b border-gray-200 dark:border-gray-700">
         {/* Print Button */}
         <Group justify="flex-start">
           <Button 
@@ -251,13 +251,15 @@ function SupplierBillPreview({ previewData }) {
             {t('report.print')}
           </Button>
         </Group>
+      </div>
 
+      <div className="flex-1 overflow-y-auto min-h-0 pr-2">
         {/* Visible UI Preview - Clean Mantine Components */}
         <Stack gap="sm">
           <Group justify="space-between" align="flex-start" style={{ direction: 'ltr' }}>
             <div style={{ textAlign: 'left' }}>
               <Text size="xl" fw={700}>
-                {isUr ? (settings.company_name_urdu || settings.company_name) : (settings.company_name || 'AL-SHEIKH FISH TRADER')}
+                {settings.company_name || 'AL-Sheikh Traders and Distributors'}
               </Text>
               <Text size="sm" c="dimmed">
                 {isUr ? (settings.company_address_urdu || settings.company_address) : (settings.company_address || 'Shop No. W-644 Gunj Mandi Rawalpindi')}
@@ -344,7 +346,7 @@ function SupplierBillPreview({ previewData }) {
           <div ref={printRef} className="printable-bill" style={{ color: '#000' }}>
 
           <div className="header-english">
-            <h2>${isUr ? (settings.company_name_urdu || settings.company_name) : (settings.company_name || 'AL - SHEIKH FISH TRADER AND DISTRIBUTER')}</h2>
+            <h2>${settings.company_name || 'AL-Sheikh Traders and Distributors'}</h2>
             <p>${isUr ? (settings.company_address_urdu || settings.company_address) : (settings.company_address || 'Shop No. W-644 Gunj Mandi Rawalpindi')}</p>
             <p>${settings.company_phone || '+92-3008501724, 051-5534607'}</p>
           </div>
@@ -464,7 +466,7 @@ function SupplierBillPreview({ previewData }) {
           </div>
         </div>
       </div>
-      </Stack>
+      </div>
     </Paper>
   );
 }

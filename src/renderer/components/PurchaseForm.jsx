@@ -1,6 +1,5 @@
 import {
   Paper,
-  Stack,
   Group,
   Text,
   Title,
@@ -352,7 +351,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
   const handlePrint = useCallback(() => {
     const supplierName = suppliers.find((s) => s.value === selectedSupplier)?.label || '';
     const dateStr = purchaseDate ? new Date(purchaseDate).toLocaleDateString('en-PK') : '';
-    const companyName = isUr ? (settings.company_name_urdu || settings.company_name) : (settings.company_name || 'AL-SHEIKH FISH TRADER AND DISTRIBUTER');
+    const companyName = settings.company_name || 'AL-Sheikh Traders and Distributors';
     const companyAddress = isUr ? (settings.company_address_urdu || settings.company_address) : (settings.company_address || 'Shop No. W-644 Gunj Mandi Rawalpindi');
     const companyPhone = settings.company_phone || '+92-3008501724 | 051-5534607';
 
@@ -440,7 +439,6 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
     t,
     isUr,
     settings.company_name,
-    settings.company_name_urdu,
     settings.company_address,
     settings.company_address_urdu,
     settings.company_phone,
@@ -459,12 +457,12 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
   }, []);
 
   return (
-    <Paper shadow="sm" p="lg" radius="md" withBorder pos="relative">
+    <Paper shadow="sm" p="sm" radius="md" withBorder pos="relative" className="h-full flex flex-col overflow-hidden">
       <LoadingOverlay visible={loading} />
 
-      <Stack gap="md">
+      <div className="flex-none flex flex-col gap-3">
         <Group justify="space-between" align="center">
-          <Title order={4} className="text-green-700">
+          <Title order={4} className="text-green-700 m-0">
             📦 {t(editPurchase ? 'purchase.edit' : 'purchase.addNew')}
           </Title>
           <Badge size="lg" variant="light" color="green">
@@ -522,9 +520,11 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
         </Grid>
 
         <Divider label={t('purchase.lineItems')} labelPosition="center" />
+      </div>
 
-        {/* Dynamic Line Items - Tabular Layout */}
-        <Paper withBorder radius="md" style={{ overflowX: 'auto' }}>
+      {/* Dynamic Line Items - Tabular Layout */}
+      <div className="flex-1 overflow-hidden min-h-0 relative mt-2 border border-gray-200 dark:border-gray-700 rounded-md">
+        <div className="h-full overflow-y-auto overflow-x-auto">
           <Table verticalSpacing="xs" striped withTableBorder withColumnBorders style={{ minWidth: 800 }}>
             <Table.Thead bg="gray.1">
               <Table.Tr>
@@ -621,8 +621,10 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
               })}
             </Table.Tbody>
           </Table>
-        </Paper>
+        </div>
+      </div>
 
+      <div className="flex-none mt-3">
         <Grid gutter="md">
           {/* Row 2: Concession + Cash Paid */}
           <Grid.Col span={4}>
@@ -738,7 +740,7 @@ function PurchaseForm({ editPurchase, onSaved, onCancel }) {
             {t(editPurchase ? 'purchase.updatePurchase' : 'purchase.savePurchase')}
           </Button>
         </Group>
-      </Stack>
+      </div>
     </Paper>
   );
 }

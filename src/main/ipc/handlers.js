@@ -917,6 +917,20 @@ function registerHandlers() {
     }
   });
 
+  ipcMain.handle(channels.EXPORT_PDF_SILENT, async (event, { htmlContent, options }) => {
+    try {
+      const printService = require('../services/printService.js');
+      const filePath = await printService.exportToPDFSilent(htmlContent, options);
+      if (!filePath) {
+        return { success: false, error: 'Silent PDF export failed' };
+      }
+      return { success: true, data: { filePath } };
+    } catch (error) {
+      console.error('Export PDF silent error:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle(channels.EXPORT_EXCEL, async (event, { data, options }) => {
     try {
       const printService = require('../services/printService.js');

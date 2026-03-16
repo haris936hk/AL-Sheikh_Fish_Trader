@@ -280,7 +280,7 @@ export function ReportViewer({
         <body>
           <!-- Company Header -->
           <div class="report-header">
-            <p class="company-name">${(language === 'ur' && settings.company_name_urdu) || settings.company_name || 'FISHPLUS'}</p>
+            <p class="company-name">${settings.company_name || 'AL-Sheikh Traders and Distributors'}</p>
             <p class="company-address">${(language === 'ur' && settings.company_address_urdu) || settings.company_address || ''}</p>
             <p class="company-phone">${settings.company_phone || ''}</p>
           </div>
@@ -443,10 +443,10 @@ export function ReportViewer({
   };
 
   return (
-    <Paper shadow="sm" p="lg" radius="md" withBorder>
-      <Stack gap="md">
+    <Paper shadow="sm" p="sm" radius="md" withBorder className="h-full flex flex-col overflow-hidden">
+      <Stack gap="sm" className="h-full flex flex-col">
         {/* Screen Header */}
-        <Group justify="space-between" align="flex-start">
+        <Group justify="space-between" align="flex-start" className="flex-none">
           <Stack gap="xs">
             <Group gap="xs" justify="center">
               <Title order={4} style={{ direction: language === 'ur' ? 'rtl' : 'ltr' }}>
@@ -490,11 +490,13 @@ export function ReportViewer({
           </Group>
         </Group>
 
-        <Divider />
+        <Divider className="flex-none" />
 
-        <div style={{ overflow: 'auto' }}>
-          <div ref={printRef} style={{ width: '100%' }}>
-            {children}
+        <div className="flex-1 overflow-hidden min-h-0 relative">
+          <div className="absolute inset-0 overflow-auto pr-2">
+            <div ref={printRef} style={{ width: '100%', minHeight: 'min-content' }}>
+              {children}
+            </div>
           </div>
         </div>
       </Stack>

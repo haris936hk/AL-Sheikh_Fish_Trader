@@ -2,7 +2,6 @@ import {
   Card,
   Table,
   Text,
-  Stack,
   ScrollArea,
   Loader,
   Center,
@@ -45,7 +44,7 @@ function ItemStockDisplay({ data = [], loading = false }) {
 
   if (loading) {
     return (
-      <Card shadow="sm" padding="md" radius="md" withBorder h={250}>
+      <Card shadow="sm" padding="md" radius="md" withBorder className="h-full">
         <Center h="100%">
           <Loader size="lg" />
         </Center>
@@ -54,8 +53,8 @@ function ItemStockDisplay({ data = [], loading = false }) {
   }
 
   return (
-    <Card shadow="sm" padding="md" radius="md" withBorder>
-      <Stack gap="xs">
+    <Card shadow="sm" padding="md" radius="md" withBorder className="h-full flex flex-col overflow-hidden">
+      <div className="flex-none flex flex-col gap-1 mb-3">
         <Group gap="xs">
           <ThemeIcon variant="light" color="teal" size="sm" radius="md">
             <IconPackage size={14} />
@@ -67,8 +66,10 @@ function ItemStockDisplay({ data = [], loading = false }) {
         <Text size="sm" c="dimmed">
           {t('item.currentStock')}
         </Text>
+      </div>
 
-        <ScrollArea h={180} type="auto">
+      <div className="flex-1 overflow-hidden min-h-0 relative border border-gray-200 dark:border-gray-700 rounded-md">
+        <ScrollArea className="h-full" type="auto">
           {data.length === 0 ? (
             <Center py="xl">
               <Text c="dimmed" size="sm">
@@ -100,7 +101,7 @@ function ItemStockDisplay({ data = [], loading = false }) {
             </Table>
           )}
         </ScrollArea>
-      </Stack>
+      </div>
     </Card>
   );
 }

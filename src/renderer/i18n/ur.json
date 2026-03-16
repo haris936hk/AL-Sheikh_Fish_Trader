@@ -36,6 +36,7 @@
     "escDash": "ایسکیپ = ڈیش بورڈ",
     "switchToEnglish": "انگریزی میں بدلیں",
     "switchToUrdu": "اردو میں بدلیں",
+    "search": "تلاش",
     "english": "English",
     "urdu": "اردو"
   },
@@ -268,6 +269,7 @@
     "postedNoDelete": "پوسٹ شدہ خریداری کو حذف نہیں کیا جا سکتا"
   },
   "sale": {
+    "title": "بکری",
     "addNew": "نئی بکری",
     "edit": "بکری تبدیل کریں",
     "saleDate": "بکری کی تاریخ",
@@ -388,6 +390,13 @@
     "supplierLedger": "بیوپاری کھاتہ",
     "netSummary": "خالص خلاصہ",
     "stockReport": "ذخیرہ رپورٹ",
+    "itemPurchase": "مال خریداری",
+    "customerRegister": "گاہک رجسٹر",
+    "customerRecovery": "گاہک ریکوری",
+    "dailyDetails": "روزانہ تفصیل",
+    "dailySales": "روزانہ بکری",
+    "itemSales": "مال بکری",
+    "concessions": "رعایت",
     "generate": "رپورٹ بنائیں",
     "export": "برآمد",
     "dateFrom": "شروع تاریخ",

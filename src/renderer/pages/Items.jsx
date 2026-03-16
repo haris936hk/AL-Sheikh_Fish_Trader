@@ -1,4 +1,4 @@
-import { Title, Text, Button, Group, Stack, Paper } from '@mantine/core';
+import { Paper, Group, Title, Text, Button } from '@mantine/core';
 import PropTypes from 'prop-types';
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,33 +43,34 @@ function Items({ onBack }) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-green-100 dark:from-gray-900 dark:to-slate-800">
+    <div className="h-full flex flex-col overflow-hidden bg-gradient-to-br from-slate-100 to-indigo-100 dark:from-gray-900 dark:to-slate-800">
       {/* Header */}
       <Paper
         shadow="md"
-        className="bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800"
+        className="bg-gradient-to-r from-blue-600 via-indigo-700 to-violet-800 flex-none"
         style={{ borderRadius: 0 }}
       >
-        <div className="px-8 py-6">
+        <div className="px-4 py-3">
           <Group justify="space-between" align="center">
-            <Stack gap={4}>
-              <Title order={1} c="white" className="text-3xl font-bold">
+            <Group gap="sm">
+              <Title order={3} c="white" className="font-bold m-0">
                 📦 {t('item.title')}
               </Title>
-              <Text c="white" opacity={0.9} size="md">
-                {t('item.addNew')}
+              <Text c="white" opacity={0.9} size="sm">
+                | {t('item.addNew')}
               </Text>
-            </Stack>
-            <Group>
+            </Group>
+            <Group gap="sm">
               <Button
+                size="sm"
                 variant="white"
-                color="teal"
+                color="indigo"
                 onClick={handleAdd}
                 leftSection={<span>➕</span>}
               >
                 {t('item.addNew')}
               </Button>
-              <Button variant="light" color="gray" onClick={onBack} leftSection={<span>🏠</span>}>
+              <Button size="sm" variant="light" color="gray" onClick={onBack} leftSection={<span>🏠</span>}>
                 {t('nav.dashboard')}
               </Button>
             </Group>
@@ -78,7 +79,7 @@ function Items({ onBack }) {
       </Paper>
 
       {/* Main Content */}
-      <div className="p-8">
+      <div className="flex-1 overflow-hidden p-3 relative">
         <ItemSearch onEdit={handleEdit} onRefresh={{ refreshKey }} />
       </div>
 

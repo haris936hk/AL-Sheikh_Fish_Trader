@@ -1,6 +1,5 @@
 import {
   Paper,
-  Stack,
   Group,
   Text,
   Title,
@@ -408,7 +407,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
   // Print receipt for saved sale
   const handlePrint = useCallback(() => {
     const dateStr = saleDate ? new Date(saleDate).toLocaleDateString('en-PK') : '';
-    const companyName = isUr ? (settings.company_name_urdu || settings.company_name) : (settings.company_name || 'AL-SHEIKH FISH TRADER AND DISTRIBUTER');
+    const companyName = settings.company_name || 'AL-Sheikh Traders and Distributors';
     const companyAddress = isUr ? (settings.company_address_urdu || settings.company_address) : (settings.company_address || 'Shop No. W-644 Gunj Mandi Rawalpindi');
     const companyPhone = settings.company_phone || '+92-3008501724 | 051-5534607';
 
@@ -494,7 +493,6 @@ function SaleForm({ editSale, onSaved, onCancel }) {
     settings.company_address,
     settings.company_address_urdu,
     settings.company_name,
-    settings.company_name_urdu,
     settings.company_phone,
     t,
     totals,
@@ -509,14 +507,14 @@ function SaleForm({ editSale, onSaved, onCancel }) {
   }, []);
 
   return (
-    <Paper shadow="sm" p="lg" radius="md" withBorder pos="relative">
+    <Paper shadow="sm" p="sm" radius="md" withBorder pos="relative" className="h-full flex flex-col overflow-hidden">
       <LoadingOverlay visible={loading} />
 
-      <Stack gap="md">
+      <div className="flex-none flex flex-col gap-3">
         <Group justify="space-between" align="center">
-          <Title order={2} mb="xl">
-          {t(editSale ? 'sale.edit' : 'sale.addNew')}
-        </Title>
+          <Title order={4} className="m-0">
+            {t(editSale ? 'sale.edit' : 'sale.addNew')}
+          </Title>
           <Badge size="lg" variant="light" color="blue">
             {saleNumber}
           </Badge>
@@ -573,9 +571,11 @@ function SaleForm({ editSale, onSaved, onCancel }) {
         </Grid>
 
         <Divider label={t('sale.lineItems', 'Line Items')} labelPosition="center" />
+      </div>
 
-        {/* Dynamic Line Items - Tabular Layout */}
-        <Paper withBorder radius="md" style={{ overflowX: 'auto', overflowY: 'visible' }}>
+      {/* Dynamic Line Items - Tabular Layout */}
+      <div className="flex-1 overflow-hidden min-h-0 relative mt-2 border border-gray-200 dark:border-gray-700 rounded-md">
+        <div className="h-full overflow-y-auto overflow-x-auto">
           <Table verticalSpacing="xs" striped withTableBorder withColumnBorders style={{ minWidth: 950 }}>
             <Table.Thead bg="gray.1">
               <Table.Tr>
@@ -755,9 +755,11 @@ function SaleForm({ editSale, onSaved, onCancel }) {
               })}
             </Table.Tbody>
           </Table>
-        </Paper>
+        </div>
+      </div>
 
-        <Divider label={t('sale.summary', 'Summary')} labelPosition="center" />
+      <div className="flex-none mt-3">
+        <Divider mb="xs" label={t('sale.summary', 'Summary')} labelPosition="center" />
 
         {/* Global Summary */}
         <Paper
@@ -774,17 +776,17 @@ function SaleForm({ editSale, onSaved, onCancel }) {
             {[
               {
                 label: t('sale.grossAmount'),
-                val: `${t('common.rs')} ${Math.round(totals.grossAmount).toLocaleString('en-US')}`,
+                val: `${Math.round(totals.grossAmount).toLocaleString('en-US')}`,
                 color: 'dark',
               },
               {
                 label: t('sale.charges'),
-                val: `${t('common.rs')} ${Math.round(totals.fareCharges + totals.iceCharges).toLocaleString('en-US')}`,
+                val: `${Math.round(totals.fareCharges + totals.iceCharges).toLocaleString('en-US')}`,
                 color: 'dark',
               },
               {
                 label: t('sale.netAmount'),
-                val: `${t('common.rs')} ${Math.round(totals.netAmount).toLocaleString('en-US')}`,
+                val: `${Math.round(totals.netAmount).toLocaleString('en-US')}`,
                 color: 'blue',
               },
             ].map(({ label, val, color }, idx) => (
@@ -840,7 +842,7 @@ function SaleForm({ editSale, onSaved, onCancel }) {
           </Grid>
         </Paper>
 
-        <Group justify="flex-end" mt="md">
+        <Group justify="flex-end" mt="sm">
           <Button
             leftSection={<IconPlus size={16} />}
             variant="light"
@@ -857,10 +859,10 @@ function SaleForm({ editSale, onSaved, onCancel }) {
             {onCancel ? t('app.cancel', 'Cancel') : t('app.clear', 'Clear')}
           </Button>
           <Button variant="filled" color="blue" onClick={handleSave}>
-                {t(editSale ? 'sale.updateSale' : 'sale.saveSale')}
-              </Button>
+            {t(editSale ? 'sale.updateSale' : 'sale.saveSale')}
+          </Button>
         </Group>
-      </Stack>
+      </div>
     </Paper>
   );
 }
